@@ -1,0 +1,3 @@
+
+class OpenGlError(BaseException):
+    pass

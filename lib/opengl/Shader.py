@@ -19,6 +19,7 @@ class Shader(OpenGlBaseObject):
         self._log = ""
         self._uniforms = dict()
         self._attributes = dict()
+        self._uniform_values = dict()
         self._shaders = []
         self._source_changed = True
         self._is_compiled = False
@@ -30,10 +31,14 @@ class Shader(OpenGlBaseObject):
         return self._source_changed
 
     def uniform(self, name):
-        return self._uniforms.get(name)
+        if name not in self._uniforms:
+            raise KeyError("uniform '%s' not found, possible values: %s" % (name, self.dump_variables(do_print=False)))
+        return self._uniforms[name]
 
     def attribute(self, name):
-        return self._attributes.get(name)
+        if name not in self._attributes:
+            raise KeyError("attribute '%s' not found, possible values: %s" % (name, self.dump_variables(do_print=False)))
+        return self._attributes[name]
 
     def set_vertex_source(self, src):
         self._source_changed = src != self._vertex_source
@@ -42,6 +47,19 @@ class Shader(OpenGlBaseObject):
     def set_fragment_source(self, src):
         self._source_changed = src != self._fragment_source
         self._fragment_source = src
+
+    def set_uniform(self, name, value):
+        self._uniform_values[name] = value
+
+    def update_uniforms(self):
+        for name in self._uniform_values:
+            value = self._uniform_values[name]
+            u = self.uniform(name)
+
+            value = sum((list(i) for i in value), [])
+            v = (GLfloat * len(value))(*value)
+            glUniformMatrix4fv(u.location, 1, GL_FALSE, v)
+        self._uniform_values.clear()
 
     def _create(self):
         self._handle = glCreateProgram()
@@ -136,6 +154,10 @@ class Shader(OpenGlBaseObject):
             attribute = ShaderUniform(namebuf.value.decode("utf-8"), uniform_size.value, uniform_type.value, location)
             self._attributes[attribute.name] = attribute
 
-    def dump_variables(self):
+    def dump_variables(self, do_print=True):
+        s = ""
         for u in list(self._uniforms.values()) + list(self._attributes.values()):
-            print("%3s %6s %2s %s" % (u.location, u.type, u.size, u.name))
+            s += "%3s %6s %2s %s\n" % (u.location, u.type, u.size, u.name)
+        if do_print:
+            print(s)
+        return s

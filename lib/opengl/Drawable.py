@@ -6,26 +6,38 @@ from .VertexArrayObject import VertexArrayObject
 
 DEFAULT_VERTEX_SRC = """
 #version 130
+uniform mat4 u_projection;
+
 in vec4 a_position;
+in vec3 a_normal;
+
 out vec4 v_pos;
+out vec3 v_normal;
+
 void main()
 {
     v_pos = a_position;
-    gl_Position = a_position;
+    v_normal = a_normal;
+    gl_Position = u_projection * a_position;
 }
 """
 
 DEFAULT_FRAGMENT_SRC = """
 #version 130
-in vec4 v_pos;
-out vec4 fragColor;
 uniform vec2 u_resolution;
 uniform vec2 u_mouse_uv;
+
+in vec4 v_pos;
+in vec3 v_normal;
+
+out vec4 fragColor;
+
 void main() {
-    fragColor = vec4(1,1,0,1);
+    vec3 col = vec3(.3);
+    col += v_normal;
+    fragColor = vec4(col,1);
 }
 """
-
 
 
 class Drawable:
@@ -80,6 +92,7 @@ class Drawable:
                 self.vao.create_element_buffer(prim_type, elem[1], elem[0])
 
         self.shader.bind()
+        self.shader.update_uniforms()
         self.vao.draw_elements()
 
 

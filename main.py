@@ -1,7 +1,9 @@
 import pyglet
+import glm
 from lib.opengl.VertexArrayObject import *
 from lib.opengl.Shader import *
 from lib.opengl.Drawable import Drawable
+from lib.geom.TriangleMesh import TriangleMesh
 
 frag_src = """
 #version 130
@@ -17,7 +19,7 @@ void main() {
 """
 
 
-class MainWindow(pyglet.window.Window):
+class TestDrawableWindow(pyglet.window.Window):
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -33,6 +35,31 @@ class MainWindow(pyglet.window.Window):
         OpenGlBaseObject.dump_instances()
 
 
+class MainWindow(pyglet.window.Window):
+
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+        self.mesh = TriangleMesh()
+        #self.mesh.add_triangle([-1,-1,0], [1,-1,0], [1,1,0])
+        #self.mesh.add_triangle([-1,-1,0], [1,1,0], [-1,1,0.5])
+        import random
+        def heightmap(x, y):
+            return random.randrange(2)/10
+        self.mesh.create_height_map(10,10, heightmap, 1./10)
+        self.drawable = self.mesh.get_drawable()
+        self.rotate_x = glm.pi()/3.
+
+    def on_draw(self):
+        self.clear()
+        proj = glm.ortho(0,1, -1,1, -2, 2)
+        proj = glm.rotate(proj, self.rotate_x, (1,0,0))
+        print(proj)
+        self.drawable.shader.set_uniform("u_projection", proj)
+        self.drawable.draw()
+        OpenGlBaseObject.dump_instances()
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        self.rotate_x += scroll_y / 30.
 
 
 

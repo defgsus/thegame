@@ -37,6 +37,7 @@ class BufferObject(OpenGlBaseObject):
         self.check_created("upload")
         ptr = (Type * len(values))(*values)
         self.size = ctypes.sizeof(Type) * len(values)
+        #print("upload", self.target, self.size, ptr, self.storage_type)
         glBufferData(self.target, self.size, ptr, self.storage_type)
 
 
@@ -96,12 +97,14 @@ class VertexArrayObject(OpenGlBaseObject):
         buf.attribute_location = attribute_location
         buf.type_enum = get_opengl_type_enum(Type)
         buf.num_dimensions = num_dimensions
+        buf.normalized = normalized
+        buf.stride = stride
 
         buf.create()
         buf.bind()
         buf.upload(Type, values)
         glEnableVertexAttribArray(attribute_location)
-        glVertexAttribPointer(attribute_location, num_dimensions, buf.type_enum, normalized, stride, None)
+        glVertexAttribPointer(buf.attribute_location, buf.num_dimensions, buf.type_enum, buf.normalized, buf.stride, None)
 
         self._attrib_buffers.append(buf)
         return buf
@@ -125,6 +128,13 @@ class VertexArrayObject(OpenGlBaseObject):
 
     def draw_elements(self):
         """Draws all element_buffers"""
+        for abuf in self._attrib_buffers:
+            abuf.bind()
+            glEnableVertexAttribArray(abuf.attribute_location)
+            glVertexAttribPointer(abuf.attribute_location, abuf.num_dimensions, abuf.type_enum, abuf.normalized, abuf.stride, None)
+
         for elembuf in self._element_buffers:
             elembuf.bind()
+
+            #print("DRAW", elembuf.primitive_type, elembuf.num_vertices, elembuf.type_enum)
             glDrawElements(elembuf.primitive_type, elembuf.num_vertices, elembuf.type_enum, None)

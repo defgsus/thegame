@@ -12,13 +12,22 @@ class ShaderUniform:
 
 class Shader(OpenGlBaseObject):
 
-    def __init__(self, vertex_source, fragment_source, name=None):
+    def __init__(self, vertex_source=None, fragment_source=None, name=None):
         super(Shader, self).__init__(name=name)
         self._vertex_source = vertex_source
         self._fragment_source = fragment_source
         self._log = ""
         self._uniforms = dict()
         self._attributes = dict()
+        self._shaders = []
+        self._source_changed = True
+        self._is_compiled = False
+
+    def is_compiled(self):
+        return self._is_compiled
+
+    def is_source_changed(self):
+        return self._source_changed
 
     def uniform(self, name):
         return self._uniforms.get(name)
@@ -26,10 +35,20 @@ class Shader(OpenGlBaseObject):
     def attribute(self, name):
         return self._attributes.get(name)
 
+    def set_vertex_source(self, src):
+        self._source_changed = src != self._vertex_source
+        self._vertex_source = src
+
+    def set_fragment_source(self, src):
+        self._source_changed = src != self._fragment_source
+        self._fragment_source = src
+
     def _create(self):
         self._handle = glCreateProgram()
 
     def _release(self):
+        self._release_shaders()
+        self._is_compiled = False
         glDeleteProgram(self._handle)
 
     def _bind(self):
@@ -38,11 +57,19 @@ class Shader(OpenGlBaseObject):
     def _unbind(self):
         glUseProgram(0)
 
+    def _release_shaders(self):
+        for s in self._shaders:
+            glDeleteShader(s)
+        self._shaders.clear()
+
     def compile(self):
         self.check_created("compile")
+        self._release_shaders()
         self._compile_shader(GL_VERTEX_SHADER, "vertex shader", self._vertex_source)
         self._compile_shader(GL_FRAGMENT_SHADER, "fragment shader", self._fragment_source)
         glLinkProgram(self._handle)
+        self._source_changed = False
+        self._is_compiled = True
 
         loglen = GLint(0)
         glGetProgramiv(self._handle, GL_INFO_LOG_LENGTH, ctypes.byref(loglen))
@@ -69,8 +96,10 @@ class Shader(OpenGlBaseObject):
         self._log += infolog.value.decode("utf-8") + "\n"
 
         glAttachShader(self._handle, shader)
+        self._shaders.append(shader)
 
     def _get_uniforms(self):
+        self._uniforms.clear()
         num_uniforms = GLint(0)
         glGetProgramiv(self._handle, GL_ACTIVE_UNIFORMS, ctypes.byref(num_uniforms))
 
@@ -89,6 +118,7 @@ class Shader(OpenGlBaseObject):
             self._uniforms[uniform.name] = uniform
 
     def _get_attributes(self):
+        self._attributes.clear()
         num_attributes = GLint(0)
         glGetProgramiv(self._handle, GL_ACTIVE_ATTRIBUTES, ctypes.byref(num_attributes))
 

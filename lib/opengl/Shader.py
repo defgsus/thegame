@@ -30,6 +30,12 @@ class Shader(OpenGlBaseObject):
     def is_source_changed(self):
         return self._source_changed
 
+    def has_uniform(self, name):
+        return name in self._uniforms
+
+    def has_attribute(self, name):
+        return name in self._attributes
+
     def uniform(self, name):
         if name not in self._uniforms:
             raise KeyError("uniform '%s' not found, possible values: %s" % (name, self.dump_variables(do_print=False)))

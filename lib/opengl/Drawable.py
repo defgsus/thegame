@@ -83,10 +83,11 @@ class Drawable:
             self.vao.bind()
             for a_name in self._attributes:
                 att = self._attributes[a_name]
-                self.vao.create_attribute_buffer(
-                    self.shader.attribute(a_name).location,
-                    att[0], att[2], att[1]
-                )
+                if self.shader.has_attribute(a_name):
+                    self.vao.create_attribute_buffer(
+                        self.shader.attribute(a_name).location,
+                        att[0], att[2], att[1]
+                    )
             for prim_type in self._elements:
                 elem = self._elements[prim_type]
                 self.vao.create_element_buffer(prim_type, elem[1], elem[0])

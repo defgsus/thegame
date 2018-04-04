@@ -18,10 +18,17 @@ class OpenGlBaseObject:
         self._handle = None
 
     def __str__(self):
-        return "%s(%s)" % (self.__class__.__name__, self.name)
+        vals = [self.name]
+        inf = self.infostr()
+        if inf:
+            vals.append(inf)
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(vals))
 
     def __repr__(self):
         return self.__str__()
+
+    def infostr(self):
+        return ""
 
     @property
     def name(self):

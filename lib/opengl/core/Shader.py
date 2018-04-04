@@ -132,6 +132,12 @@ class Shader(OpenGlBaseObject):
         glGetShaderInfoLog(shader, loglen, None, infolog)
         self._log += infolog.value.decode("utf-8") + "\n"
 
+        status = GLint(0)
+        glGetShaderiv(shader, GL_COMPILE_STATUS, ctypes.byref(status))
+        if not status:
+            print(self._log)
+            raise OpenGlError("%s compilation error" % shader_type_name)
+
         glAttachShader(self._handle, shader)
         self._shaders.append(shader)
 

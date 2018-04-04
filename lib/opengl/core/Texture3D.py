@@ -7,6 +7,9 @@ class Texture3D(TextureBase):
         super(Texture3D, self).__init__(GL_TEXTURE_3D, name=name)
         self.depth = 0
 
+    def infostr(self):
+        return "%sx%sx%s" % (self.width, self.height, self.depth)
+
     def upload(self, values, width, height, depth,
                input_format=GL_RGB, input_type=GL_FLOAT, gpu_format=GL_RGBA, mipmap_level=0):
         """Upload linear data in `values`.
@@ -25,7 +28,7 @@ class Texture3D(TextureBase):
                      input_format, input_type, ptr)
 
         self.set_parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        self.set_parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        self.set_parameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
         self.set_parameter(GL_TEXTURE_WRAP_S, GL_REPEAT)
         self.set_parameter(GL_TEXTURE_WRAP_T, GL_REPEAT)

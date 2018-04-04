@@ -7,6 +7,8 @@ class WorldBlock:
     def __init__(self):
         self.space_type = 0
 
+    def __repr__(self):
+        return "(%s)" % self.space_type
 
 class WorldChunk:
 
@@ -23,6 +25,9 @@ class WorldChunk:
         self.num_z = 0
         self.blocks = []
         self.tileset = tileset
+
+    def size(self):
+        return self.num_x, self.num_y, self.num_z
 
     def from_heightmap(self, heightmap):
         import random
@@ -52,7 +57,7 @@ class WorldChunk:
                     return row[x]
         return WorldBlock()
 
-    def is_wall(self, x, y, z, dir):
+    def is_wall(self, x, y, z, side):
         b = self.block(x, y, z)
         if b.space_type:
             return True
@@ -67,7 +72,8 @@ class WorldChunk:
         tex = Texture3D(name="chunk")
         tex.create()
         tex.bind()
-        tex.upload(values, self.num_x, self.num_y, self.num_z, GL_LUMINANCE, GL_UNSIGNED_BYTE)
+        tex.upload(values, self.num_x, self.num_y, self.num_z, GL_LUMINANCE, GL_FLOAT)
+        print("chunktex:", tex)
         return tex
 
     def create_mesh(self):

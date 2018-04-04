@@ -15,6 +15,7 @@ uniform sampler3D u_chunktex;
 
 uniform float u_time;
 uniform vec3 u_lightpos;
+uniform vec3 u_chunksize;
 
 in vec4 v_pos;
 in vec3 v_normal;
@@ -22,16 +23,44 @@ in vec2 v_texcoord;
 
 out vec4 fragColor;
 
-vec3 poscol(in vec4 p) {
-    float z = p.z*4.;
-    return vec3(1.-z, .3+z, 0.);
+float voxel_at(in vec3 pos) {
+    //if (any(lessThan(pos, vec3(1))) || any(greaterThanEqual(pos, u_chunksize)))
+    //    return 0.;
+    return texelFetch(u_chunktex, ivec3(pos), 0).x;
 }
+
+// Inigo Quilez, Reinder Nijhoff, https://www.shadertoy.com/view/4ds3WS
+float voxel_shadow_ray(in vec3 ro, in vec3 rd) {
+
+    vec3 pos = floor(ro);
+    vec3 ri = 1.0/rd;
+    vec3 rs = sign(rd);
+    vec3 dis = (pos-ro + 0.5 + rs*0.5) * ri;
+
+    float res = 1.0;
+
+    for(int i=0; i<18; i++) 
+    {
+        if (any(lessThan(pos, vec3(0))) || any(greaterThan(pos, u_chunksize))) { break; }
+        if (voxel_at(pos) > 0.) { res = 0.0; break; }
+        vec3 mm = step(dis.xyz, dis.yxy) * step(dis.xyz, dis.zzx);
+        dis += mm * rs * ri;
+        pos += mm * rs;
+    }
+
+    return res;
+}
+
 
 vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal) {
     vec3 lightnorm = normalize(lightpos - pos);
     float d = max(0., dot(normal, lightnorm));
+    if (d > 0.)
+    {
+        d *= voxel_shadow_ray(pos+0.01*normal, lightnorm);
+    }
     
-    return clamp(vec3(d,d,pow(d,1.3)), .4, 1.);
+    return clamp(vec3(d,d,pow(d,1.3)), .2, 1.);
 }
 
 void main() {
@@ -43,8 +72,9 @@ void main() {
     col = mix(col, tex.rgb, 1.);  
     col *= lighting(u_lightpos, v_pos.xyz, v_normal);
     
+    //col = mix(col, vec3(voxel_at(v_pos.xyz-v_normal*.01)), .8);
     //col = mix(col, texture2D(u_tex2, v_texcoord).xyz, .5);
-    //col = mix(col, texture3D(u_chunktex, v_pos.xyz).xyz, .9);
+    //col += texture(u_chunktex, v_pos.xyz*2.1).xyz;
     
     //col += sin(u_time+v_pos.x);
     //col = mix(col, vec3(v_texcoord, 0.), .9);
@@ -53,13 +83,29 @@ void main() {
 }
 """
 
+HEIGHTMAP2 = [
+    [0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+]
+
 HEIGHTMAP = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 1, 1, 0, 1, 0, 0],
-    [0, 0, 1, 2, 2, 2, 2, 4, 1, 0],
-    [0, 0, 1, 2, 1, 1, 0, 1, 0, 0],
+    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [3, 0, 5, 0, 0, 0, 0, 0, 0, 0],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [3, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    [2, 0, 0, 1, 1, 1, 0, 1, 0, 0],
+    [3, 0, 1, 2, 2, 2, 2, 4, 1, 0],
+    [2, 0, 1, 2, 1, 1, 0, 1, 0, 0],
     [0, 0, 1, 2, 1, 0, 0, 0, 0, 0],
     [0, 0, 1, 2, 1, 0, 0, 0, 0, 0],
     [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
@@ -155,8 +201,8 @@ class ChunkWindow(pyglet.window.Window):
 
         lightpos = (
            math.sin(ti/2.)*self.chunk.num_x/2.,
-           math.sin(ti/3.)*self.chunk.num_y/2.,
-           self.chunk.num_z
+           (math.sin(ti/3.)+.6)*self.chunk.num_y/2.,
+           self.chunk.num_z+1
         )
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_time", ti)
@@ -164,6 +210,7 @@ class ChunkWindow(pyglet.window.Window):
         self.drawable.shader.set_uniform("u_tex1", 0)
         self.drawable.shader.set_uniform("u_tex2", 1)
         self.drawable.shader.set_uniform("u_chunktex", 2)
+        self.drawable.shader.set_uniform("u_chunksize", self.chunk.size())
 
         self.texture.set_active_texture(0)
         self.texture.bind()
@@ -171,8 +218,9 @@ class ChunkWindow(pyglet.window.Window):
         self.texture2.bind()
         self.texture.set_active_texture(2)
         self.chunktex.bind()
-        self.drawable.draw()
         self.texture.set_active_texture(0)
+
+        self.drawable.draw()
 
         if self.fbo:
             self.fbo.unbind()

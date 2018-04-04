@@ -6,6 +6,7 @@ from lib.opengl import Texture3D
 class WorldBlock:
     def __init__(self):
         self.space_type = 0
+        self.texture = 0
 
     def __repr__(self):
         return "(%s)" % self.space_type
@@ -43,7 +44,11 @@ class WorldChunk:
                     block = WorldBlock()
                     h = heightmap[y][x]
                     block.space_type = 1 if h >= z else 0
-                    block.texture = random.randrange(self.tileset.num_tiles)
+                    if block.space_type:
+                        if h == 0:
+                            block.texture = 0
+                        else:
+                            block.texture = random.randrange(self.tileset.num_tiles)
                     row.append(block)
                 plane.append(row)
             self.blocks.append(plane)
@@ -98,7 +103,7 @@ class WorldChunk:
                             mesh.add_quad((x, y, z), (x1, y, z), (x1, y, z1), (x, y, z1), *uvquad)
                         # back
                         if not self.is_wall(x, y+1, z, self.FRONT):
-                            mesh.add_quad((x, y1, z), (x1, y1, z), (x1, y1, z1), (x, y1, z1), *uvquad)
+                            mesh.add_quad((x, y1, z), (x, y1, z1), (x1, y1, z1), (x1, y1, z), *uvquad)
                         # left
                         if not self.is_wall(x-1, y, z, self.RIGHT):
                             mesh.add_quad((x, y1, z), (x, y, z), (x, y, z1), (x, y1, z1), *uvquad)

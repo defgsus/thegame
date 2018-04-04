@@ -24,9 +24,9 @@ in vec2 v_texcoord;
 out vec4 fragColor;
 
 float voxel_at(in vec3 pos) {
-    //if (any(lessThan(pos, vec3(1))) || any(greaterThanEqual(pos, u_chunksize)))
-    //    return 0.;
-    return texelFetch(u_chunktex, ivec3(pos), 0).x;
+    if (any(lessThan(pos, vec3(1))) || any(greaterThanEqual(pos, u_chunksize)))
+        return 0.;
+    return texelFetch(u_chunktex, ivec3(pos+.5), 0).x;
 }
 
 // Inigo Quilez, Reinder Nijhoff, https://www.shadertoy.com/view/4ds3WS
@@ -39,10 +39,10 @@ float voxel_shadow_ray(in vec3 ro, in vec3 rd) {
 
     float res = 1.0;
 
-    for(int i=0; i<18; i++) 
+    for(int i=0; i<15; i++) 
     {
-        if (any(lessThan(pos, vec3(0))) || any(greaterThan(pos, u_chunksize))) { break; }
-        if (voxel_at(pos) > 0.) { res = 0.0; break; }
+        if (any(lessThan(pos, vec3(0))) || any(greaterThanEqual(pos, u_chunksize))) { break; }
+        if (voxel_at(pos) > 0.) { res *= 0.0; break; }
         vec3 mm = step(dis.xyz, dis.yxy) * step(dis.xyz, dis.zzx);
         dis += mm * rs * ri;
         pos += mm * rs;
@@ -72,6 +72,7 @@ void main() {
     col = mix(col, tex.rgb, 1.);  
     col *= lighting(u_lightpos, v_pos.xyz, v_normal);
     
+    //col.x += v_pos.y/10.;
     //col = mix(col, vec3(voxel_at(v_pos.xyz-v_normal*.01)), .8);
     //col = mix(col, texture2D(u_tex2, v_texcoord).xyz, .5);
     //col += texture(u_chunktex, v_pos.xyz*2.1).xyz;
@@ -161,12 +162,13 @@ class ChunkWindow(pyglet.window.Window):
         if self.projection in "io":
             proj = glm.ortho(-sc,sc, sc,-sc, -sc*2, sc*2)
         else:
-            proj = glm.perspective(30., self.width / self.height, 0.01, 10.)
+            proj = glm.perspective(30., self.width / self.height, 0.01, 20.)
             proj = glm.translate(proj, (0,0,-1))
         proj = glm.rotate(proj, self.rotate_x, (1,0,0))
         proj = glm.rotate(proj, self.rotate_y, (0,1,0))
         proj = glm.rotate(proj, self.rotate_z, (0,0,1))
-        proj = glm.translate(proj, (-self.chunk.num_x/2, -self.chunk.num_y/2, 0))
+        proj = glm.translate(proj, (-self.chunk.num_x/2, -self.chunk.num_y/2,
+                                    [0,-2,-4]["oip".index(self.projection)]))
         #print(proj)
 
         if self.chunktex is None:
@@ -201,7 +203,7 @@ class ChunkWindow(pyglet.window.Window):
 
         lightpos = (
            math.sin(ti/2.)*self.chunk.num_x/2.,
-           (math.sin(ti/3.)+.6)*self.chunk.num_y/2.,
+           (math.sin(ti/3.)+2.)*self.chunk.num_y/2.,
            self.chunk.num_z+1
         )
         self.drawable.shader.set_uniform("u_projection", proj)

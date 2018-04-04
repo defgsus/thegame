@@ -49,8 +49,8 @@ class Texture2D(OpenGlBaseObject):
         self.set_parameter(GL_TEXTURE_WRAP_S, GL_REPEAT)
         self.set_parameter(GL_TEXTURE_WRAP_T, GL_REPEAT)
 
-    def upload_image(self, image_or_file, mipmap_level=0, gpu_format=GL_RGBA):
-        image = pyglet.image.load(image_or_file)
+    def upload_image(self, filename, mipmap_level=0, gpu_format=GL_RGBA):
+        image = pyglet.image.load(filename)
         if image.format == "RGB":
             input_format = GL_RGB
         elif image.format == "RGBA":
@@ -79,7 +79,7 @@ class Texture2D(OpenGlBaseObject):
         input_format = [GL_LUMINANCE, GL_RG, GL_RGB, GL_RGBA][num_chan-1]
 
         values = image.tobytes("raw")
-        values = [v for v in values]
-        print(values)
+        #values = [v for v in values]
+        #print(values)
         self.upload(values, image.width, image.height, input_format=input_format, input_type=GL_UNSIGNED_BYTE,
                     mipmap_level=mipmap_level, gpu_format=gpu_format)

@@ -6,6 +6,9 @@ from lib.opengl.VertexArrayObject import *
 from lib.opengl.Shader import *
 from lib.opengl.Drawable import Drawable
 from lib.opengl.Texture2D import Texture2D
+from lib.opengl.Framebuffer2D import Framebuffer2D
+from lib.opengl.ScreenQuad import ScreenQuad
+
 from lib.geom.TriangleMesh import TriangleHashMesh, TriangleMesh
 
 frag_src = """#version 130
@@ -36,10 +39,12 @@ void main() {
     float g = smoothstep(.02, .0, .49-abs(grid.x-.5));
     g = max(g, smoothstep(.02, .0, .49-abs(grid.y-.5)));
     col += 1.-g;
+    
     col = mix(col, poscol(v_pos), .4);
     col = mix(col, v_normal*.5+.5, .5);
-    col = mix(col, tex.rgb, .5);  
+    col = mix(col, tex.rgb, 1.);  
     col *= clamp(lightdot, .4, 1.);
+    
     //col += sin(u_time+v_pos.x);
     //col = mix(col, vec3(v_texcoord, 0.), .9);
     //col = vec3(lightdot);  
@@ -76,6 +81,8 @@ class OrthoWindow(pyglet.window.Window):
         self.drawable = self.mesh.get_drawable()
         self.drawable.shader.set_fragment_source(frag_src)
         self.texture = Texture2D()
+        self.fbo = Framebuffer2D(self.width, self.height, with_depth_tex=True)
+        self.quad = ScreenQuad()
 
         self.projection = "i"
         self._init_rotation()
@@ -107,13 +114,25 @@ class OrthoWindow(pyglet.window.Window):
             self.texture.create()
             self.texture.bind()
             #self.texture.upload_image("./assets/STEEL.BMP")
-            #self.texture.upload_image("./assets/bluenoise.png")
+            self.texture.upload_image("./assets/bluenoise.png")
             import random
-            self.texture.upload([random.randrange(256) for x in range(16*16*3)], 16, input_type=GL_BYTE)
+            #self.texture.upload([random.randrange(256) for x in range(16*16*3)], 16, input_type=GL_BYTE)
 
+        if not self.fbo.is_created():
+            self.fbo.create()
+
+        self.fbo.bind()
+        self.fbo.clear()
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_time", time.time() - self.start_time)
+        self.texture.bind()
         self.drawable.draw()
+        self.fbo.unbind()
+
+        self.fbo.color_texture(0).bind()
+        #self.fbo.depth_texture().bind()
+        self.quad.draw(self.width, self.height)
+
         #OpenGlBaseObject.dump_instances()
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):

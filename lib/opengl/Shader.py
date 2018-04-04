@@ -59,16 +59,23 @@ class Shader(OpenGlBaseObject):
 
     def update_uniforms(self):
         for name in self._uniform_values:
-            value = self._uniform_values[name]
-            u = self.uniform(name)
-            if u.type == GL_FLOAT:
-                glUniform1f(u.location, value)
-            elif u.type == GL_FLOAT_MAT4:
-                value = sum((list(i) for i in value), [])
-                v = (GLfloat * len(value))(*value)
-                glUniformMatrix4fv(u.location, 1, GL_FALSE, v)
-            else:
-                raise ValueError("Unsupported type enum %s for uniform %s" % (u.type, u.name))
+            if name in self._uniforms:
+                value = self._uniform_values[name]
+                u = self.uniform(name)
+                if u.type == GL_FLOAT:
+                    glUniform1f(u.location, value)
+                elif u.type == GL_FLOAT_VEC2:
+                    glUniform2f(u.location, value[0], value[1])
+                elif u.type == GL_FLOAT_VEC3:
+                    glUniform3f(u.location, value[0], value[1], value[2])
+                elif u.type == GL_FLOAT_VEC4:
+                    glUniform4f(u.location, value[0], value[1], value[2], value[3])
+                elif u.type == GL_FLOAT_MAT4:
+                    value = sum((list(i) for i in value), [])
+                    v = (GLfloat * len(value))(*value)
+                    glUniformMatrix4fv(u.location, 1, GL_FALSE, v)
+                else:
+                    raise ValueError("Unsupported type enum %s for uniform %s" % (u.type, u.name))
         self._uniform_values.clear()
 
     def _create(self):

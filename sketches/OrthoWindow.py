@@ -1,15 +1,21 @@
+import time
 import pyglet
 import glm
 from pyglet.gl import *
 from lib.opengl.VertexArrayObject import *
 from lib.opengl.Shader import *
 from lib.opengl.Drawable import Drawable
+from lib.opengl.Texture2D import Texture2D
 from lib.geom.TriangleMesh import TriangleHashMesh, TriangleMesh
 
 frag_src = """#version 130
+#line 11
+uniform sampler2D u_tex1;
+uniform float u_time;
 
 in vec4 v_pos;
 in vec3 v_normal;
+in vec2 v_texcoord;
 
 out vec4 fragColor;
 
@@ -19,13 +25,24 @@ vec3 poscol(in vec4 p) {
 }
 
 void main() {
+    vec4 tex = texture2D(u_tex1, v_texcoord);
+    
+    vec3 lightpos = vec3(sin(u_time/3.)*.3, sin(u_time/5.)*.5, .3);
+    vec3 lightnorm = normalize(lightpos - v_pos.xyz);
+    float lightdot = max(0., dot(v_normal, lightnorm));
+    
     vec2 grid = mod(v_pos.xy*10., 1.);
     vec3 col = vec3(0);
     float g = smoothstep(.02, .0, .49-abs(grid.x-.5));
     g = max(g, smoothstep(.02, .0, .49-abs(grid.y-.5)));
     col += 1.-g;
     col = mix(col, poscol(v_pos), .4);
-    col = mix(col, v_normal*.5+.5, .5); 
+    col = mix(col, v_normal*.5+.5, .5);
+    col = mix(col, tex.rgb, .5);  
+    col *= clamp(lightdot, .4, 1.);
+    //col += sin(u_time+v_pos.x);
+    //col = mix(col, vec3(v_texcoord, 0.), .9);
+    //col = vec3(lightdot);  
     fragColor = vec4(col, 1);
 }
 """
@@ -43,10 +60,12 @@ HEIGHTMAP = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
+
 class OrthoWindow(pyglet.window.Window):
 
     def __init__(self, *args, **kwargs):
-        super(OrthoWindow, self).__init__(*args, **kwargs)
+        super(OrthoWindow, self).__init__(*args, vsync=True, **kwargs)
+
         self.mesh = TriangleMesh()
         #self.mesh = TriangleHashMesh()
         import random
@@ -56,9 +75,18 @@ class OrthoWindow(pyglet.window.Window):
         self.mesh.create_height_map(10,10, heightmap, 1./10)
         self.drawable = self.mesh.get_drawable()
         self.drawable.shader.set_fragment_source(frag_src)
+        self.texture = Texture2D()
 
         self.projection = "i"
         self._init_rotation()
+
+        self.start_time = time.time()
+
+        pyglet.clock.schedule_interval(self.update, 1.0 / 20.0)
+        pyglet.clock.set_fps_limit(20)
+
+    def update(self, dt):
+        pass
 
     def on_draw(self):
         glDisable(GL_CULL_FACE)
@@ -75,7 +103,16 @@ class OrthoWindow(pyglet.window.Window):
         proj = glm.rotate(proj, self.rotate_z, (0,0,1))
         #print(proj)
 
+        if not self.texture.is_created():
+            self.texture.create()
+            self.texture.bind()
+            #self.texture.upload_image("./assets/STEEL.BMP")
+            #self.texture.upload_image("./assets/bluenoise.png")
+            import random
+            self.texture.upload([random.randrange(256) for x in range(16*16*3)], 16, input_type=GL_BYTE)
+
         self.drawable.shader.set_uniform("u_projection", proj)
+        self.drawable.shader.set_uniform("u_time", time.time() - self.start_time)
         self.drawable.draw()
         #OpenGlBaseObject.dump_instances()
 

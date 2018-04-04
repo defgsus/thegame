@@ -61,10 +61,14 @@ class Shader(OpenGlBaseObject):
         for name in self._uniform_values:
             value = self._uniform_values[name]
             u = self.uniform(name)
-
-            value = sum((list(i) for i in value), [])
-            v = (GLfloat * len(value))(*value)
-            glUniformMatrix4fv(u.location, 1, GL_FALSE, v)
+            if u.type == GL_FLOAT:
+                glUniform1f(u.location, value)
+            elif u.type == GL_FLOAT_MAT4:
+                value = sum((list(i) for i in value), [])
+                v = (GLfloat * len(value))(*value)
+                glUniformMatrix4fv(u.location, 1, GL_FALSE, v)
+            else:
+                raise ValueError("Unsupported type enum %s for uniform %s" % (u.type, u.name))
         self._uniform_values.clear()
 
     def _create(self):
@@ -137,8 +141,9 @@ class Shader(OpenGlBaseObject):
             uniform_type = GLenum(0)
             glGetActiveUniform(self._handle, i, max_name_length, ctypes.byref(name_length),
                                ctypes.byref(uniform_size), ctypes.byref(uniform_type), namebuf)
+            print(namebuf.value, uniform_type.value)
             location = glGetUniformLocation(self._handle, namebuf)
-            uniform = ShaderUniform(namebuf.value.decode("utf-8"), uniform_size.value, uniform_type.value, location)
+            uniform = ShaderUniform(namebuf.value.decode("utf-8"), uniform_type.value, uniform_size.value, location)
             self._uniforms[uniform.name] = uniform
 
     def _get_attributes(self):
@@ -157,7 +162,7 @@ class Shader(OpenGlBaseObject):
             glGetActiveAttrib(self._handle, i, max_name_length, ctypes.byref(name_length),
                                ctypes.byref(uniform_size), ctypes.byref(uniform_type), namebuf)
             location = glGetAttribLocation(self._handle, namebuf)
-            attribute = ShaderUniform(namebuf.value.decode("utf-8"), uniform_size.value, uniform_type.value, location)
+            attribute = ShaderUniform(namebuf.value.decode("utf-8"), uniform_type.value, uniform_size.value, location)
             self._attributes[attribute.name] = attribute
 
     def dump_variables(self, do_print=True):

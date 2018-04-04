@@ -19,6 +19,9 @@ class AbstractTriangleMesh:
     def vertices_array(self):
         raise NotImplementedError
 
+    def texcoords_array(self):
+        raise NotImplementedError
+
     def triangles_array(self):
         raise NotImplementedError
 
@@ -31,14 +34,25 @@ class AbstractTriangleMesh:
     def normals_array(self):
         raise NotImplementedError
 
-    def add_triangle(self, pos1, pos2, pos3):
-        return self.add_triangle_idx(
-            self.add_vertex(pos1),
-            self.add_vertex(pos2),
-            self.add_vertex(pos3),
-        )
+    def add_triangle(self, pos1, pos2, pos3,
+                     tex1=(0,0), tex2=(1,0), tex3=(1,1)):
+        i1 = self.add_vertex(pos1)
+        i2 = self.add_vertex(pos2)
+        i3 = self.add_vertex(pos3)
+        self.add_texcoord(tex1)
+        self.add_texcoord(tex2)
+        self.add_texcoord(tex3)
+        return self.add_triangle_idx(i1, i2, i3)
 
-    def add_quad(self, pos1, pos2, pos3, pos4):
+    def add_quad(self, pos1, pos2, pos3, pos4,
+                       tex1=(0,0), tex2=(1,0), tex3=(1,1), tex4=(0,1)):
+        self.add_triangle(pos1, pos2, pos3, tex1, tex2, tex3)
+        return self.add_triangle(pos1, pos3, pos4, tex1, tex3, tex4)
+        # TODO
+        self.add_texcoord(tex1)
+        self.add_texcoord(tex2)
+        self.add_texcoord(tex3)
+        self.add_texcoord(tex4)
         return self.add_quad_idx(
             self.add_vertex(pos1),
             self.add_vertex(pos2),
@@ -66,6 +80,10 @@ class AbstractTriangleMesh:
         a = self.normals_array()
         if a:
             draw.set_attribute(draw.A_NORMAL, 3, a)
+
+        a = self.texcoords_array()
+        if a:
+            draw.set_attribute(draw.A_TEXCOORD, 2, a)
 
         a = self.triangles_array()
         if a:
@@ -149,6 +167,7 @@ class TriangleMesh(AbstractTriangleMesh):
     """Merges nearby vertex positions"""
     def __init__(self):
         self._vertices = []
+        self._texcoords = []
         self._triangles = []
         self._lines = []
         self._quads = []
@@ -157,6 +176,10 @@ class TriangleMesh(AbstractTriangleMesh):
         self._vertices.append(pos)
         return len(self._vertices)-1
 
+    def add_texcoord(self, uv):
+        self._texcoords.append(uv)
+        return len(self._texcoords)-1
+
     def add_triangle_idx(self, i1, i2, i3):
         if i1 == i2 or i1 == i3 or i2 == i3:
             return None
@@ -164,9 +187,11 @@ class TriangleMesh(AbstractTriangleMesh):
         return len(self._triangles)-1
 
     def add_quad_idx(self, i1, i2, i3, i4):
-        # TODO
         self.add_triangle_idx(i1, i2, i3)
         return self.add_triangle_idx(i1, i3, i4)
+        # TODO
+        #self._quads.append((i1, i2, i3, i4))
+        #return len(self._quads)-1
 
     def add_line_idx(self, i1, i2):
         self._lines.append((i1, i2))
@@ -174,6 +199,9 @@ class TriangleMesh(AbstractTriangleMesh):
 
     def vertices_array(self):
         return vecs_to_list(self._vertices)
+
+    def texcoords_array(self):
+        return vecs_to_list(self._texcoords)
 
     def triangles_array(self):
         return vecs_to_list(self._triangles)

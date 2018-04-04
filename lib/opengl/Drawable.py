@@ -10,14 +10,17 @@ uniform mat4 u_projection;
 
 in vec4 a_position;
 in vec3 a_normal;
+in vec2 a_texcoord;
 
 out vec4 v_pos;
 out vec3 v_normal;
+out vec2 v_texcoord;
 
 void main()
 {
     v_pos = a_position;
     v_normal = a_normal;
+    v_texcoord = a_texcoord;
     gl_Position = u_projection * a_position;
 }
 """
@@ -29,6 +32,7 @@ uniform vec2 u_mouse_uv;
 
 in vec4 v_pos;
 in vec3 v_normal;
+in vec2 v_texcoord;
 
 out vec4 fragColor;
 
@@ -44,6 +48,7 @@ class Drawable:
 
     A_POSITION = "a_position"
     A_NORMAL = "a_normal"
+    A_TEXCOORD = "a_texcoord"
     A_COLOR = "a_color"
 
     def __init__(self):

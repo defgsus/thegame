@@ -1,18 +1,6 @@
 from pyglet.gl import *
 from .error import OpenGlError
-
-
-OPENGL_TYPE_ENUM_MAPPING = {
-    GLfloat: GL_FLOAT,
-    GLint: GL_INT,
-    GLuint: GL_UNSIGNED_INT,
-}
-
-
-def get_opengl_type_enum(typ):
-    if typ in OPENGL_TYPE_ENUM_MAPPING:
-        return OPENGL_TYPE_ENUM_MAPPING[typ]
-    return typ
+from .types import *
 
 
 class OpenGlObjects:

@@ -81,7 +81,7 @@ class OrthoWindow(pyglet.window.Window):
         self.drawable = self.mesh.get_drawable()
         self.drawable.shader.set_fragment_source(frag_src)
         self.texture = Texture2D()
-        self.fbo = Framebuffer2D(self.width, self.height, with_depth_tex=True)
+        self.fbo = Framebuffer2D(self.width, self.height)
         self.quad = ScreenQuad()
 
         self.projection = "i"
@@ -114,24 +114,32 @@ class OrthoWindow(pyglet.window.Window):
             self.texture.create()
             self.texture.bind()
             #self.texture.upload_image("./assets/STEEL.BMP")
-            self.texture.upload_image("./assets/bluenoise.png")
+            #self.texture.upload_image("./assets/bluenoise.png")
+            self.texture.upload_image("./assets/blueplate.png")
             import random
             #self.texture.upload([random.randrange(256) for x in range(16*16*3)], 16, input_type=GL_BYTE)
 
-        if not self.fbo.is_created():
-            self.fbo.create()
+        if self.fbo:
+            if self.fbo.is_created():
+                if self.fbo.width != self.width or self.fbo.height != self.height:
+                    self.fbo.release()
+                    self.fbo = Framebuffer2D(self.width, self.height)
 
-        self.fbo.bind()
-        self.fbo.clear()
+            if not self.fbo.is_created():
+                self.fbo.create()
+
+            self.fbo.bind()
+            self.fbo.clear()
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_time", time.time() - self.start_time)
         self.texture.bind()
         self.drawable.draw()
-        self.fbo.unbind()
+        if self.fbo:
+            self.fbo.unbind()
 
-        self.fbo.color_texture(0).bind()
-        #self.fbo.depth_texture().bind()
-        self.quad.draw(self.width, self.height)
+            self.fbo.color_texture(0).bind()
+            #self.fbo.depth_texture().bind()
+            self.quad.draw(self.width, self.height)
 
         #OpenGlBaseObject.dump_instances()
 

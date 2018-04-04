@@ -40,7 +40,8 @@ class Framebuffer2D(OpenGlBaseObject):
             h = (GLuint * 1)(self._rbo)
             glDeleteRenderbuffers(1, h)
             self._rbo = -1
-        glDeleteFramebuffers(1, self._handle)
+        h = (GLuint *1)(self._handle)
+        glDeleteFramebuffers(1, h)
 
     def _bind(self):
         glBindFramebuffer(GL_FRAMEBUFFER, self._handle)

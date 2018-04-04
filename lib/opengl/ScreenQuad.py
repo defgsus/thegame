@@ -25,19 +25,32 @@ class ScreenQuad:
 
     FRAGMENT_SRC = """
     #version 130
+    #line 28
     uniform sampler2D u_tex1;
     uniform vec4 u_resolution;
     
     in vec4 v_pos;
     in vec2 v_texcoord;
     
-    out vec4 fragColor;
+    out vec4 o_color;
+    
+    void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+        const int NUMX = 2;
+        const int NUMY = 3;
+        vec2 fac = vec2(NUMX, NUMY);
+        vec2 texcoord = floor(fragCoord/fac) * fac;
+        fragColor = vec4(0);
+        for (int y=0; y<NUMY; ++y)
+        for (int x=0; x<NUMX; ++x)
+        {
+            fragColor += texture(u_tex1, (texcoord + vec2(x, y) / fac) / u_resolution.xy);
+        }
+        fragColor /= float(NUMX*NUMY);
+    }
     
     void main() {
-        vec2 fac = u_resolution.xy/4.;
-        vec2 texcoord = floor(v_texcoord*fac) / fac;
-        fragColor = texture(u_tex1, texcoord);
-        //fragColor += 0.01 * u_resolution;
+        vec2 scr = (v_pos.xy*.5+.5) * u_resolution.xy;
+        mainImage(o_color, scr);
     }
     """
 

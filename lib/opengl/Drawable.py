@@ -1,6 +1,6 @@
-from .base import *
-from .Shader import Shader
-from .VertexArrayObject import VertexArrayObject
+from .core.base import *
+from .core.Shader import Shader
+from .core.VertexArrayObject import VertexArrayObject
 
 
 

@@ -1,32 +1,10 @@
-import ctypes
-from .base import *
-pyglet.options['debug_texture'] = True
+from .TextureBase import *
 
-class Texture2D(OpenGlBaseObject):
+
+class Texture2D(TextureBase):
 
     def __init__(self, name=None):
-        super(Texture2D, self).__init__(name=name)
-        self.target = GL_TEXTURE_2D
-        self.width = 0
-        self.height = 0
-        self.gpu_format = 0
-
-    def _create(self):
-        h = GLuint(0)
-        glGenTextures(1, ctypes.byref(h))
-        self._handle = h.value
-
-    def _release(self):
-        glDeleteTextures(0, self._handle)
-
-    def _bind(self):
-        glBindTexture(self.target, self._handle)
-
-    def _unbind(self):
-        glBindTexture(self.target, 0)
-
-    def set_parameter(self, enum, value):
-        glTexParameteri(self.target, enum, value)
+        super(Texture2D, self).__init__(GL_TEXTURE_2D, name=name)
 
     def upload(self, values, width, height, input_format=GL_RGB, input_type=GL_FLOAT, gpu_format=GL_RGBA, mipmap_level=0):
         """Upload linear data in `values`. height == len(values) / width / typesize(input_format).

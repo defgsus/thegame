@@ -1,9 +1,5 @@
-import pyglet
-import glm
-from lib.opengl.VertexArrayObject import *
-from lib.opengl.Shader import *
+from lib.opengl.core.Shader import *
 from lib.opengl.Drawable import Drawable
-from lib.geom.TriangleMesh import TriangleMesh
 
 
 class TestWindow(pyglet.window.Window):

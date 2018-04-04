@@ -1,4 +1,6 @@
-from lib.geom.TriangleMesh import TriangleMesh
+from pyglet.gl import *
+from lib.geom import TriangleMesh
+from lib.opengl import Texture3D
 
 
 class WorldBlock:
@@ -55,6 +57,18 @@ class WorldChunk:
         if b.space_type:
             return True
         return False
+
+    def create_texture3d(self):
+        values = []
+        for plane in self.blocks:
+            for row in plane:
+                for b in row:
+                    values.append(b.space_type)
+        tex = Texture3D(name="chunk")
+        tex.create()
+        tex.bind()
+        tex.upload(values, self.num_x, self.num_y, self.num_z, GL_LUMINANCE, GL_UNSIGNED_BYTE)
+        return tex
 
     def create_mesh(self):
         mesh = TriangleMesh()

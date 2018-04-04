@@ -3,21 +3,16 @@ import pyglet
 import glm
 import math
 from pyglet.gl import *
-from lib.opengl.VertexArrayObject import *
-from lib.opengl.Shader import *
-from lib.opengl.Drawable import Drawable
-from lib.opengl.Texture2D import Texture2D
-from lib.opengl.Framebuffer2D import Framebuffer2D
-from lib.opengl.ScreenQuad import ScreenQuad
+from lib.opengl import *
 
-from lib.world.WorldChunk import WorldChunk
-from lib.world.Tileset import Tileset
-
-from lib.geom.TriangleMesh import TriangleHashMesh, TriangleMesh
+from lib.world import *
 
 frag_src = """#version 130
 #line 11
 uniform sampler2D u_tex1;
+uniform sampler2D u_tex2;
+uniform sampler3D u_chunktex;
+
 uniform float u_time;
 uniform vec3 u_lightpos;
 
@@ -32,17 +27,24 @@ vec3 poscol(in vec4 p) {
     return vec3(1.-z, .3+z, 0.);
 }
 
+vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal) {
+    vec3 lightnorm = normalize(lightpos - pos);
+    float d = max(0., dot(normal, lightnorm));
+    
+    return clamp(vec3(d,d,pow(d,1.3)), .4, 1.);
+}
+
 void main() {
     vec4 tex = texture2D(u_tex1, v_texcoord);
-    
-    vec3 lightnorm = normalize(u_lightpos - v_pos.xyz);
-    float lightdot = max(0., dot(v_normal, lightnorm));
-    
+        
     vec3 col = vec3(0);
     //col = mix(col, poscol(v_pos), .4);
     //col = mix(col, v_normal*.5+.5, .5);
     col = mix(col, tex.rgb, 1.);  
-    col *= clamp(lightdot, .4, 1.);
+    col *= lighting(u_lightpos, v_pos.xyz, v_normal);
+    
+    //col = mix(col, texture2D(u_tex2, v_texcoord).xyz, .5);
+    //col = mix(col, texture3D(u_chunktex, v_pos.xyz).xyz, .9);
     
     //col += sin(u_time+v_pos.x);
     //col = mix(col, vec3(v_texcoord, 0.), .9);
@@ -77,10 +79,14 @@ class ChunkWindow(pyglet.window.Window):
         self.chunk = WorldChunk(self.tileset)
         self.chunk.from_heightmap(HEIGHTMAP)
 
+        self.chunktex = None
+
         self.texture = Texture2D()
         self.mesh = self.chunk.create_mesh()
         self.drawable = self.mesh.get_drawable()
         self.drawable.shader.set_fragment_source(frag_src)
+
+        self.texture2 = Texture2D()
 
         if 1:
             self.fbo = Framebuffer2D(self.width, self.height)
@@ -117,15 +123,21 @@ class ChunkWindow(pyglet.window.Window):
         proj = glm.translate(proj, (-self.chunk.num_x/2, -self.chunk.num_y/2, 0))
         #print(proj)
 
+        if self.chunktex is None:
+            self.chunktex = self.chunk.create_texture3d()
+
         if not self.texture.is_created():
             self.texture.create()
             self.texture.bind()
-            #self.texture.upload_image("./assets/STEEL.BMP")
             #self.texture.upload_image("./assets/bluenoise.png")
             #self.texture.upload_image("./assets/blueplate.png")
             self.texture.upload_image_PIL(self.tileset.image)
-            import random
             #self.texture.upload([random.randrange(256) for x in range(16*16*3)], 16, input_type=GL_BYTE)
+
+        if not self.texture2.is_created():
+            self.texture2.create()
+            self.texture2.bind()
+            self.texture2.upload_image("./assets/happystone.png")
 
         if self.fbo:
             if self.fbo.is_created():
@@ -149,9 +161,19 @@ class ChunkWindow(pyglet.window.Window):
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_time", ti)
         self.drawable.shader.set_uniform("u_lightpos", lightpos)
+        self.drawable.shader.set_uniform("u_tex1", 0)
+        self.drawable.shader.set_uniform("u_tex2", 1)
+        self.drawable.shader.set_uniform("u_chunktex", 2)
 
+        self.texture.set_active_texture(0)
         self.texture.bind()
+        self.texture.set_active_texture(1)
+        self.texture2.bind()
+        self.texture.set_active_texture(2)
+        self.chunktex.bind()
         self.drawable.draw()
+        self.texture.set_active_texture(0)
+
         if self.fbo:
             self.fbo.unbind()
 

@@ -2,14 +2,12 @@ import time
 import pyglet
 import glm
 from pyglet.gl import *
-from lib.opengl.VertexArrayObject import *
-from lib.opengl.Shader import *
-from lib.opengl.Drawable import Drawable
-from lib.opengl.Texture2D import Texture2D
-from lib.opengl.Framebuffer2D import Framebuffer2D
+from lib.opengl.core.Shader import *
+from lib.opengl.core.Texture2D import Texture2D
+from lib.opengl.core.Framebuffer2D import Framebuffer2D
 from lib.opengl.ScreenQuad import ScreenQuad
 
-from lib.geom.TriangleMesh import TriangleHashMesh, TriangleMesh
+from lib.geom.TriangleMesh import TriangleMesh
 
 frag_src = """#version 130
 #line 11
@@ -73,7 +71,6 @@ class OrthoWindow(pyglet.window.Window):
 
         self.mesh = TriangleMesh()
         #self.mesh = TriangleHashMesh()
-        import random
         def heightmap(x, y):
             return HEIGHTMAP[max(0,min(9,y))][max(0,min(9,x))] / 10
             #return random.randrange(max(1,random.randrange(3)))/10
@@ -116,7 +113,6 @@ class OrthoWindow(pyglet.window.Window):
             #self.texture.upload_image("./assets/STEEL.BMP")
             #self.texture.upload_image("./assets/bluenoise.png")
             self.texture.upload_image("./assets/blueplate.png")
-            import random
             #self.texture.upload([random.randrange(256) for x in range(16*16*3)], 16, input_type=GL_BYTE)
 
         if self.fbo:

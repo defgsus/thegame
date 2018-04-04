@@ -62,7 +62,9 @@ class Shader(OpenGlBaseObject):
             if name in self._uniforms:
                 value = self._uniform_values[name]
                 u = self.uniform(name)
-                if u.type == GL_FLOAT:
+                if u.type in (GL_INT, GL_SAMPLER_1D, GL_SAMPLER_2D, GL_SAMPLER_3D):
+                    glUniform1i(u.location, value)
+                elif u.type == GL_FLOAT:
                     glUniform1f(u.location, value)
                 elif u.type == GL_FLOAT_VEC2:
                     glUniform2f(u.location, value[0], value[1])

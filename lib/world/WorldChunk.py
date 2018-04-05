@@ -48,7 +48,7 @@ class WorldChunk:
                         if h == 0:
                             block.texture = 0
                         else:
-                            block.texture = random.randrange(self.tileset.num_tiles)
+                            block.texture = random.randrange(1, self.tileset.num_tiles)
                     row.append(block)
                 plane.append(row)
             self.blocks.append(plane)
@@ -68,16 +68,33 @@ class WorldChunk:
             return True
         return False
 
+    def density_at(self, x, y, z, radius=1):
+        dens = 0.
+        for z in range(z - radius, z + radius + 1):
+            for y in range(y - radius, y + radius + 1):
+                for x in range(x - radius, x + radius + 1):
+                    if self.block(x, y, z).space_type:
+                        dens += 1.
+        return dens / pow(1 + 2 * radius, 3)
+
     def create_texture3d(self):
         values = []
-        for plane in self.blocks:
-            for row in plane:
-                for b in row:
+        max_dens = 0.
+        for z, plane in enumerate(self.blocks):
+            for y, row in enumerate(plane):
+                for x, b in enumerate(row):
                     values.append(b.space_type)
+                    values.append(self.density_at(x, y, z))
+                    max_dens = max(max_dens, values[-1])
+                    values.append(0.)
+        if max_dens:
+            for i in range(1, len(values), 3):
+                values[i] /= max_dens
+
         tex = Texture3D(name="chunk")
         tex.create()
         tex.bind()
-        tex.upload(values, self.num_x, self.num_y, self.num_z, GL_LUMINANCE, GL_FLOAT)
+        tex.upload(values, self.num_x, self.num_y, self.num_z, GL_RGB, GL_FLOAT)
         print("chunktex:", tex)
         return tex
 

@@ -39,8 +39,8 @@ class ScreenQuad:
     out vec4 o_color;
     
     void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-        const int NUMX = 3;
-        const int NUMY = 3;
+        const int NUMX = 2;
+        const int NUMY = 2;
         vec2 fac = vec2(NUMX, NUMY);
         vec2 texcoord = floor(fragCoord/fac) * fac;
         fragColor = vec4(0);

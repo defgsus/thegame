@@ -29,6 +29,10 @@ float voxel_at(in vec3 pos) {
     return texelFetch(u_chunktex, ivec3(pos+.5), 0).x;
 }
 
+float voxel_density(in vec3 pos) {
+    return texture(u_chunktex, (pos+vec3(0,0,.5)) / u_chunksize).y;
+}
+
 // Inigo Quilez, Reinder Nijhoff, https://www.shadertoy.com/view/4ds3WS
 float voxel_shadow_ray(in vec3 ro, in vec3 rd) {
 
@@ -43,6 +47,9 @@ float voxel_shadow_ray(in vec3 ro, in vec3 rd) {
     {
         if (any(lessThan(pos, vec3(0))) || any(greaterThanEqual(pos, u_chunksize))) { break; }
         if (voxel_at(pos) > 0.) { res *= 0.0; break; }
+        
+        //res -= voxel_density(pos+vec3(0,0,1))*.1;
+        
         vec3 mm = step(dis.xyz, dis.yxy) * step(dis.xyz, dis.zzx);
         dis += mm * rs * ri;
         pos += mm * rs;
@@ -60,7 +67,7 @@ vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal) {
         d *= voxel_shadow_ray(pos+0.01*normal, lightnorm);
     }
     
-    return clamp(vec3(d,d,pow(d,1.3)), .2, 1.);
+    return clamp(vec3(d,d,pow(d,1.3)), .3, 1.);
 }
 
 void main() {
@@ -80,6 +87,9 @@ void main() {
     //col += sin(u_time+v_pos.x);
     //col = mix(col, vec3(v_texcoord, 0.), .9);
     //col = vec3(lightdot);  
+    
+    col *= vec3(1. - voxel_density(v_pos.xyz));
+    
     fragColor = vec4(col, 1);
 }
 """
@@ -97,7 +107,7 @@ HEIGHTMAP2 = [
     [0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
-HEIGHTMAP = [
+HEIGHTMAP1 = [
     [4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -113,17 +123,57 @@ HEIGHTMAP = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
+_ = 0
+HEIGHTMAP = [
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, _, _, _],
+    [_, _, 2, _, _, _, _, _, _, _, _, _, _, 2, _, _],
+    [_, _, 3, _, _, 1, 2, 3, 2, 1, _, _, _, 3, _, _],
+    [_, _, 2, _, _, 1, _, _, _, 1, _, _, _, 2, _, _],
+    [_, _, 3, _, _, 1, _, _, _, 1, _, _, _, 3, _, _],
+    [_, _, 2, _, _, _, _, _, _, _, _, _, _, 2, _, _],
+    [_, _, 7, 6, 7, _, _, _, _, _, _, 7, 6, 7, _, _],
+    [_, _, 6, 4, 6, _, _, _, _, _, _, 6, 5, 6, _, _],
+    [_, _, 7, 6, 7, 2, 3, _, _, 3, 2, 7, 6, 7, _, _],
+    [_, _, _, _, _, _, 1, _, _, 1, _, _, _, _, _, _],
+    [_, _, _, _, _, _, 1, _, _, 1, _, _, _, _, _, _],
+    [_, _, _, _, 4, 4, _, _, _, _, 4, 4, _, _, _, _],
+    [_, _, _, _, 4, 4, _, _, _, _, 4, 4, _, _, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+]
+
+
+def gen_heightmap(w=16, h=32):
+    import random
+    rows = []
+    for y in range(h):
+        row = []
+        for x in range(w):
+            h = 0
+            h += (math.sin(x/5.)+math.cos(y/7))*2.6
+            if random.randrange(4) == 0:
+                h = random.randrange(5)
+            row.append(max(0, int(h)))
+        rows.append(row)
+    return rows
+
 
 class ChunkWindow(pyglet.window.Window):
 
     def __init__(self, *args, **kwargs):
-        super(ChunkWindow, self).__init__(*args, vsync=True, **kwargs)
+        super(ChunkWindow, self).__init__(
+            *args,
+            #width=800, height=600,
+            vsync=True, **kwargs)
 
         self.tileset = Tileset(16, 16)
         self.tileset.load("./assets/tileset01.png")
         print(self.tileset)
 
         self.chunk = WorldChunk(self.tileset)
+        #self.chunk.from_heightmap(gen_heightmap())
         self.chunk.from_heightmap(HEIGHTMAP)
 
         self.chunktex = None
@@ -141,15 +191,26 @@ class ChunkWindow(pyglet.window.Window):
         else:
             self.fbo = None
 
-        self.projection = "i"
+        self.srotate_x = 0.
+        self.srotate_y = 0.
+        self.srotate_z = 0.
+        self.projection = "o"
         self._init_rotation()
+        self._calc_projection()
+        self.sprojection_matrix = self.projection_matrix
 
         self.start_time = time.time()
 
-        pyglet.clock.schedule_interval(self.update, 1.0 / 20.0)
-        pyglet.clock.set_fps_limit(20)
+        pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
+        pyglet.clock.set_fps_limit(60)
 
     def update(self, dt):
+        d = dt * 5.
+        self.srotate_x += d * (self.rotate_x-self.srotate_x)
+        self.srotate_y += d * (self.rotate_y-self.srotate_y)
+        self.srotate_z += d * (self.rotate_z-self.srotate_z)
+        d = dt * 3.
+        self.sprojection_matrix += d * (self.projection_matrix - self.sprojection_matrix)
         pass
 
     def on_draw(self):
@@ -157,19 +218,7 @@ class ChunkWindow(pyglet.window.Window):
         glEnable(GL_DEPTH_TEST)
         self.clear()
 
-        sc = self.chunk.num_x / 2
-
-        if self.projection in "io":
-            proj = glm.ortho(-sc,sc, sc,-sc, -sc*2, sc*2)
-        else:
-            proj = glm.perspective(30., self.width / self.height, 0.01, 20.)
-            proj = glm.translate(proj, (0,0,-1))
-        proj = glm.rotate(proj, self.rotate_x, (1,0,0))
-        proj = glm.rotate(proj, self.rotate_y, (0,1,0))
-        proj = glm.rotate(proj, self.rotate_z, (0,0,1))
-        proj = glm.translate(proj, (-self.chunk.num_x/2, -self.chunk.num_y/2,
-                                    [0,-2,-4]["oip".index(self.projection)]))
-        #print(proj)
+        self._calc_projection()
 
         if self.chunktex is None:
             self.chunktex = self.chunk.create_texture3d()
@@ -206,7 +255,7 @@ class ChunkWindow(pyglet.window.Window):
            (math.sin(ti/3.)+2.)*self.chunk.num_y/2.,
            self.chunk.num_z+1
         )
-        self.drawable.shader.set_uniform("u_projection", proj)
+        self.drawable.shader.set_uniform("u_projection", self.sprojection_matrix)
         self.drawable.shader.set_uniform("u_time", ti)
         self.drawable.shader.set_uniform("u_lightpos", lightpos)
         self.drawable.shader.set_uniform("u_tex1", 0)
@@ -250,6 +299,31 @@ class ChunkWindow(pyglet.window.Window):
         if text == "p":
             self.projection = "p"
             self._init_rotation()
+        if text == "f":
+            self.set_fullscreen(not self.fullscreen)
+
+    def _calc_projection(self):
+        sc = min(16, self.chunk.num_x) / 1.3
+        asp = self.width / self.height
+
+        if self.projection == "i":
+            ysc = sc/asp
+            proj = glm.ortho(sc,-sc, ysc,-ysc, -sc*4, sc*4)
+        elif self.projection == "o":
+            ysc = sc/asp * .75
+            proj = glm.ortho(sc,-sc, ysc,-ysc, -sc*4, sc*4)
+        else:
+            #proj = glm.frustum(-1,1, -1,1, 0.01, 3)
+            proj = glm.perspective(30, self.width / self.height, 0.01, sc*3.)
+            proj = glm.translate(proj, (0,0,-10))
+
+        proj = glm.rotate(proj, self.srotate_x, (1,0,0))
+        proj = glm.rotate(proj, self.srotate_y, (0,1,0))
+        proj = glm.rotate(proj, self.srotate_z, (0,0,1))
+        proj = glm.translate(proj, (-self.chunk.num_x/2, -self.chunk.num_y/2,
+                                    [-3,-2,-4]["oip".index(self.projection)]))
+        #print(proj)
+        self.projection_matrix = proj
 
     def _init_rotation(self):
         self.rotate_x = glm.pi()/(3.3 if self.projection=="i" else 4)

@@ -7,92 +7,8 @@ from lib.opengl import *
 
 from lib.world import *
 
-frag_src = """#version 130
-#line 11
-uniform sampler2D u_tex1;
-uniform sampler2D u_tex2;
-uniform sampler3D u_chunktex;
+from .ChunkWindow_shader import frag_src
 
-uniform float u_time;
-uniform vec3 u_lightpos;
-uniform vec3 u_chunksize;
-
-in vec4 v_pos;
-in vec3 v_normal;
-in vec2 v_texcoord;
-
-out vec4 fragColor;
-
-float voxel_at(in vec3 pos) {
-    if (any(lessThan(pos, vec3(1))) || any(greaterThanEqual(pos, u_chunksize)))
-        return 0.;
-    return texelFetch(u_chunktex, ivec3(pos+.5), 0).x;
-}
-
-float voxel_density(in vec3 pos) {
-    return texture(u_chunktex, (pos+vec3(0,0,.5)) / u_chunksize).y;
-}
-
-// Inigo Quilez, Reinder Nijhoff, https://www.shadertoy.com/view/4ds3WS
-float voxel_shadow_ray(in vec3 ro, in vec3 rd) {
-
-    vec3 pos = floor(ro);
-    vec3 ri = 1.0/rd;
-    vec3 rs = sign(rd);
-    vec3 dis = (pos-ro + 0.5 + rs*0.5) * ri;
-
-    float res = 1.0;
-
-    for(int i=0; i<15; i++) 
-    {
-        if (any(lessThan(pos, vec3(0))) || any(greaterThanEqual(pos, u_chunksize))) { break; }
-        if (voxel_at(pos) > 0.) { res *= 0.0; break; }
-        
-        //res -= voxel_density(pos+vec3(0,0,1))*.1;
-        
-        vec3 mm = step(dis.xyz, dis.yxy) * step(dis.xyz, dis.zzx);
-        dis += mm * rs * ri;
-        pos += mm * rs;
-    }
-
-    return res;
-}
-
-
-vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal) {
-    vec3 lightnorm = normalize(lightpos - pos);
-    float d = max(0., dot(normal, lightnorm));
-    if (d > 0.)
-    {
-        d *= voxel_shadow_ray(pos+0.01*normal, lightnorm);
-    }
-    
-    return clamp(vec3(d,d,pow(d,1.3)), .3, 1.);
-}
-
-void main() {
-    vec4 tex = texture2D(u_tex1, v_texcoord);
-        
-    vec3 col = vec3(0);
-    //col = mix(col, poscol(v_pos), .4);
-    //col = mix(col, v_normal*.5+.5, .5);
-    col = mix(col, tex.rgb, 1.);  
-    col *= lighting(u_lightpos, v_pos.xyz, v_normal);
-    
-    //col.x += v_pos.y/10.;
-    //col = mix(col, vec3(voxel_at(v_pos.xyz-v_normal*.01)), .8);
-    //col = mix(col, texture2D(u_tex2, v_texcoord).xyz, .5);
-    //col += texture(u_chunktex, v_pos.xyz*2.1).xyz;
-    
-    //col += sin(u_time+v_pos.x);
-    //col = mix(col, vec3(v_texcoord, 0.), .9);
-    //col = vec3(lightdot);  
-    
-    col *= vec3(1. - voxel_density(v_pos.xyz));
-    
-    fragColor = vec4(col, 1);
-}
-"""
 
 HEIGHTMAP2 = [
     [0, 1, 0, 0, 0, 0, 0, 0],
@@ -103,7 +19,7 @@ HEIGHTMAP2 = [
     [0, 1, 0, 0, 0, 0, 0, 0],
     [0, 1, 0, 0, 0, 0, 0, 0],
     [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 1, 1, 1, 0, 0, 0, 0],
+    [0, 5, 1, 1, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
@@ -125,23 +41,30 @@ HEIGHTMAP1 = [
 
 _ = 0
 HEIGHTMAP = [
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, _, _, _],
-    [_, _, 2, _, _, _, _, _, _, _, _, _, _, 2, _, _],
-    [_, _, 3, _, _, 1, 2, 3, 2, 1, _, _, _, 3, _, _],
-    [_, _, 2, _, _, 1, _, _, _, 1, _, _, _, 2, _, _],
-    [_, _, 3, _, _, 1, _, _, _, 1, _, _, _, 3, _, _],
-    [_, _, 2, _, _, _, _, _, _, _, _, _, _, 2, _, _],
-    [_, _, 7, 6, 7, _, _, _, _, _, _, 7, 6, 7, _, _],
-    [_, _, 6, 4, 6, _, _, _, _, _, _, 6, 5, 6, _, _],
-    [_, _, 7, 6, 7, 2, 3, _, _, 3, 2, 7, 6, 7, _, _],
-    [_, _, _, _, _, _, 1, _, _, 1, _, _, _, _, _, _],
-    [_, _, _, _, _, _, 1, _, _, 1, _, _, _, _, _, _],
-    [_, _, _, _, 4, 4, _, _, _, _, 4, 4, _, _, _, _],
-    [_, _, _, _, 4, 4, _, _, _, _, 4, 4, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 2, _, _, _, _, _, _, 3, _, _, _, 2, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 3, _, _, _, _, _, _, 2, _, _, _, 3, _, _, _, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, _, _, _],
+    [_, _, 2, _, _, _, _, _, _, 3, _, 1, _, 2, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 3, 2, 2, 2, _, _, _, 2, _, 1, _, 3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 2, _, _, _, _, _, _, 3, _, 2, 3, 2, _, _, _, _, _, 3, _, _, _, _, _, 2, _, _, _, _, _, _, _],
+    [_, _, 3, _, _, _, _, _, _, _, _, 1, _, 3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 2, _, _, _, _, _, _, _, _, 1, _, 2, _, _, _, _, _, _, _, _, 6, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 3, _, _, _, _, _, _, _, _, _, _, 3, _, _, _, 5, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 3, _, _, 1, 2, 3, 2, 1, _, _, _, 3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1, _, _, _, _],
+    [_, _, 2, _, _, 1, _, _, _, 1, _, _, _, 2, _, 2, _, _, _, _, 4, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 3, _, _, 1, _, _, _, 1, _, _, _, 3, _, _, _, _, _, _, _, _, _, 7, _, _, _, _, _, _, _, _, _],
+    [_, _, 2, _, _, _, _, _, _, _, _, _, _, 2, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 7, 6, 7, _, _, _, _, _, _, 7, 6, 7, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 6, 4, 6, _, _, _, _, _, _, 6, 5, 6, _, _, _, _, _, _, _, _, 2, _, _, _, _, _, _, _, _, _, _],
+    [_, _, 7, 6, 7, 2, 3, _, _, 3, 2, 7, 6, 7, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, 1, _, _, 1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, 1, _, _, 1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, 4, 4, _, _, _, _, 4, 4, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, 4, 4, _, _, _, _, 4, 4, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
 ]
 
 
@@ -168,16 +91,33 @@ class ChunkWindow(pyglet.window.Window):
             #width=800, height=600,
             vsync=True, **kwargs)
 
+        self.keys = pyglet.window.key.KeyStateHandler()
+        self.push_handlers(self.keys)
+
         self.tileset = Tileset(16, 16)
         self.tileset.load("./assets/tileset01.png")
         print(self.tileset)
+
+        # ---- world chunk ----
 
         self.chunk = WorldChunk(self.tileset)
         #self.chunk.from_heightmap(gen_heightmap())
         self.chunk.from_heightmap(HEIGHTMAP)
 
+        # voxel texture
         self.chunktex = None
 
+        # distance map
+        self.vdf_scale = 1
+        self.vdf = self.chunk.create_voxel_distance_field(self.vdf_scale)
+        if 1:
+            self.vdf.calc_distances()
+            self.vdf.save_json("./temp/vdf.json")
+        else:
+            self.vdf.load_json("./temp/vdf.json")
+        self.vdf_tex = None
+
+        # mesh and texture
         self.texture = Texture2D()
         self.mesh = self.chunk.create_mesh()
         self.drawable = self.mesh.get_drawable()
@@ -185,12 +125,20 @@ class ChunkWindow(pyglet.window.Window):
 
         self.texture2 = Texture2D()
 
+        # post-fx
         if 1:
             self.fbo = Framebuffer2D(self.width, self.height)
             self.quad = ScreenQuad()
         else:
             self.fbo = None
 
+        # player
+        self.player_pos = glm.vec3(10, 15, 10) + .5
+        self.splayer_pos = glm.vec3(self.player_pos)
+
+        # projection
+        self.zoom = 0.
+        self.szoom = 0.
         self.srotate_x = 0.
         self.srotate_y = 0.
         self.srotate_z = 0.
@@ -205,13 +153,37 @@ class ChunkWindow(pyglet.window.Window):
         pyglet.clock.set_fps_limit(60)
 
     def update(self, dt):
+        self.check_keys(dt)
+        newpos = self.player_pos + min(1,dt*5) * glm.vec3(0,0,-1)
+        if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z-.5)).space_type == 0:
+            self.player_pos = newpos
+
         d = dt * 5.
+        self.szoom += d + (self.zoom - self.szoom)
         self.srotate_x += d * (self.rotate_x-self.srotate_x)
         self.srotate_y += d * (self.rotate_y-self.srotate_y)
         self.srotate_z += d * (self.rotate_z-self.srotate_z)
+        self.splayer_pos += d * (self.player_pos - self.splayer_pos)
         d = dt * 3.
         self.sprojection_matrix += d * (self.projection_matrix - self.sprojection_matrix)
-        pass
+
+    def check_keys(self, dt):
+        dir_mapping = {
+            # TODO: projection/mapping/coord-system is completely off
+            pyglet.window.key.LEFT: glm.vec3(1,0,0),
+            pyglet.window.key.RIGHT: glm.vec3(-1,0,0),
+            pyglet.window.key.UP: glm.vec3(0,-1,0),
+            pyglet.window.key.DOWN: glm.vec3(0,1,0),
+            pyglet.window.key.SPACE: glm.vec3(0,0,4),
+        }
+        for symbol in dir_mapping:
+            if self.keys[symbol]:
+                dir = dir_mapping[symbol]
+                #dir = self.projection_matrix * glm.vec4(dir, 0.)
+                #dir = dir.xyz;
+                newpos = self.player_pos + dir * min(1, dt*10.)
+                if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
+                    self.player_pos = newpos
 
     def on_draw(self):
         glDisable(GL_CULL_FACE)
@@ -222,6 +194,10 @@ class ChunkWindow(pyglet.window.Window):
 
         if self.chunktex is None:
             self.chunktex = self.chunk.create_texture3d()
+
+        if self.vdf_tex is None:
+            self.vdf_tex = self.vdf.create_texture3d("vdf")
+            print(self.vdf_tex)
 
         if not self.texture.is_created():
             self.texture.create()
@@ -262,6 +238,10 @@ class ChunkWindow(pyglet.window.Window):
         self.drawable.shader.set_uniform("u_tex2", 1)
         self.drawable.shader.set_uniform("u_chunktex", 2)
         self.drawable.shader.set_uniform("u_chunksize", self.chunk.size())
+        self.drawable.shader.set_uniform("u_vdf_tex", 3)
+        self.drawable.shader.set_uniform("u_vdf_size", self.vdf.size())
+        self.drawable.shader.set_uniform("u_vdf_scale", self.vdf_scale)
+        self.drawable.shader.set_uniform("u_player_pos", (self.splayer_pos))
 
         self.texture.set_active_texture(0)
         self.texture.bind()
@@ -269,6 +249,8 @@ class ChunkWindow(pyglet.window.Window):
         self.texture2.bind()
         self.texture.set_active_texture(2)
         self.chunktex.bind()
+        self.texture.set_active_texture(3)
+        self.vdf_tex.bind()
         self.texture.set_active_texture(0)
 
         self.drawable.draw()
@@ -288,6 +270,14 @@ class ChunkWindow(pyglet.window.Window):
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         self.rotate_y += dx / 30.
 
+    def on_mouse_press(self, x, y, button, modifiers):
+        ro, rd = self.get_ray(x, y)
+        print(ro, rd)
+
+    def on_key_press(self, symbol, modifiers):
+        if symbol == pyglet.window.key.ESCAPE:
+            self.close()
+
     def on_text(self, text):
         if text == "o":
             self.projection = "o"
@@ -299,8 +289,29 @@ class ChunkWindow(pyglet.window.Window):
         if text == "p":
             self.projection = "p"
             self._init_rotation()
+        if text == "e":
+            self.projection = "e"
+            self._init_rotation()
         if text == "f":
             self.set_fullscreen(not self.fullscreen)
+        if text == "+":
+            self.zoom += 1.
+        if text == "-":
+            self.zoom -= 1.
+
+    def get_uv(self, x, y):
+        return ((x / self.width * 2. - 1.) * self.width / self.height,
+                y / self.height * 2. - 1.)
+
+    def get_ray(self, x, y):
+        uv = self.get_uv(x, y)
+        ro = glm.vec3(self.projection_matrix[3])
+        m = glm.mat4(self.projection_matrix)
+        m[3][0] = 0
+        m[3][1] = 0
+        m[3][2] = 0
+        rd = m * glm.vec4(glm.normalize(glm.vec3(uv[0], uv[1], -1.2)), 0)
+        return (ro, rd)
 
     def _calc_projection(self):
         sc = min(16, self.chunk.num_x) / 1.3
@@ -312,20 +323,29 @@ class ChunkWindow(pyglet.window.Window):
         elif self.projection == "o":
             ysc = sc/asp * .75
             proj = glm.ortho(sc,-sc, ysc,-ysc, -sc*4, sc*4)
-        else:
+        elif self.projection == "p":
             #proj = glm.frustum(-1,1, -1,1, 0.01, 3)
             proj = glm.perspective(30, self.width / self.height, 0.01, sc*3.)
-            proj = glm.translate(proj, (0,0,-10))
+            proj = glm.translate(proj, (0,0,-5))
+        else:  # "e"
+            proj = glm.perspective(30, self.width / self.height, 0.01, sc*3.)
+            proj = glm.translate(proj, (0,0,0))
 
         proj = glm.rotate(proj, self.srotate_x, (1,0,0))
         proj = glm.rotate(proj, self.srotate_y, (0,1,0))
         proj = glm.rotate(proj, self.srotate_z, (0,0,1))
-        proj = glm.translate(proj, (-self.chunk.num_x/2, -self.chunk.num_y/2,
-                                    [-3,-2,-4]["oip".index(self.projection)]))
+        proj = glm.translate(proj, (0,0,#-self.chunk.num_x/2, -self.chunk.num_y/2,
+                                    [-3,-2,-4,-1]["oipe".index(self.projection)]))
+
+        proj = glm.scale(proj, glm.vec3(1.+self.zoom/10.))
+        proj = glm.translate(proj, -self.splayer_pos)
+
         #print(proj)
         self.projection_matrix = proj
 
     def _init_rotation(self):
         self.rotate_x = glm.pi()/(3.3 if self.projection=="i" else 4)
+        if self.projection == "e":
+            self.rotate_x = glm.pi()/2.
         self.rotate_y = 0#-glm.pi()/4.
         self.rotate_z = 0

@@ -50,6 +50,8 @@ class ScreenQuad:
             fragColor += texture(u_tex1, (texcoord + vec2(x, y) / fac) / u_resolution.xy);
         }
         fragColor /= float(NUMX*NUMY);
+        
+        //fragColor = floor(fragColor*30.)/30.;
     }
     
     void main() {

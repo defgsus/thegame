@@ -21,11 +21,11 @@ class Texture2D(TextureBase):
         glTexImage2D(self.target, mipmap_level, self.gpu_format, self.width, self.height, 0,
                      input_format, input_type, ptr)
 
-        self.set_parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        self.set_parameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        self.set_parameter(GL_TEXTURE_MIN_FILTER, self.min_filter)
+        self.set_parameter(GL_TEXTURE_MAG_FILTER, self.mag_filter)
 
-        self.set_parameter(GL_TEXTURE_WRAP_S, GL_REPEAT)
-        self.set_parameter(GL_TEXTURE_WRAP_T, GL_REPEAT)
+        self.set_parameter(GL_TEXTURE_WRAP_S, self.wrap_mode)
+        self.set_parameter(GL_TEXTURE_WRAP_T, self.wrap_mode)
 
     def upload_image(self, filename, mipmap_level=0, gpu_format=GL_RGBA):
         image = pyglet.image.load(filename)

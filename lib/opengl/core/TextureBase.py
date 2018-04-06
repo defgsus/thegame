@@ -4,12 +4,20 @@ from .base import *
 
 class TextureBase(OpenGlBaseObject):
 
+    GL_LINEAR = GL_LINEAR
+    GL_NEAREST = GL_NEAREST
+    GL_CLAMP = GL_CLAMP
+    GL_REPEAT = GL_REPEAT
+
     def __init__(self, target, name=None):
         super(TextureBase, self).__init__(name=name)
         self.target = target
         self.width = 0
         self.height = 0
         self.gpu_format = 0
+        self.mag_filter = GL_LINEAR
+        self.min_filter = GL_NEAREST
+        self.wrap_mode = GL_CLAMP
 
     @staticmethod
     def set_active_texture(idx):

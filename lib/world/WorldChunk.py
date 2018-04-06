@@ -1,6 +1,8 @@
+import glm
 from pyglet.gl import *
 from lib.geom import TriangleMesh
 from lib.opengl import Texture3D
+from .VoxelDistanceField import VoxelDistanceField
 
 
 class WorldBlock:
@@ -10,6 +12,7 @@ class WorldBlock:
 
     def __repr__(self):
         return "(%s)" % self.space_type
+
 
 class WorldChunk:
 
@@ -128,3 +131,44 @@ class WorldChunk:
                         if not self.is_wall(x+1, y, z, self.LEFT):
                             mesh.add_quad((x1, y, z), (x1, y1, z), (x1, y1, z1), (x1, y, z1), *uvquad)
         return mesh
+
+    def create_voxel_distance_field(self, scale):
+        vox = VoxelDistanceField(self.num_x*scale, self.num_y*scale, self.num_z*scale)
+        for z in range(self.num_z):
+            for y in range(self.num_y):
+                for x in range(self.num_x):
+                    if self.block(x, y, z).space_type > 0:
+                        for sz in range(scale):
+                            for sy in range(scale):
+                                for sx in range(scale):
+                                    vox.set_value(x+sx, y+sy, z+sz, 1)
+        return vox
+
+    def cast_voxel_ray(self, ro, rd, max_steps=None):
+        """
+        iq, nijhoff, https://www.shadertoy.com/view/4ds3WS
+        """
+        if max_steps is None:
+            max_steps = max(self.size())
+
+        pos = glm.floor(ro)
+        ri = 1. / glm.vec3(rd)
+        rs = glm.sign(rd)
+        dis = (pos - ro + .5 + rs*.5) * ri
+
+        hit = False
+
+        for i in range(max_steps):
+            mm = glm.step(dis.xyz, dis.yxy) * glm.step(dis.xyz, dis.zzx)
+            dis += mm * rs * ri
+            pos += mm * rs
+            if self.block(pos.x, pos.y, pos.z).space_type:
+                hit = True
+                break
+
+        #nor = -mm*rs
+
+        mini = (pos-ro + 0.5 - 0.5*rs)*ri
+        t = max(mini)
+
+        return t, hit

@@ -10,16 +10,19 @@ uniform mat4 u_projection;
 
 in vec4 a_position;
 in vec3 a_normal;
+in vec4 a_color;
 in vec2 a_texcoord;
 
 out vec4 v_pos;
 out vec3 v_normal;
+out vec4 v_color;
 out vec2 v_texcoord;
 
 void main()
 {
     v_pos = a_position;
     v_normal = a_normal;
+    v_color = a_color;
     v_texcoord = a_texcoord;
     gl_Position = u_projection * a_position;
 }

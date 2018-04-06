@@ -6,12 +6,16 @@ class Texture2D(TextureBase):
     def __init__(self, name=None):
         super(Texture2D, self).__init__(GL_TEXTURE_2D, name=name)
 
-    def upload(self, values, width, height, input_format=GL_RGB, input_type=GL_FLOAT, gpu_format=GL_RGBA, mipmap_level=0):
+    def upload(self, values, width, height, input_format=GL_RGB, input_type=GL_FLOAT, gpu_format=GL_RGBA, mipmap_level=0,
+               do_flip_y=False):
         """Upload linear data in `values`. height == len(values) / width / typesize(input_format).
         `values` can be None to create an empty texture"""
         self.width = width
         self.height = height
         self.gpu_format = gpu_format
+
+        if do_flip_y:
+            values = self._flip_y(values, width, height, get_opengl_channel_size(input_format))
 
         if values is not None:
             ptr = (get_opengl_type(input_type) * len(values))(*values)
@@ -27,22 +31,24 @@ class Texture2D(TextureBase):
         self.set_parameter(GL_TEXTURE_WRAP_S, self.wrap_mode)
         self.set_parameter(GL_TEXTURE_WRAP_T, self.wrap_mode)
 
-    def upload_image(self, filename, mipmap_level=0, gpu_format=GL_RGBA):
+    def upload_image(self, filename, mipmap_level=0, gpu_format=GL_RGBA, do_flip_y = False):
         image = pyglet.image.load(filename)
         if image.format == "RGB":
+            num_chan = 3
             input_format = GL_RGB
         elif image.format == "RGBA":
+            num_chan = 4
             input_format = GL_RGBA
         else:
             raise ValueError("Unsupported image format %s" % image.format)
 
         values = image.data
-        #values = [v for v in values]
-        #print(values)
+        if not do_flip_y:
+            values = self._flip_y(values, image.width, image.height, num_chan)
         self.upload(values, image.width, image.height, input_format=input_format, input_type=GL_UNSIGNED_BYTE,
                     mipmap_level=mipmap_level, gpu_format=gpu_format)
 
-    def upload_image_PIL(self, image_or_file, mipmap_level=0, gpu_format=GL_RGBA):
+    def upload_image_PIL(self, image_or_file, mipmap_level=0, gpu_format=GL_RGBA, do_flip_y=False):
         from PIL import Image
         if isinstance(image_or_file, Image.Image):
             image = image_or_file
@@ -57,7 +63,13 @@ class Texture2D(TextureBase):
         input_format = [GL_LUMINANCE, GL_RG, GL_RGB, GL_RGBA][num_chan-1]
 
         values = image.tobytes("raw")
-        #values = [v for v in values]
-        #print(values)
+        if not do_flip_y:
+            values = self._flip_y(values, image.width, image.height, num_chan)
         self.upload(values, image.width, image.height, input_format=input_format, input_type=GL_UNSIGNED_BYTE,
                     mipmap_level=mipmap_level, gpu_format=gpu_format)
+
+    def _flip_y(self, values, width, height, num_chan):
+        ret = []
+        for i in range(height, 0, -1):
+            ret += values[(i-1)*width*num_chan:i*width*num_chan]
+        return ret

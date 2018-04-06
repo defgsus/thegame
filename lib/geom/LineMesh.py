@@ -1,0 +1,77 @@
+import math
+from lib.pector import *
+from lib.opengl.Drawable import Drawable, GL_TRIANGLES, GL_LINES
+
+
+def vecs_to_list(vecs):
+    r = []
+    for vec in vecs:
+        try:
+            for v in vec:
+                r.append(v)
+        except TypeError:
+            r.append(vec)
+    return r
+
+
+class AbstractLineMesh:
+
+    def vertices_array(self):
+        raise NotImplementedError
+
+    def colors_array(self):
+        raise NotImplementedError
+
+    def lines_array(self):
+        raise NotImplementedError
+
+    def add_line(self, pos1, pos2):
+        return self.add_line_idx(
+            self.add_vertex(pos1),
+            self.add_vertex(pos2),
+        )
+
+    def create_drawable(self):
+        draw = Drawable()
+        a = self.vertices_array()
+        if not a:
+            raise ValueError("No vertices to make drawable")
+        draw.set_attribute(draw.A_POSITION, 3, a)
+
+        a = self.colors_array()
+        if a:
+            draw.set_attribute(draw.A_COLOR, 3, a)
+
+        a = self.lines_array()
+        if a:
+            draw.set_index(GL_LINES, a)
+        return draw
+
+
+class LineMesh(AbstractLineMesh):
+    def __init__(self):
+        self._vertices = []
+        self._colors = []
+        self._lines = []
+        self._color = (1,1,1)
+
+    def set_color(self, r, g, b):
+        self._color = (r, g, b)
+
+    def add_vertex(self, pos):
+        self._vertices.append(pos)
+        self._colors.append(self._color)
+        return len(self._vertices)-1
+
+    def add_line_idx(self, i1, i2):
+        self._lines.append((i1, i2))
+        return len(self._lines)-1
+
+    def vertices_array(self):
+        return vecs_to_list(self._vertices)
+
+    def colors_array(self):
+        return vecs_to_list(self._colors)
+
+    def lines_array(self):
+        return vecs_to_list(self._lines)

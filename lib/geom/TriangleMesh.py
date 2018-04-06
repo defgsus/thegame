@@ -66,7 +66,7 @@ class AbstractTriangleMesh:
             self.add_vertex(pos2),
         )
 
-    def get_drawable(self):
+    def create_drawable(self):
         draw = Drawable()
         #print(self.vertices_array())
         #print(self.triangles_array())
@@ -164,7 +164,6 @@ class AbstractTriangleMesh:
 
 
 class TriangleMesh(AbstractTriangleMesh):
-    """Merges nearby vertex positions"""
     def __init__(self):
         self._vertices = []
         self._texcoords = []

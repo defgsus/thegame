@@ -102,7 +102,7 @@ class ChunkWindow(pyglet.window.Window):
 
         self.chunk = WorldChunk(self.tileset)
         #self.chunk.from_heightmap(gen_heightmap())
-        self.chunk.from_heightmap(HEIGHTMAP)
+        self.chunk.from_heightmap(HEIGHTMAP, do_flip_y=True)
 
         # voxel texture
         self.chunktex = None
@@ -120,7 +120,7 @@ class ChunkWindow(pyglet.window.Window):
         # mesh and texture
         self.texture = Texture2D()
         self.mesh = self.chunk.create_mesh()
-        self.drawable = self.mesh.get_drawable()
+        self.drawable = self.mesh.create_drawable()
         self.drawable.shader.set_fragment_source(frag_src)
 
         self.texture2 = Texture2D()
@@ -169,11 +169,10 @@ class ChunkWindow(pyglet.window.Window):
 
     def check_keys(self, dt):
         dir_mapping = {
-            # TODO: projection/mapping/coord-system is completely off
-            pyglet.window.key.LEFT: glm.vec3(1,0,0),
-            pyglet.window.key.RIGHT: glm.vec3(-1,0,0),
-            pyglet.window.key.UP: glm.vec3(0,-1,0),
-            pyglet.window.key.DOWN: glm.vec3(0,1,0),
+            pyglet.window.key.LEFT: glm.vec3(-1,0,0),
+            pyglet.window.key.RIGHT: glm.vec3(1,0,0),
+            pyglet.window.key.UP: glm.vec3(0,1,0),
+            pyglet.window.key.DOWN: glm.vec3(0,-1,0),
             pyglet.window.key.SPACE: glm.vec3(0,0,4),
         }
         for symbol in dir_mapping:
@@ -255,6 +254,12 @@ class ChunkWindow(pyglet.window.Window):
 
         self.drawable.draw()
 
+        if 0:
+            if not hasattr(self, "coord_sys"):
+                self.coord_sys = CoordinateGrid(20)
+            self.coord_sys.drawable.shader.set_uniform("u_projection", self.sprojection_matrix)
+            self.coord_sys.draw()
+
         if self.fbo:
             self.fbo.unbind()
 
@@ -319,16 +324,16 @@ class ChunkWindow(pyglet.window.Window):
 
         if self.projection == "i":
             ysc = sc/asp
-            proj = glm.ortho(sc,-sc, ysc,-ysc, -sc*4, sc*4)
+            proj = glm.ortho(-sc,sc, -ysc,ysc, -sc*4, sc*4)
         elif self.projection == "o":
             ysc = sc/asp * .75
-            proj = glm.ortho(sc,-sc, ysc,-ysc, -sc*4, sc*4)
+            proj = glm.ortho(-sc,sc, -ysc,ysc, -sc*4, sc*4)
         elif self.projection == "p":
             #proj = glm.frustum(-1,1, -1,1, 0.01, 3)
-            proj = glm.perspective(30, self.width / self.height, 0.01, sc*3.)
+            proj = glm.perspectiveFov(1., self.width, self.height, 0.01, sc*3.)
             proj = glm.translate(proj, (0,0,-5))
         else:  # "e"
-            proj = glm.perspective(30, self.width / self.height, 0.01, sc*3.)
+            proj = glm.perspectiveFov(2., self.width, self.height, 0.01, sc*3.)
             proj = glm.translate(proj, (0,0,0))
 
         proj = glm.rotate(proj, self.srotate_x, (1,0,0))
@@ -344,8 +349,8 @@ class ChunkWindow(pyglet.window.Window):
         self.projection_matrix = proj
 
     def _init_rotation(self):
-        self.rotate_x = glm.pi()/(3.3 if self.projection=="i" else 4)
+        self.rotate_x = -glm.pi()/(3.3 if self.projection=="i" else 4)
         if self.projection == "e":
-            self.rotate_x = glm.pi()/2.
+            self.rotate_x = -glm.pi()/2.
         self.rotate_y = 0#-glm.pi()/4.
         self.rotate_z = 0

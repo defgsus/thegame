@@ -1,8 +1,9 @@
 import pyglet
-from sketches.OrthoWindow import OrthoWindow
-from sketches.ChunkWindow import ChunkWindow
 
-MainWindow = ChunkWindow
+#from sketches.OrthoWindow import OrthoWindow as MainWindow
+from sketches.ChunkWindow import ChunkWindow as MainWindow
+#from sketches.ProjectionWindow import ProjectionWindow as MainWindow
+
 
 platform = pyglet.window.get_platform()
 display = platform.get_default_display()

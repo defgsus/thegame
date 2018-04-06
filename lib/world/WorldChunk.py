@@ -33,7 +33,7 @@ class WorldChunk:
     def size(self):
         return self.num_x, self.num_y, self.num_z
 
-    def from_heightmap(self, heightmap):
+    def from_heightmap(self, heightmap, do_flip_y=False):
         import random
         self.num_x = len(heightmap[0])
         self.num_y = len(heightmap)
@@ -45,7 +45,7 @@ class WorldChunk:
                 row = []
                 for x in range(self.num_x):
                     block = WorldBlock()
-                    h = heightmap[y][x]
+                    h = heightmap[self.num_y-1-y][x] if do_flip_y else heightmap[y][x]
                     block.space_type = 1 if h >= z else 0
                     if block.space_type:
                         if h == 0:

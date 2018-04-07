@@ -16,6 +16,9 @@ def vecs_to_list(vecs):
 
 class AbstractLineMesh:
 
+    def is_empty(self):
+        raise NotImplementedError
+
     def vertices_array(self):
         raise NotImplementedError
 
@@ -33,6 +36,10 @@ class AbstractLineMesh:
 
     def create_drawable(self):
         draw = Drawable()
+        return self.update_drawable(draw)
+
+    def update_drawable(self, draw):
+        draw.clear()
         a = self.vertices_array()
         if not a:
             raise ValueError("No vertices to make drawable")
@@ -54,6 +61,9 @@ class LineMesh(AbstractLineMesh):
         self._colors = []
         self._lines = []
         self._color = (1,1,1)
+
+    def is_empty(self):
+        return len(self._lines) == 0
 
     def set_color(self, r, g, b):
         self._color = (r, g, b)

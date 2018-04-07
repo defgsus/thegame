@@ -152,7 +152,9 @@ class WorldChunk:
             max_steps = max(self.size())
 
         pos = glm.floor(ro)
-        ri = 1. / glm.vec3(rd)
+        rd = glm.vec3(rd)
+        rd += 0.0000001
+        ri = 1. / rd
         rs = glm.sign(rd)
         dis = (pos - ro + .5 + rs*.5) * ri
 
@@ -162,7 +164,7 @@ class WorldChunk:
             mm = glm.step(dis.xyz, dis.yxy) * glm.step(dis.xyz, dis.zzx)
             dis += mm * rs * ri
             pos += mm * rs
-            if self.block(pos.x, pos.y, pos.z).space_type:
+            if self.block(int(pos.x), int(pos.y), int(pos.z)).space_type:
                 hit = True
                 break
 

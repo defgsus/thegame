@@ -60,11 +60,24 @@ class Drawable:
         self._attributes = dict()
         self._elements = dict()
 
+    def is_empty(self):
+        return not self._elements
+
     def release(self):
         if self.vao.is_created():
             self.vao.release()
         if self.shader.is_created():
             self.shader.release()
+
+    def clear_attributes(self):
+        self._attributes.clear()
+        self._attributes_changed = True
+    def clear_index(self):
+        self._elements.clear()
+        self._attributes_changed = True
+    def clear(self):
+        self.clear_attributes()
+        self.clear_index()
 
     def set_attribute(self, name, num_coords, values, Type=GLfloat):
         self._attributes[name] = (num_coords, values, Type)

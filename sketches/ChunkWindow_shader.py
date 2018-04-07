@@ -11,6 +11,7 @@ uniform vec3 u_chunksize;
 uniform vec3 u_vdf_size;
 uniform float u_vdf_scale;
 uniform vec3 u_player_pos;
+uniform vec3 u_hit_voxel;
 
 in vec4 v_pos;
 in vec3 v_normal;
@@ -166,6 +167,9 @@ void main() {
     //col += distance_at(vec3(v_pos.xy, u_time))/3.;
     
     //col *= .8+.4*ambient_occlusion(v_pos.xyz, v_normal);
+    
+    if (ivec2(u_hit_voxel) == ivec2(v_pos))
+        col *= 2.;
     
     fragColor = vec4(col, 1);
 }

@@ -4,7 +4,7 @@ import glm
 import math
 from pyglet.gl import *
 from lib.opengl import *
-
+from lib.geom import *
 from lib.world import *
 
 from .ChunkWindow_shader import frag_src
@@ -104,6 +104,12 @@ class ChunkWindow(pyglet.window.Window):
         #self.chunk.from_heightmap(gen_heightmap())
         self.chunk.from_heightmap(HEIGHTMAP1, do_flip_y=True)
 
+        # click in world
+        self.hit_voxel = (-1,-1,-1)
+        self.click_mesh = LineMesh()
+        self.click_mesh_changed = False
+        self.click_drawable = Drawable()
+
         # voxel texture
         self.chunktex = None
 
@@ -138,8 +144,7 @@ class ChunkWindow(pyglet.window.Window):
 
         # projection
         self.projection = WorldProjection(self.width, self.height)
-        self.transformation = glm.mat4(1)
-        self.stransformation = glm.mat4(1)
+        self.projection.update(.4)
 
         # time(r)
         self.start_time = time.time()
@@ -155,10 +160,10 @@ class ChunkWindow(pyglet.window.Window):
         d = min(1, dt*5)
         self.splayer_pos += d * (self.player_pos - self.splayer_pos)
 
+        self.projection.width = self.width
+        self.projection.height = self.height
+        self.projection.user_transformation = glm.translate(glm.mat4(1), -self.splayer_pos)
         self.projection.update(dt)
-
-        self.transformation = glm.translate(glm.mat4(1), -self.splayer_pos)
-        self.stransformation += d * (self.transformation - self.stransformation)
 
     def check_keys(self, dt):
         dir_mapping = {
@@ -216,7 +221,7 @@ class ChunkWindow(pyglet.window.Window):
 
         ti = time.time() - self.start_time
 
-        proj = self.projection.matrix * self.stransformation
+        proj = self.projection.matrix
 
         lightpos = (
            math.sin(ti/2.)*self.chunk.num_x/2.,
@@ -234,6 +239,7 @@ class ChunkWindow(pyglet.window.Window):
         self.drawable.shader.set_uniform("u_vdf_size", self.vdf.size())
         self.drawable.shader.set_uniform("u_vdf_scale", self.vdf_scale)
         self.drawable.shader.set_uniform("u_player_pos", self.splayer_pos)
+        self.drawable.shader.set_uniform("u_hit_voxel", self.hit_voxel)
 
         self.texture.set_active_texture(0)
         self.texture.bind()
@@ -245,13 +251,26 @@ class ChunkWindow(pyglet.window.Window):
         self.vdf_tex.bind()
         self.texture.set_active_texture(0)
 
+        # main scene
         self.drawable.draw()
 
+        # click debugger
+        if self.click_mesh_changed:
+            self.click_mesh_changed = False
+            self.click_mesh.update_drawable(self.click_drawable)
+
+        if not self.click_drawable.is_empty():
+            self.click_drawable.shader.set_uniform("u_projection", proj)
+            self.click_drawable.draw()
+
+        # coordinate system
         if 0:
             if not hasattr(self, "coord_sys"):
                 self.coord_sys = CoordinateGrid(20)
             self.coord_sys.drawable.shader.set_uniform("u_projection", proj)
             self.coord_sys.draw()
+
+        # post-proc
 
         if self.fbo:
             self.fbo.unbind()
@@ -263,14 +282,25 @@ class ChunkWindow(pyglet.window.Window):
         #OpenGlBaseObject.dump_instances()
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        self.projection._rotation[0] += scroll_y / 30.
+        self.projection._rotation[0] -= scroll_y / 30.
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         self.projection._rotation[1] += dx / 30.
 
     def on_mouse_press(self, x, y, button, modifiers):
+        import random
         ro, rd = self.get_ray(x, y)
-        print(ro, rd)
+        if 1:
+            rg = ro + 10000 * rd
+            for i in range(10):
+                ofs = tuple(random.uniform(-.04, .04) for x in range(3))
+                self.click_mesh.add_line(ro+ofs, rg+ofs)
+            self.click_mesh_changed = True
+
+        t, hit = self.chunk.cast_voxel_ray(ro, rd, 1000)
+        if hit:
+            print(hit, t, ro + t * rd)
+            self.hit_voxel = glm.floor(ro+t*rd)
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:

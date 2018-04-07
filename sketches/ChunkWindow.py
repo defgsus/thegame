@@ -223,14 +223,11 @@ class ChunkWindow(pyglet.window.Window):
 
         proj = self.projection.matrix
 
-        lightpos = (
-           math.sin(ti/2.)*self.chunk.num_x/2.,
-           (math.sin(ti/3.)+2.)*self.chunk.num_y/2.,
-           self.chunk.num_z+1
-        )
+        lightpos = glm.vec3(self.hit_voxel) + (.5,.5,1.5)
+        lightamt = .94+..6*math.sin(ti*2.)
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_time", ti)
-        self.drawable.shader.set_uniform("u_lightpos", lightpos)
+        self.drawable.shader.set_uniform("u_lightpos", glm.vec4(lightpos, lightamt))
         self.drawable.shader.set_uniform("u_tex1", 0)
         self.drawable.shader.set_uniform("u_tex2", 1)
         self.drawable.shader.set_uniform("u_chunktex", 2)
@@ -290,8 +287,8 @@ class ChunkWindow(pyglet.window.Window):
     def on_mouse_press(self, x, y, button, modifiers):
         import random
         ro, rd = self.get_ray(x, y)
-        if 1:
-            rg = ro + 10000 * rd
+        if 0:
+            rg = ro + 100 * rd
             for i in range(10):
                 ofs = tuple(random.uniform(-.04, .04) for x in range(3))
                 self.click_mesh.add_line(ro+ofs, rg+ofs)

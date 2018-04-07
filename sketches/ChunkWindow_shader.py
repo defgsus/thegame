@@ -6,7 +6,7 @@ uniform sampler3D u_chunktex;
 uniform sampler3D u_vdf_tex;
 
 uniform float u_time;
-uniform vec3 u_lightpos;
+uniform vec4 u_lightpos; // pos, amt
 uniform vec3 u_chunksize;
 uniform vec3 u_vdf_size;
 uniform float u_vdf_scale;
@@ -148,9 +148,9 @@ void main() {
     col = mix(col, tex.rgb, 1.);
     
     vec3 light = vec3(0);
-    //light += lighting(u_lightpos, v_pos.xyz, v_normal);
-    light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, v_normal, 1);
-    light += .7*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, v_normal, 0);
+    light += u_lightpos.w * lighting(u_lightpos.xyz, v_pos.xyz, v_normal, 0);
+    //light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, v_normal, 1);
+    //light += .7*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, v_normal, 0);
     col *= light;
     
     //col.x += v_pos.y/10.;
@@ -168,8 +168,10 @@ void main() {
     
     //col *= .8+.4*ambient_occlusion(v_pos.xyz, v_normal);
     
-    if (ivec2(u_hit_voxel) == ivec2(v_pos))
-        col *= 2.;
+    // hit highlight
+    vec3 hitbox = abs(u_hit_voxel + .5 - v_pos.xyz);
+    float hit = clamp(1.4-dot(hitbox, hitbox), 0., 1.);
+    col = (col * (1.+pow(hit, 2.))) + .3*u_lightpos.w*pow(hit, 3.);
     
     fragColor = vec4(col, 1);
 }

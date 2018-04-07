@@ -22,11 +22,13 @@ class WorldProjection:
 
         self._zoom = 0.
         self._rotation = glm.vec3(0)
-        self._matrix = glm.mat4(1)
+        self._mat_project = glm.mat4(1)
+        self._mat_transform = glm.mat4(1)
 
         self._szoom = 0.
         self._srotation = glm.vec3(0)
-        self._smatrix = glm.mat4(1)
+        self._smat_project = glm.mat4(1)
+        self._smat_transform = glm.mat4(1)
 
         self.init()
 
@@ -48,11 +50,19 @@ class WorldProjection:
 
     @property
     def matrix(self):
-        return self._smatrix
+        return self._smat_project * self._smat_transform
 
-    @matrix.setter
-    def matrix(self, val):
-        self._matrix = val
+    @property
+    def projection_matrix(self):
+        return self._smat_project
+
+    @property
+    def inverse_projection_matrix(self):
+        return glm.inverse(self._smat_project)
+
+    @property
+    def transformation_matrix(self):
+        return self._smat_transform
 
     @property
     def near(self):
@@ -67,7 +77,7 @@ class WorldProjection:
             self.projection = projection
 
         if self.projection in "oi":
-            self._near = -100
+            self._near = -10
             self._far = 100
         else:
             self._near = 0.01
@@ -84,14 +94,23 @@ class WorldProjection:
         self._calc_matrix()
 
         d = min(1, dt * 3)
-        self._smatrix += d * (self._matrix - self._smatrix)
+        self._smat_project += d * (self._mat_project - self._smat_project)
+        self._smat_transform += d * (self._mat_transform - self._smat_transform)
 
-    def get_ray(self, uv):
-        ro = self.matrix * glm.vec4(uv, self.near, 1)
-        rd = glm.normalize(
-            self.matrix * glm.vec4(uv, self.far, 1) - ro
-        )
-        return glm.vec3(ro), glm.vec3(rd)
+    def screen_to_ray(self, x, y):
+        """Return tuple with ray-origin and normalized ray-direction for input screen space"""
+        st = glm.vec2(x / self.width, y / self.height) * 2. - 1.
+
+        pos = self.inverse_projection_matrix * glm.vec4(st.x, st.y, -self.near, 1)
+        pos /= pos.w
+
+        dirf = self.inverse_projection_matrix * glm.vec4(st.x, st.y, -self.far, 1)
+        dirf /= dirf.w
+
+        dir = glm.normalize(dirf)
+
+        t = self.transformation_matrix
+        return glm.vec3(t * pos), glm.vec3(t * dir)
 
     def _init_rotation(self):
         self._rotation = glm.vec3(
@@ -106,6 +125,8 @@ class WorldProjection:
         sc = 16
         asp = self.width / self.height
 
+        # projection
+
         if self.projection == "i":
             ysc = sc/asp
             proj = glm.ortho(-sc,sc, -ysc,ysc, self._near, self._far)
@@ -117,15 +138,19 @@ class WorldProjection:
             proj = glm.translate(proj, (0,0,-5))
         else:  # "e"
             proj = glm.perspectiveFov(2., self.width, self.height, self._near, self._far)
-            proj = glm.translate(proj, (0,0,0))
 
-        proj = glm.rotate(proj, self._srotation[0], (1,0,0))
-        proj = glm.rotate(proj, self._srotation[1], (0,1,0))
-        proj = glm.rotate(proj, self._srotation[2], (0,0,1))
-        proj = glm.translate(proj, (0, 0,
+        self._mat_project = proj
+
+        # transformation
+        
+        trans = glm.rotate(glm.mat4(1), self._srotation[0], (1,0,0))
+        trans = glm.rotate(trans, self._srotation[1], (0,1,0))
+        trans = glm.rotate(trans, self._srotation[2], (0,0,1))
+        trans = glm.translate(trans, (0, 0,
                                     [-3,-2,-4,-1]["oipe".index(self.projection)]))
 
-        proj = glm.scale(proj, glm.vec3(max(0.01, 1.+self.zoom/10.)))
-        self._matrix = proj
+        trans = glm.scale(trans, glm.vec3(max(0.01, 1.+self.zoom/10.)))
+
+        self._mat_transform = trans
 
 

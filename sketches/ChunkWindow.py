@@ -286,9 +286,5 @@ class ChunkWindow(pyglet.window.Window):
         if text == "-":
             self.projection.zoom -= 1.
 
-    def get_uv(self, x, y):
-        return ((x / self.width * 2. - 1.) * self.width / self.height,
-                y / self.height * 2. - 1.)
-
     def get_ray(self, x, y):
-        return self.projection.get_ray(self.get_uv(x, y))
+        return self.projection.screen_to_ray(x, y)

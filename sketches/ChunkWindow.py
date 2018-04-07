@@ -102,7 +102,7 @@ class ChunkWindow(pyglet.window.Window):
 
         self.chunk = WorldChunk(self.tileset)
         #self.chunk.from_heightmap(gen_heightmap())
-        self.chunk.from_heightmap(HEIGHTMAP, do_flip_y=True)
+        self.chunk.from_heightmap(HEIGHTMAP1, do_flip_y=True)
 
         # voxel texture
         self.chunktex = None
@@ -133,22 +133,16 @@ class ChunkWindow(pyglet.window.Window):
             self.fbo = None
 
         # player
-        self.player_pos = glm.vec3(10, 15, 10) + .5
+        self.player_pos = glm.vec3(2, 2, 10) + .5
         self.splayer_pos = glm.vec3(self.player_pos)
 
         # projection
-        self.zoom = 0.
-        self.szoom = 0.
-        self.srotate_x = 0.
-        self.srotate_y = 0.
-        self.srotate_z = 0.
-        self.projection = "o"
-        self._init_rotation()
-        self._calc_projection()
-        self.sprojection_matrix = self.projection_matrix
+        self.projection = WorldProjection(self.width, self.height)
+        self.transformation = glm.mat4(1)
+        self.stransformation = glm.mat4(1)
 
+        # time(r)
         self.start_time = time.time()
-
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
         pyglet.clock.set_fps_limit(60)
 
@@ -158,14 +152,13 @@ class ChunkWindow(pyglet.window.Window):
         if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z-.5)).space_type == 0:
             self.player_pos = newpos
 
-        d = dt * 5.
-        self.szoom += d + (self.zoom - self.szoom)
-        self.srotate_x += d * (self.rotate_x-self.srotate_x)
-        self.srotate_y += d * (self.rotate_y-self.srotate_y)
-        self.srotate_z += d * (self.rotate_z-self.srotate_z)
+        d = min(1, dt*5)
         self.splayer_pos += d * (self.player_pos - self.splayer_pos)
-        d = dt * 3.
-        self.sprojection_matrix += d * (self.projection_matrix - self.sprojection_matrix)
+
+        self.projection.update(dt)
+
+        self.transformation = glm.translate(glm.mat4(1), -self.splayer_pos)
+        self.stransformation += d * (self.transformation - self.stransformation)
 
     def check_keys(self, dt):
         dir_mapping = {
@@ -188,8 +181,6 @@ class ChunkWindow(pyglet.window.Window):
         glDisable(GL_CULL_FACE)
         glEnable(GL_DEPTH_TEST)
         self.clear()
-
-        self._calc_projection()
 
         if self.chunktex is None:
             self.chunktex = self.chunk.create_texture3d()
@@ -225,12 +216,14 @@ class ChunkWindow(pyglet.window.Window):
 
         ti = time.time() - self.start_time
 
+        proj = self.projection.matrix * self.stransformation
+
         lightpos = (
            math.sin(ti/2.)*self.chunk.num_x/2.,
            (math.sin(ti/3.)+2.)*self.chunk.num_y/2.,
            self.chunk.num_z+1
         )
-        self.drawable.shader.set_uniform("u_projection", self.sprojection_matrix)
+        self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_time", ti)
         self.drawable.shader.set_uniform("u_lightpos", lightpos)
         self.drawable.shader.set_uniform("u_tex1", 0)
@@ -240,7 +233,7 @@ class ChunkWindow(pyglet.window.Window):
         self.drawable.shader.set_uniform("u_vdf_tex", 3)
         self.drawable.shader.set_uniform("u_vdf_size", self.vdf.size())
         self.drawable.shader.set_uniform("u_vdf_scale", self.vdf_scale)
-        self.drawable.shader.set_uniform("u_player_pos", (self.splayer_pos))
+        self.drawable.shader.set_uniform("u_player_pos", self.splayer_pos)
 
         self.texture.set_active_texture(0)
         self.texture.bind()
@@ -257,7 +250,7 @@ class ChunkWindow(pyglet.window.Window):
         if 0:
             if not hasattr(self, "coord_sys"):
                 self.coord_sys = CoordinateGrid(20)
-            self.coord_sys.drawable.shader.set_uniform("u_projection", self.sprojection_matrix)
+            self.coord_sys.drawable.shader.set_uniform("u_projection", proj)
             self.coord_sys.draw()
 
         if self.fbo:
@@ -270,10 +263,10 @@ class ChunkWindow(pyglet.window.Window):
         #OpenGlBaseObject.dump_instances()
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        self.rotate_x += scroll_y / 30.
+        self.projection._rotation[0] += scroll_y / 30.
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        self.rotate_y += dx / 30.
+        self.projection._rotation[1] += dx / 30.
 
     def on_mouse_press(self, x, y, button, modifiers):
         ro, rd = self.get_ray(x, y)
@@ -284,73 +277,18 @@ class ChunkWindow(pyglet.window.Window):
             self.close()
 
     def on_text(self, text):
-        if text == "o":
-            self.projection = "o"
-            self._init_rotation()
-        if text == "i":
-            self.projection = "i"
-            self._init_rotation()
-            self.rotate_z = glm.pi()/4
-        if text == "p":
-            self.projection = "p"
-            self._init_rotation()
-        if text == "e":
-            self.projection = "e"
-            self._init_rotation()
+        if text in self.projection.PROJECTIONS:
+            self.projection.init(text)
         if text == "f":
             self.set_fullscreen(not self.fullscreen)
         if text == "+":
-            self.zoom += 1.
+            self.projection.zoom += 1.
         if text == "-":
-            self.zoom -= 1.
+            self.projection.zoom -= 1.
 
     def get_uv(self, x, y):
         return ((x / self.width * 2. - 1.) * self.width / self.height,
                 y / self.height * 2. - 1.)
 
     def get_ray(self, x, y):
-        uv = self.get_uv(x, y)
-        ro = glm.vec3(self.projection_matrix[3])
-        m = glm.mat4(self.projection_matrix)
-        m[3][0] = 0
-        m[3][1] = 0
-        m[3][2] = 0
-        rd = m * glm.vec4(glm.normalize(glm.vec3(uv[0], uv[1], -1.2)), 0)
-        return (ro, rd)
-
-    def _calc_projection(self):
-        sc = min(16, self.chunk.num_x) / 1.3
-        asp = self.width / self.height
-
-        if self.projection == "i":
-            ysc = sc/asp
-            proj = glm.ortho(-sc,sc, -ysc,ysc, -sc*4, sc*4)
-        elif self.projection == "o":
-            ysc = sc/asp * .75
-            proj = glm.ortho(-sc,sc, -ysc,ysc, -sc*4, sc*4)
-        elif self.projection == "p":
-            #proj = glm.frustum(-1,1, -1,1, 0.01, 3)
-            proj = glm.perspectiveFov(1., self.width, self.height, 0.01, sc*3.)
-            proj = glm.translate(proj, (0,0,-5))
-        else:  # "e"
-            proj = glm.perspectiveFov(2., self.width, self.height, 0.01, sc*3.)
-            proj = glm.translate(proj, (0,0,0))
-
-        proj = glm.rotate(proj, self.srotate_x, (1,0,0))
-        proj = glm.rotate(proj, self.srotate_y, (0,1,0))
-        proj = glm.rotate(proj, self.srotate_z, (0,0,1))
-        proj = glm.translate(proj, (0,0,#-self.chunk.num_x/2, -self.chunk.num_y/2,
-                                    [-3,-2,-4,-1]["oipe".index(self.projection)]))
-
-        proj = glm.scale(proj, glm.vec3(1.+self.zoom/10.))
-        proj = glm.translate(proj, -self.splayer_pos)
-
-        #print(proj)
-        self.projection_matrix = proj
-
-    def _init_rotation(self):
-        self.rotate_x = -glm.pi()/(3.3 if self.projection=="i" else 4)
-        if self.projection == "e":
-            self.rotate_x = -glm.pi()/2.
-        self.rotate_y = 0#-glm.pi()/4.
-        self.rotate_z = 0
+        return self.projection.get_ray(self.get_uv(x, y))

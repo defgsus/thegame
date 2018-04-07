@@ -92,7 +92,7 @@ float distance_field_shadow_ray(in vec3 ro, in vec3 rd, in float max_dist)
         vec3 pos = ro + t * rd;
         if (any(lessThan(pos, vec3(0))) || any(greaterThanEqual(pos, u_chunksize-1.)))
             break;
-        float h = distance_at(pos) - .2;
+        float h = distance_at(pos) - .3;
         #if 0
             res = min( res, 10.0*h/t );
         #else
@@ -101,7 +101,7 @@ float distance_field_shadow_ray(in vec3 ro, in vec3 rd, in float max_dist)
             res = min(res, 10.0*d/max(0.0,t-y));
             ph = h;
         #endif
-        t += d;
+        t += max(0.1, h);
         if (res < 0.0001 || t >= max_dist) 
             break;
     }
@@ -110,7 +110,7 @@ float distance_field_shadow_ray(in vec3 ro, in vec3 rd, in float max_dist)
 
 // dilla, https://www.shadertoy.com/view/XsjXRG
 float ambient_occlusion(vec3 origin, vec3 ray) {
-    float delta = 0.1;
+    float delta = 0.01;
     const int samples = 6;
     float r = 0.0;
     for (int i = 1; i <= samples; ++i) {
@@ -168,7 +168,7 @@ void main() {
     
     //col += distance_at(vec3(v_pos.xy, u_time))/3.;
     
-    //col *= .8+.4*ambient_occlusion(v_pos.xyz, v_normal);
+    col *= .5+.5*ambient_occlusion(v_pos.xyz, v_normal);
     
     // hit highlight
     vec3 hitbox = abs(u_hit_voxel + .5 - v_pos.xyz);

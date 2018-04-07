@@ -33,14 +33,16 @@ DEFAULT_FRAGMENT_SRC = """
 uniform sampler2D u_tex1;
 
 in vec4 v_pos;
+in vec4 v_color;
 in vec3 v_normal;
 in vec2 v_texcoord;
 
 out vec4 fragColor;
 
 void main() {
-    vec4 col = texture(u_tex1, v_texcoord);
-    col.xyz += v_normal*.3;
+    vec4 col = v_color;
+    col += texture(u_tex1, v_texcoord);
+    //col.xyz += v_normal*.3;
     fragColor = col;
 }
 """

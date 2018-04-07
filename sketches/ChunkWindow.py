@@ -91,6 +91,8 @@ class ChunkWindow(pyglet.window.Window):
             #width=800, height=600,
             vsync=True, **kwargs)
 
+        self.edit_mode = False
+
         self.keys = pyglet.window.key.KeyStateHandler()
         self.push_handlers(self.keys)
 
@@ -132,6 +134,10 @@ class ChunkWindow(pyglet.window.Window):
 
         self.texture2 = Texture2D()
 
+        # edit mesh
+        self.edit_drawable = Drawable()
+        self.cur_edit_voxel = (-1,-1,-1)
+
         # post-fx
         if 1:
             self.fbo = Framebuffer2D(self.width, self.height)
@@ -144,7 +150,7 @@ class ChunkWindow(pyglet.window.Window):
         self.splayer_pos = glm.vec3(self.player_pos)
 
         # projection
-        self.projection = WorldProjection(self.width, self.height)
+        self.projection = WorldProjection(self.width, self.height, WorldProjection.P_ISOMETRIC)
         self.projection.update(.4)
 
         # time(r)
@@ -216,7 +222,9 @@ class ChunkWindow(pyglet.window.Window):
             self.texture2.bind()
             self.texture2.upload_image("./assets/happystone.png")
 
-        if self.fbo:
+        do_postproc = self.fbo and not self.edit_mode
+
+        if do_postproc:
             if self.fbo.is_created():
                 if self.fbo.width != self.width or self.fbo.height != self.height:
                     self.fbo.release()
@@ -260,6 +268,11 @@ class ChunkWindow(pyglet.window.Window):
         # main scene
         self.drawable.draw()
 
+        # edit mesh
+        if self.edit_mode and not self.edit_drawable.is_empty():
+            self.edit_drawable.shader.set_uniform("u_projection", proj)
+            self.edit_drawable.draw()
+
         # click debugger
         if self.click_mesh_changed:
             self.click_mesh_changed = False
@@ -278,7 +291,7 @@ class ChunkWindow(pyglet.window.Window):
 
         # post-proc
 
-        if self.fbo:
+        if do_postproc:
             self.fbo.unbind()
 
             self.fbo.color_texture(0).bind()
@@ -315,9 +328,26 @@ class ChunkWindow(pyglet.window.Window):
                 block.texture = 40
                 self.chunk_changed = True
 
+    def on_mouse_motion(self, x, y, dx, dy):
+        if not self.edit_mode:
+            return
+        ro, rd = self.get_ray(x, y)
+        t, hit = self.chunk.cast_voxel_ray(ro, rd, 300)
+        hit_voxel = tuple(int(x) for x in (ro+t*rd)) if hit else (-1,-1,-1)
+        if hit_voxel != self.cur_edit_voxel:
+            self.edit_drawable.clear()
+            if hit:
+                pos = glm.floor(ro+t*rd)+.5
+                mesh = LineMesh()
+                mesh.add_cube(pos, 1.1)
+                mesh.update_drawable(self.edit_drawable)
+
+
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:
             self.close()
+        elif symbol == pyglet.window.key.F4:
+            self.edit_mode = not self.edit_mode
 
     def on_text(self, text):
         if text in self.projection.PROJECTIONS:

@@ -84,7 +84,7 @@ class WorldProjection:
             self.projection = projection
 
         if self.projection in "oit":
-            self._near = -10
+            self._near = -30
             self._far = 100
         else:
             self._near = 0.01

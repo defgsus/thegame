@@ -1,4 +1,5 @@
 import math
+import glm
 from lib.pector import *
 from lib.opengl.Drawable import Drawable, GL_TRIANGLES, GL_LINES
 
@@ -54,6 +55,31 @@ class AbstractLineMesh:
             draw.set_index(GL_LINES, a)
         return draw
 
+    def add_cube(self, center, size):
+        c = glm.vec3(center)
+        s = glm.vec3(size) / 2.
+
+        verts = (
+            ((-s.x, -s.y, -s.z), (+s.x, -s.y, -s.z)),
+            ((-s.x, +s.y, -s.z), (+s.x, +s.y, -s.z)),
+            ((-s.x, -s.y, +s.z), (+s.x, -s.y, +s.z)),
+            ((-s.x, +s.y, +s.z), (+s.x, +s.y, +s.z)),
+
+            ((-s.x, -s.y, -s.z), (-s.x, +s.y, -s.z)),
+            ((+s.x, -s.y, -s.z), (+s.x, +s.y, -s.z)),
+            ((-s.x, -s.y, +s.z), (-s.x, +s.y, +s.z)),
+            ((+s.x, -s.y, +s.z), (+s.x, +s.y, +s.z)),
+
+            ((-s.x, -s.y, -s.z), (-s.x, -s.y, +s.z)),
+            ((+s.x, -s.y, -s.z), (+s.x, -s.y, +s.z)),
+            ((-s.x, +s.y, -s.z), (-s.x, +s.y, +s.z)),
+            ((+s.x, +s.y, -s.z), (+s.x, +s.y, +s.z)),
+
+        )
+        for v in verts:
+            self.add_line(c+v[0], c+v[1])
+
+
 
 class LineMesh(AbstractLineMesh):
     def __init__(self):
@@ -85,3 +111,4 @@ class LineMesh(AbstractLineMesh):
 
     def lines_array(self):
         return vecs_to_list(self._lines)
+

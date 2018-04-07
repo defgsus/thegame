@@ -7,6 +7,7 @@ class Tileset:
         self.width = 0
         self.height = 0
         self.num_tiles = 0
+        self.padding = .5/16.
         self.image = None
 
     def __str__(self):
@@ -28,9 +29,13 @@ class Tileset:
     def get_uv_quad(self, idx):
         x = idx % self.width
         y = idx // self.width
+        x1 = x + 1 - self.padding
+        y1 = y + 1 - self.padding
+        x = x + self.padding
+        y = y + self.padding
         return (
-            (x / self.width, y / self.height),
-            ((x+1) / self.width, y / self.height),
-            ((x+1) / self.width, (y+1) / self.height),
-            (x / self.width, (y+1) / self.height),
+            (x  / self.width, y  / self.height),
+            (x1 / self.width, y  / self.height),
+            (x1 / self.width, y1 / self.height),
+            (x  / self.width, y1 / self.height),
         )

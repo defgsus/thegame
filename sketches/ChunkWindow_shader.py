@@ -157,7 +157,7 @@ void main() {
     
     //col.x += v_pos.y/10.;
     //col = mix(col, vec3(voxel_at(v_pos.xyz-v_normal*.01)), .8);
-    //col = mix(col, texture2D(u_tex2, v_texcoord).xyz, .5);
+    //col = mix(col, texture2D(u_tex1, v_pos.xy).xyz, .5);
     //col += texture(u_chunktex, v_pos.xyz*2.1).xyz;
     
     //col += sin(u_time+v_pos.x);

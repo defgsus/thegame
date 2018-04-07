@@ -95,14 +95,20 @@ class ChunkWindow(pyglet.window.Window):
         self.push_handlers(self.keys)
 
         self.tileset = Tileset(16, 16)
-        self.tileset.load("./assets/tileset01.png")
+        #self.tileset.load("./assets/tileset01.png")
+        self.tileset.load("./assets/tileset02.png")
         print(self.tileset)
 
         # ---- world chunk ----
 
         self.chunk = WorldChunk(self.tileset)
-        #self.chunk.from_heightmap(gen_heightmap())
-        self.chunk.from_heightmap(HEIGHTMAP1, do_flip_y=True)
+        if 0:
+            #self.chunk.from_heightmap(gen_heightmap())
+            self.chunk.from_heightmap(HEIGHTMAP, do_flip_y=True)
+        else:
+            tiled = TiledImport()
+            tiled.load("./assets/tiled/level01.json")
+            self.chunk.from_tiled(tiled)
 
         # click in world
         self.hit_voxel = (-1,-1,-1)
@@ -199,7 +205,7 @@ class ChunkWindow(pyglet.window.Window):
             self.texture.bind()
             #self.texture.upload_image("./assets/bluenoise.png")
             #self.texture.upload_image("./assets/blueplate.png")
-            self.texture.upload_image_PIL(self.tileset.image)
+            self.texture.upload_image_PIL(self.tileset.image, do_flip_y=True)
             #self.texture.upload([random.randrange(256) for x in range(16*16*3)], 16, input_type=GL_BYTE)
 
         if not self.texture2.is_created():

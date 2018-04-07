@@ -56,6 +56,25 @@ class WorldChunk:
                 plane.append(row)
             self.blocks.append(plane)
 
+    def from_tiled(self, tiled):
+        """from TiledImport"""
+        self.num_x = tiled.width
+        self.num_y = tiled.height
+        self.num_z = tiled.num_layers
+        self.blocks = []
+        for z in range(self.num_z):
+            plane = []
+            for y in range(self.num_y):
+                row = []
+                for x in range(self.num_x):
+                    block = WorldBlock()
+                    tex = tiled.layers[z][(self.num_y-1-y)*self.num_x+x]
+                    block.texture = max(0, tex - 1)
+                    block.space_type = tex > 0
+                    row.append(block)
+                plane.append(row)
+            self.blocks.append(plane)
+
     def block(self, x, y, z):
         if 0 <= z < len(self.blocks):
             plane = self.blocks[z]

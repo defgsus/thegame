@@ -140,7 +140,7 @@ class WorldProjection:
             self._rotation[2] = glm.pi()/4.
 
     def _calc_matrix(self):
-        sc = 16
+        sc = 11
         asp = self.width / self.height
 
         # projection

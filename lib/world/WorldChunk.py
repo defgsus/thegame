@@ -1,3 +1,4 @@
+import os
 import glm
 from pyglet.gl import *
 from lib.geom import TriangleMesh
@@ -29,6 +30,7 @@ class WorldChunk:
         self.num_z = 0
         self.blocks = []
         self.tileset = tileset
+        self.filename = None
 
     def size(self):
         return self.num_x, self.num_y, self.num_z
@@ -57,7 +59,13 @@ class WorldChunk:
             self.blocks.append(plane)
 
     def from_tiled(self, tiled):
-        """from TiledImport"""
+        """from TiledImport or filename"""
+        if isinstance(tiled, str):
+            from .TiledImport import TiledImport
+            self.filename = tiled
+            tiled = TiledImport()
+            tiled.load(self.filename)
+
         self.num_x = tiled.width
         self.num_y = tiled.height
         self.num_z = tiled.num_layers
@@ -100,6 +108,13 @@ class WorldChunk:
         return dens / pow(1 + 2 * radius, 3)
 
     def create_texture3d(self):
+        tex = Texture3D(name="voxels")
+        tex.create()
+        tex = self.update_texture3d(tex)
+        print("voxels", tex)
+        return tex
+
+    def update_texture3d(self, tex):
         values = []
         max_dens = 0.
         for z, plane in enumerate(self.blocks):
@@ -113,11 +128,8 @@ class WorldChunk:
             for i in range(1, len(values), 3):
                 values[i] /= max_dens
 
-        tex = Texture3D(name="chunk")
-        tex.create()
         tex.bind()
         tex.upload(values, self.num_x, self.num_y, self.num_z, GL_RGB, GL_FLOAT)
-        print("chunktex:", tex)
         return tex
 
     def create_mesh(self):
@@ -152,6 +164,14 @@ class WorldChunk:
         return mesh
 
     def create_voxel_distance_field(self, scale):
+        if self.filename:
+            cache_filename = "%s-cached-sdf.json" % self.filename
+            if os.path.exists(cache_filename):
+                if os.path.getmtime(cache_filename) >= os.path.getmtime(self.filename):
+                    vox = VoxelDistanceField(0,0,0)
+                    vox.load_json(cache_filename)
+                    return vox
+
         vox = VoxelDistanceField(self.num_x*scale, self.num_y*scale, self.num_z*scale)
         for z in range(self.num_z):
             for y in range(self.num_y):
@@ -161,6 +181,9 @@ class WorldChunk:
                             for sy in range(scale):
                                 for sx in range(scale):
                                     vox.set_value(x+sx, y+sy, z+sz, 1)
+        vox.calc_distances()
+        if self.filename:
+            vox.save_json(cache_filename)
         return vox
 
     def cast_voxel_ray(self, ro, rd, max_steps=None):

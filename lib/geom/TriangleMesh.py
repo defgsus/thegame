@@ -68,10 +68,9 @@ class AbstractTriangleMesh:
 
     def create_drawable(self):
         draw = Drawable()
-        #print(self.vertices_array())
-        #print(self.triangles_array())
-        #print(self.lines_array())
-        #print(self.normals_array())
+        return self.update_drawable(draw)
+
+    def update_drawable(self, draw):
         a = self.vertices_array()
         if not a:
             raise ValueError("No vertices to make drawable")

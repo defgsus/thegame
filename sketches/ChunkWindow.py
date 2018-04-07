@@ -102,13 +102,13 @@ class ChunkWindow(pyglet.window.Window):
         # ---- world chunk ----
 
         self.chunk = WorldChunk(self.tileset)
+        self.chunk_changed = False
         if 0:
             #self.chunk.from_heightmap(gen_heightmap())
             self.chunk.from_heightmap(HEIGHTMAP, do_flip_y=True)
         else:
             tiled = TiledImport()
-            tiled.load("./assets/tiled/level01.json")
-            self.chunk.from_tiled(tiled)
+            self.chunk.from_tiled("./assets/tiled/level01.json")
 
         # click in world
         self.hit_voxel = (-1,-1,-1)
@@ -122,11 +122,6 @@ class ChunkWindow(pyglet.window.Window):
         # distance map
         self.vdf_scale = 1
         self.vdf = self.chunk.create_voxel_distance_field(self.vdf_scale)
-        if 1:
-            self.vdf.calc_distances()
-            self.vdf.save_json("./temp/vdf.json")
-        else:
-            self.vdf.load_json("./temp/vdf.json")
         self.vdf_tex = None
 
         # mesh and texture
@@ -191,10 +186,18 @@ class ChunkWindow(pyglet.window.Window):
     def on_draw(self):
         glDisable(GL_CULL_FACE)
         glEnable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         self.clear()
 
         if self.chunktex is None:
             self.chunktex = self.chunk.create_texture3d()
+
+        if self.chunk_changed:
+            self.chunk_changed = False
+            self.chunk.update_texture3d(self.chunktex)
+            self.mesh = self.chunk.create_mesh()
+            self.mesh.update_drawable(self.drawable)
 
         if self.vdf_tex is None:
             self.vdf_tex = self.vdf.create_texture3d("vdf")
@@ -302,8 +305,15 @@ class ChunkWindow(pyglet.window.Window):
 
         t, hit = self.chunk.cast_voxel_ray(ro, rd, 1000)
         if hit:
-            print(hit, t, ro + t * rd)
-            self.hit_voxel = glm.floor(ro+t*rd)
+            pos = glm.floor(ro + t * rd)
+            self.hit_voxel = pos
+            pos = tuple(int(x) for x in pos)
+            block = self.chunk.block(*pos)
+            print(hit, t, pos, block.texture)
+            if 0:
+                block.space_type = 1
+                block.texture = 40
+                self.chunk_changed = True
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:

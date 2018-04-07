@@ -175,6 +175,7 @@ void main() {
     float hit = clamp(1.4-dot(hitbox, hitbox), 0., 1.);
     col = (col * (1.+pow(hit, 2.))) + .3*u_lightpos.w*pow(hit, 3.);
     
-    fragColor = vec4(col, 1);
+    col = mix(vec3(1), col, tex.w);
+    fragColor = vec4(col, tex.w);
 }
 """

@@ -224,7 +224,7 @@ class ChunkWindow(pyglet.window.Window):
         proj = self.projection.matrix
 
         lightpos = glm.vec3(self.hit_voxel) + (.5,.5,1.5)
-        lightamt = .94+..6*math.sin(ti*2.)
+        lightamt = .94+.06*math.sin(ti*2.)
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_time", ti)
         self.drawable.shader.set_uniform("u_lightpos", glm.vec4(lightpos, lightamt))

@@ -149,8 +149,10 @@ void main() {
     
     vec3 light = vec3(0);
     light += u_lightpos.w * lighting(u_lightpos.xyz, v_pos.xyz, v_normal, 0);
+    // moonlight
     //light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, v_normal, 1);
-    //light += .7*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, v_normal, 0);
+    // player light
+    light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, v_normal, 0);
     col *= light;
     
     //col.x += v_pos.y/10.;

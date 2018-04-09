@@ -16,7 +16,19 @@ def vecs_to_list(vecs):
 
 class AbstractTriangleMesh:
 
+    def create_attribute(self, name, size):
+        raise NotImplementedError
+
+    def attribute_names(self):
+        raise NotImplementedError
+
+    def attribute_size(self, name):
+        raise NotImplementedError
+
     def vertices_array(self):
+        raise NotImplementedError
+
+    def attributes_array(self, name):
         raise NotImplementedError
 
     def texcoords_array(self):
@@ -103,6 +115,12 @@ class AbstractTriangleMesh:
         a = self.lines_array()
         if a:
             draw.set_index(GL_LINES, a)
+
+        for aname in self.attribute_names():
+            a = self.attributes_array(aname)
+            if a:
+                draw.set_attribute(aname, self.attribute_size(aname), a)
+
         return draw
 
     def create_height_map(self, width, height, function, scale=1.,
@@ -166,9 +184,19 @@ class TriangleMesh(AbstractTriangleMesh):
     def __init__(self):
         self._vertices = []
         self._texcoords = []
+        self._attributes = dict()
         self._triangles = []
         self._lines = []
         self._quads = []
+
+    def create_attribute(self, name, size):
+        self._attributes[name] = {"size": size, "values": []}
+
+    def attribute_names(self):
+        return self._attributes.keys()
+
+    def attribute_size(self, name):
+        return self._attributes[name]["size"]
 
     def add_vertex(self, pos):
         self._vertices.append(pos)
@@ -177,6 +205,9 @@ class TriangleMesh(AbstractTriangleMesh):
     def add_texcoord(self, uv):
         self._texcoords.append(uv)
         return len(self._texcoords)-1
+
+    def add_attribute(self, name, value):
+        self._attributes[name]["values"].append(value)
 
     def add_triangle_idx(self, i1, i2, i3):
         if i1 == i2 or i1 == i3 or i2 == i3:
@@ -200,6 +231,9 @@ class TriangleMesh(AbstractTriangleMesh):
 
     def texcoords_array(self):
         return vecs_to_list(self._texcoords)
+
+    def attributes_array(self, name):
+        return vecs_to_list(self._attributes[name]["values"])
 
     def triangles_array(self):
         return vecs_to_list(self._triangles)

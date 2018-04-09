@@ -12,10 +12,12 @@ uniform vec3 u_vdf_size;
 uniform float u_vdf_scale;
 uniform vec3 u_player_pos;
 uniform vec3 u_hit_voxel;
+uniform int u_debug_view;
 
 in vec4 v_pos;
 in vec3 v_normal;
 in vec2 v_texcoord;
+in vec3 v_ambient;
 
 out vec4 fragColor;
 
@@ -143,39 +145,51 @@ void main() {
     vec4 tex = texture2D(u_tex1, v_texcoord);
         
     vec3 col = vec3(0);
-    //col = mix(col, poscol(v_pos), .4);
-    //col = mix(col, v_normal*.5+.5, .5);
-    col = mix(col, tex.rgb, 1.);
     
-    vec3 light = vec3(0);
-    light += u_lightpos.w * lighting(u_lightpos.xyz, v_pos.xyz, v_normal, 0);
-    // moonlight
-    //light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, v_normal, 1);
-    // player light
-    light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, v_normal, 0);
-    col *= light;
+    if (u_debug_view == 0) 
+    {
+        //col = mix(col, poscol(v_pos), .4);
+        //col = mix(col, v_normal*.5+.5, .5);
+        col = mix(col, tex.rgb, 1.);
+        
+        vec3 light = vec3(0);
+        light += u_lightpos.w * lighting(u_lightpos.xyz, v_pos.xyz, v_normal, 0);
+        // moonlight
+        //light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, v_normal, 1);
+        // player light
+        light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, v_normal, 0);
+        col *= light;
+        
+        //col.x += v_pos.y/10.;
+        //col = mix(col, vec3(voxel_at(v_pos.xyz-v_normal*.01)), .8);
+        //col = mix(col, texture2D(u_tex1, v_pos.xy).xyz, .5);
+        //col += texture(u_chunktex, v_pos.xyz*2.1).xyz;
+        
+        //col += sin(u_time+v_pos.x);
+        //col = mix(col, vec3(v_texcoord, 0.), .9);
+        //col = vec3(lightdot);  
+        
+        //col *= vec3(1. - voxel_density(v_pos.xyz));
+        
+        //col += distance_at(vec3(v_pos.xy, u_time))/3.;
+        
+        //col *= .5+.5*ambient_occlusion(v_pos.xyz, v_normal);
+        col *= v_ambient;
+        
+        // hit highlight
+        vec3 hitbox = abs(u_hit_voxel + .5 - v_pos.xyz);
+        float hit = clamp(1.4-dot(hitbox, hitbox), 0., 1.);
+        col = (col * (1.+pow(hit, 2.))) + .3*u_lightpos.w*pow(hit, 3.);
+        
+        col = mix(vec3(1), col, tex.w);
+    }
     
-    //col.x += v_pos.y/10.;
-    //col = mix(col, vec3(voxel_at(v_pos.xyz-v_normal*.01)), .8);
-    //col = mix(col, texture2D(u_tex1, v_pos.xy).xyz, .5);
-    //col += texture(u_chunktex, v_pos.xyz*2.1).xyz;
+    if (u_debug_view == 1) 
+    {
+        col = vec3(1);
+        col *= v_ambient;
+    }
     
-    //col += sin(u_time+v_pos.x);
-    //col = mix(col, vec3(v_texcoord, 0.), .9);
-    //col = vec3(lightdot);  
-    
-    //col *= vec3(1. - voxel_density(v_pos.xyz));
-    
-    //col += distance_at(vec3(v_pos.xy, u_time))/3.;
-    
-    col *= .5+.5*ambient_occlusion(v_pos.xyz, v_normal);
-    
-    // hit highlight
-    vec3 hitbox = abs(u_hit_voxel + .5 - v_pos.xyz);
-    float hit = clamp(1.4-dot(hitbox, hitbox), 0., 1.);
-    col = (col * (1.+pow(hit, 2.))) + .3*u_lightpos.w*pow(hit, 3.);
-    
-    col = mix(vec3(1), col, tex.w);
     fragColor = vec4(col, tex.w);
 }
 """

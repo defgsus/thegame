@@ -12,11 +12,13 @@ in vec4 a_position;
 in vec3 a_normal;
 in vec4 a_color;
 in vec2 a_texcoord;
+in vec3 a_ambient;
 
 out vec4 v_pos;
 out vec3 v_normal;
 out vec4 v_color;
 out vec2 v_texcoord;
+out vec3 v_ambient;
 
 void main()
 {
@@ -24,6 +26,7 @@ void main()
     v_normal = a_normal;
     v_color = a_color;
     v_texcoord = a_texcoord;
+    v_ambient = a_ambient;
     gl_Position = u_projection * a_position;
 }
 """

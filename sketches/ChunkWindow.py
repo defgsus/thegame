@@ -92,6 +92,7 @@ class ChunkWindow(pyglet.window.Window):
             vsync=True, **kwargs)
 
         self.edit_mode = False
+        self.debug_view = 0
 
         self.keys = pyglet.window.key.KeyStateHandler()
         self.push_handlers(self.keys)
@@ -254,6 +255,7 @@ class ChunkWindow(pyglet.window.Window):
         self.drawable.shader.set_uniform("u_vdf_scale", self.vdf_scale)
         self.drawable.shader.set_uniform("u_player_pos", self.splayer_pos)
         self.drawable.shader.set_uniform("u_hit_voxel", self.hit_voxel)
+        self.drawable.shader.set_uniform("u_debug_view", self.debug_view)
 
         self.texture.set_active_texture(0)
         self.texture.bind()
@@ -358,6 +360,8 @@ class ChunkWindow(pyglet.window.Window):
             self.projection.zoom += 1.
         if text == "-":
             self.projection.zoom -= 1.
+        if text == "d":
+            self.debug_view = (self.debug_view + 1) % 2
 
     def get_ray(self, x, y):
         return self.projection.screen_to_ray(x, y)

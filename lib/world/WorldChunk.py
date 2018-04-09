@@ -134,6 +134,13 @@ class WorldChunk:
 
     def create_mesh(self):
         mesh = TriangleMesh()
+        mesh.create_attribute("a_ambient", 3)
+
+        def add_quad(p1, p2, p3, p4, *uvquad):
+            mesh.add_quad(p1, p2, p3, p4, *uvquad)
+            for p in (p1, p2, p3, p1, p3, p4):
+                mesh.add_attribute("a_ambient", self.get_ambient_color(*p))
+
         for z in range(self.num_z):
             z1 = z + 1
             for y in range(self.num_y):
@@ -143,25 +150,79 @@ class WorldChunk:
                     b = self.block(x, y, z)
                     if b.space_type:
                         uvquad = self.tileset.get_uv_quad(b.texture)
-                        # bottom
-                        if not self.is_wall(x, y, z-1, self.TOP):
-                            mesh.add_quad((x, y1, z), (x1, y1, z), (x1, y, z), (x, y, z), *uvquad)
-                        # top
-                        if not self.is_wall(x, y, z+1, self.BOTTOM):
-                            mesh.add_quad((x, y, z1), (x1, y, z1), (x1, y1, z1), (x, y1, z1), *uvquad)
-                        # front
-                        if not self.is_wall(x, y-1, z, self.BACK):
-                            mesh.add_quad((x, y, z), (x1, y, z), (x1, y, z1), (x, y, z1), *uvquad)
-                        # back
-                        if not self.is_wall(x, y+1, z, self.FRONT):
-                            mesh.add_quad((x, y1, z), (x, y1, z1), (x1, y1, z1), (x1, y1, z), *uvquad)
-                        # left
-                        if not self.is_wall(x-1, y, z, self.RIGHT):
-                            mesh.add_quad((x, y1, z), (x, y, z), (x, y, z1), (x, y1, z1), *uvquad)
-                        # right
-                        if not self.is_wall(x+1, y, z, self.LEFT):
-                            mesh.add_quad((x1, y, z), (x1, y1, z), (x1, y1, z1), (x1, y, z1), *uvquad)
+                        if 1:
+                            # bottom
+                            if not self.is_wall(x, y, z-1, self.TOP):
+                                add_quad((x, y1, z), (x1, y1, z), (x1, y, z), (x, y, z), *uvquad)
+                            # top
+                            if not self.is_wall(x, y, z+1, self.BOTTOM):
+                                add_quad((x, y, z1), (x1, y, z1), (x1, y1, z1), (x, y1, z1), *uvquad)
+                            # front
+                            if not self.is_wall(x, y-1, z, self.BACK):
+                                add_quad((x, y, z), (x1, y, z), (x1, y, z1), (x, y, z1), *uvquad)
+                            # back
+                            if not self.is_wall(x, y+1, z, self.FRONT):
+                                add_quad((x, y1, z), (x, y1, z1), (x1, y1, z1), (x1, y1, z), *uvquad)
+                            # left
+                            if not self.is_wall(x-1, y, z, self.RIGHT):
+                                add_quad((x, y1, z), (x, y, z), (x, y, z1), (x, y1, z1), *uvquad)
+                            # right
+                            if not self.is_wall(x+1, y, z, self.LEFT):
+                                add_quad((x1, y, z), (x1, y1, z), (x1, y1, z1), (x1, y, z1), *uvquad)
+                        else:
+                            v = [[[[],[]],[[],[]]],[[[],[]],[[],[]]]]
+                            for k in range(2):
+                                for j in range(2):
+                                    for i in range(2):
+                                        v[i][j][k] = mesh.add_vertex((x, y, z))
+                                        mesh.add_attribute("a_ambient", self.get_ambient_color(x, y, z))
+                            mesh.add_quad_idx(v[0][1][0], v[1][1][0], v[1][0][0], v[0][0][0])
+        #print("LEN", len(mesh._vertices), len(mesh._attributes["a_ambient"]["values"]))
         return mesh
+
+    def get_ambient_color(self, x, y, z):
+        tests = (
+            (x-1, y+0, z+0, self.RIGHT),
+            (x-1, y-1, z+0, self.RIGHT),
+            (x+0, y+0, z+0, self.LEFT),
+            (x+0, y-1, z+0, self.LEFT),
+
+            (x-1, y-1, z+1, self.BOTTOM),
+            (x+0, y-1, z+1, self.BOTTOM),
+            (x-1, y+0, z+1, self.BOTTOM),
+            (x+0, y+0, z+1, self.BOTTOM),
+
+            (x-1, y-1, z+2, self.BOTTOM),
+            (x+0, y-1, z+2, self.BOTTOM),
+            (x-1, y+0, z+2, self.BOTTOM),
+            (x+0, y+0, z+2, self.BOTTOM),
+
+            (x-2, y-2, z+3, self.BOTTOM),
+            (x-1, y-2, z+3, self.BOTTOM),
+            (x+0, y-2, z+3, self.BOTTOM),
+            (x+1, y-2, z+3, self.BOTTOM),
+
+            (x-2, y-1, z+3, self.BOTTOM),
+            (x-1, y-1, z+3, self.BOTTOM),
+            (x+0, y-1, z+3, self.BOTTOM),
+            (x+1, y-1, z+3, self.BOTTOM),
+
+            (x-2, y+0, z+3, self.BOTTOM),
+            (x-1, y+0, z+3, self.BOTTOM),
+            (x+0, y+0, z+3, self.BOTTOM),
+            (x+1, y+0, z+3, self.BOTTOM),
+
+            (x-2, y+1, z+3, self.BOTTOM),
+            (x-1, y+1, z+3, self.BOTTOM),
+            (x+0, y+1, z+3, self.BOTTOM),
+            (x+1, y+1, z+3, self.BOTTOM),
+        )
+        count = 0
+        for t in tests:
+            if self.is_wall(*t):
+                count += 1
+        count = 1. - count / len(tests)
+        return (count, count, count)
 
     def create_voxel_distance_field(self, scale):
         if self.filename:

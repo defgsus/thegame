@@ -49,12 +49,13 @@ class Tileset:
         tex.create()
         tex.bind()
         tex.upload(self.values, self.width*self.tile_width, self.height*self.tile_height,
-                   input_format=GL_RGBA, input_type=GL_FLOAT)
+                   input_format=GL_RGBA, input_type=GL_FLOAT, do_flip_y=True)
         return tex
 
     def get_uv_quad(self, idx):
         x = idx % self.width
         y = idx // self.width
+        y = self.width - 1 - y
         x1 = x + 1 - self.padding
         y1 = y + 1 - self.padding
         x = x + self.padding
@@ -87,7 +88,7 @@ class Tileset:
             for x in range(self.tile_width):
                 n = glm.normalize((
                     self._get_pixel(tilex, tiley, x+1, y) - self._get_pixel(tilex, tiley, x-1, y),
-                    self._get_pixel(tilex, tiley, x, y+1) - self._get_pixel(tilex, tiley, x, y-1),
+                    self._get_pixel(tilex, tiley, x, y-1) - self._get_pixel(tilex, tiley, x, y+1),
                     .5))
                 normals.append(n)
 

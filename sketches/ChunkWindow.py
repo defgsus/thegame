@@ -7,6 +7,7 @@ from lib.opengl import *
 from lib.geom import *
 from lib.world import *
 from lib.world.ChunkRenderer_shader import vert_src, frag_src
+from lib.ai import *
 
 
 class ChunkWindow(pyglet.window.Window):
@@ -65,6 +66,16 @@ class ChunkWindow(pyglet.window.Window):
         # edit mesh
         self.edit_drawable = Drawable()
         self.cur_edit_voxel = (-1,-1,-1)
+
+        # waypoints test
+        self.waypoints = self.chunk.create_waypoints()
+        self.waypoints_mesh = self.waypoints.create_mesh(color=(.3,.3,.3))
+        self.waypoints_drawable = Drawable()
+        self.waypoint1 = None
+        self.waypoint2 = None
+        self.path = None
+        self.path_changed = False
+        self.path_drawable = Drawable()
 
         # post-fx
         if 1:
@@ -212,6 +223,35 @@ class ChunkWindow(pyglet.window.Window):
             self.click_drawable.shader.set_uniform("u_projection", proj)
             self.click_drawable.draw()
 
+        # waypoints debugger
+        if self.edit_mode:
+            if not self.waypoints_mesh.is_empty():
+                print("waypoint mesh", len(self.waypoints_mesh.lines_array()))
+                self.waypoints_mesh.update_drawable(self.waypoints_drawable)
+                self.waypoints_mesh.clear()
+
+            if not self.waypoints_drawable.is_empty():
+                mat = glm.translate(proj, (.5,.5,.2))
+                self.waypoints_drawable.shader.set_uniform("u_projection", mat)
+                self.waypoints_drawable.draw()
+
+            if self.path_changed:
+                if self.path:
+                    mesh = LineMesh()
+                    prev_node = None
+                    for node in self.path:
+                        if prev_node is not None:
+                            mesh.add_line(self.waypoints.id_to_pos[prev_node], self.waypoints.id_to_pos[node])
+                        prev_node = node
+                    mesh.update_drawable(self.path_drawable)
+                else:
+                    self.path_drawable.clear()
+
+            if not self.path_drawable.is_empty():
+                mat = glm.translate(proj, (.6,.6,.4))
+                self.path_drawable.shader.set_uniform("u_projection", mat)
+                self.path_drawable.draw()
+
         # coordinate system
         if 0:
             if not hasattr(self, "coord_sys"):
@@ -250,13 +290,27 @@ class ChunkWindow(pyglet.window.Window):
         if hit:
             pos = glm.floor(ro + t * rd)
             self.hit_voxel = pos
-            pos = tuple(int(x) for x in pos)
-            block = self.chunk.block(*pos)
-            print(hit, t, pos, block.texture)
+            ihit = tuple(int(x) for x in pos)
+            block = self.chunk.block(*ihit)
+            #print(hit, t, ihit, block.texture)
             if 0:
                 block.space_type = 1
                 block.texture = 40
                 self.chunk_changed = True
+
+            if self.edit_mode:
+                node = self.waypoints.closest_node((ihit[0], ihit[1], 1))
+                if self.waypoint1 is None:
+                    self.waypoint1 = node
+                else:
+                    if self.waypoint2 is None:
+                        self.waypoint2 = node
+                        pathfinder = AStar(self.waypoints)
+                        self.path = pathfinder.search(self.waypoint1, self.waypoint2)
+                        self.path_changed = True
+
+                    self.waypoint1 = None
+                    self.waypoint2 = None
 
     def on_mouse_motion(self, x, y, dx, dy):
         if not self.edit_mode:

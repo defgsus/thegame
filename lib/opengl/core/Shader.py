@@ -114,7 +114,9 @@ class Shader(OpenGlBaseObject):
         glGetProgramInfoLog(self._handle, loglen, None, infolog)
         self._log += infolog.value.decode("utf-8") + "\n"
 
-        print(self._log.strip())
+        self._log = self._log.strip()
+        if self._log:
+            print(self._log)
 
         self._get_uniforms()
         self._get_attributes()
@@ -156,7 +158,7 @@ class Shader(OpenGlBaseObject):
             uniform_type = GLenum(0)
             glGetActiveUniform(self._handle, i, max_name_length, ctypes.byref(name_length),
                                ctypes.byref(uniform_size), ctypes.byref(uniform_type), namebuf)
-            print(namebuf.value, uniform_type.value)
+            #print(namebuf.value, uniform_type.value)
             location = glGetUniformLocation(self._handle, namebuf)
             uniform = ShaderUniform(namebuf.value.decode("utf-8"), uniform_type.value, uniform_size.value, location)
             self._uniforms[uniform.name] = uniform

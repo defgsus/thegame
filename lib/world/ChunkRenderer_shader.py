@@ -191,20 +191,31 @@ vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal, in int do_voxel) {
     return clamp(vec3(d,d,d), 0., 1.);
 }
 
+vec3 environment_color(in vec3 dir) {
+    float h = dir.z;
+    
+    vec3 high_sky = vec3(.1, .4, .7);
+    vec3 low_sky = vec3(.5, .3, .9);
+    vec3 sub = vec3(0);
+    
+    vec3 col = mix(low_sky, high_sky, clamp(h*5., 0., 1.));
+    col = mix(col, sub, clamp(-h*5., 0., 1.));
+    
+    return col;
+}
+
 void main() {
     vec4 tex = texture2D(u_tex1, v_texcoord);
         
     vec3 col = vec3(0);
     
+    vec3 normal = vec3(0, 0, 1);        
+    vec2 v_normcoord = v_texcoord + vec2(.5, 0.);
+    normal = normalize(normal*0. + texture2D(u_tex1, v_normcoord).xyz);
+    normal = v_normal_space * normal;
+    
     if (u_debug_view == 0) 
-    {
-        vec3 normal = vec3(0, 0, 1);
-        
-        vec2 v_normcoord = v_texcoord + vec2(.5, 0.);
-        normal = normalize(normal*0. + texture2D(u_tex1, v_normcoord).xyz);
-
-        normal = v_normal_space * normal;
-            
+    {    
         //col = mix(col, poscol(v_pos), .4);
         //col = mix(col, normal*.5+.5, .5);
         col = mix(col, tex.rgb, 1.);
@@ -216,6 +227,8 @@ void main() {
         // player light
         light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, normal, 0);
         col *= light;
+        
+        col += .09*environment_color(normal);
         
         //col.x += v_pos.y/10.;
         //col = mix(col, vec3(voxel_at(v_pos.xyz-normal*.01)), .8);
@@ -243,7 +256,10 @@ void main() {
     
     if (u_debug_view == 1) 
     {
-        col = vec3(1);
+        col = vec3(.6);
+        
+        col += .2*environment_color(normal);
+        
         col *= v_ambient;
     }
     

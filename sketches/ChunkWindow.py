@@ -6,81 +6,7 @@ from pyglet.gl import *
 from lib.opengl import *
 from lib.geom import *
 from lib.world import *
-
-from .ChunkWindow_shader import frag_src
-
-
-HEIGHTMAP2 = [
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 5, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-]
-
-HEIGHTMAP1 = [
-    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
-    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [3, 0, 5, 0, 0, 0, 0, 0, 0, 0],
-    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [3, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-    [2, 0, 0, 1, 1, 1, 0, 1, 0, 0],
-    [3, 0, 1, 2, 2, 2, 2, 4, 1, 0],
-    [2, 0, 1, 2, 1, 1, 0, 1, 0, 0],
-    [0, 0, 1, 2, 1, 0, 0, 0, 0, 0],
-    [0, 0, 1, 2, 1, 0, 0, 0, 0, 0],
-    [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-]
-
-_ = 0
-HEIGHTMAP = [
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 2, _, _, _, _, _, _, 3, _, _, _, 2, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 3, _, _, _, _, _, _, 2, _, _, _, 3, _, _, _, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, _, _, _],
-    [_, _, 2, _, _, _, _, _, _, 3, _, 1, _, 2, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 3, 2, 2, 2, _, _, _, 2, _, 1, _, 3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 2, _, _, _, _, _, _, 3, _, 2, 3, 2, _, _, _, _, _, 3, _, _, _, _, _, 2, _, _, _, _, _, _, _],
-    [_, _, 3, _, _, _, _, _, _, _, _, 1, _, 3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 2, _, _, _, _, _, _, _, _, 1, _, 2, _, _, _, _, _, _, _, _, 6, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 3, _, _, _, _, _, _, _, _, _, _, 3, _, _, _, 5, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 3, _, _, 1, 2, 3, 2, 1, _, _, _, 3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1, _, _, _, _],
-    [_, _, 2, _, _, 1, _, _, _, 1, _, _, _, 2, _, 2, _, _, _, _, 4, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 3, _, _, 1, _, _, _, 1, _, _, _, 3, _, _, _, _, _, _, _, _, _, 7, _, _, _, _, _, _, _, _, _],
-    [_, _, 2, _, _, _, _, _, _, _, _, _, _, 2, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 7, 6, 7, _, _, _, _, _, _, 7, 6, 7, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 6, 4, 6, _, _, _, _, _, _, 6, 5, 6, _, _, _, _, _, _, _, _, 2, _, _, _, _, _, _, _, _, _, _],
-    [_, _, 7, 6, 7, 2, 3, _, _, 3, 2, 7, 6, 7, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, _, _, 1, _, _, 1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, _, _, 1, _, _, 1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, 4, 4, _, _, _, _, 4, 4, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, 4, 4, _, _, _, _, 4, 4, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
-]
-
-
-def gen_heightmap(w=16, h=32):
-    import random
-    rows = []
-    for y in range(h):
-        row = []
-        for x in range(w):
-            h = 0
-            h += (math.sin(x/5.)+math.cos(y/7))*2.6
-            if random.randrange(4) == 0:
-                h = random.randrange(5)
-            row.append(max(0, int(h)))
-        rows.append(row)
-    return rows
+from lib.world.ChunkRenderer_shader import vert_src, frag_src
 
 
 class ChunkWindow(pyglet.window.Window):
@@ -128,9 +54,10 @@ class ChunkWindow(pyglet.window.Window):
         self.vdf_tex = None
 
         # mesh and texture
-        self.texture = Texture2D()
+        self.texture = None
         self.mesh = self.chunk.create_mesh()
         self.drawable = self.mesh.create_drawable()
+        self.drawable.shader.set_vertex_source(vert_src)
         self.drawable.shader.set_fragment_source(frag_src)
 
         self.texture2 = Texture2D()
@@ -184,6 +111,8 @@ class ChunkWindow(pyglet.window.Window):
         for symbol in dir_mapping:
             if self.keys[symbol]:
                 dir = dir_mapping[symbol]
+                if self.projection.projection == self.projection.P_ISOMETRIC:
+                    dir = glm.vec3(glm.rotate(glm.mat4(1), -glm.pi()/4., (0,0,1)) * glm.vec4(dir, 0))
                 #dir = self.projection_matrix * glm.vec4(dir, 0.)
                 #dir = dir.xyz;
                 newpos = self.player_pos + dir * min(1, dt*10.)
@@ -210,12 +139,11 @@ class ChunkWindow(pyglet.window.Window):
             self.vdf_tex = self.vdf.create_texture3d("vdf")
             print(self.vdf_tex)
 
-        if not self.texture.is_created():
-            self.texture.create()
-            self.texture.bind()
+        if self.texture is None:
+            self.texture = self.tileset.create_texture2d()
             #self.texture.upload_image("./assets/bluenoise.png")
             #self.texture.upload_image("./assets/blueplate.png")
-            self.texture.upload_image_PIL(self.tileset.image, do_flip_y=True)
+            #self.texture.upload_image_PIL(self.tileset.image, do_flip_y=True)
             #self.texture.upload([random.randrange(256) for x in range(16*16*3)], 16, input_type=GL_BYTE)
 
         if not self.texture2.is_created():

@@ -6,6 +6,9 @@ class Texture2D(TextureBase):
     def __init__(self, name=None):
         super(Texture2D, self).__init__(GL_TEXTURE_2D, name=name)
 
+    def __str__(self):
+        return "Texture2D(%s, %sx%s)" % (self.name, self.width, self.height)
+
     def upload(self, values, width, height, input_format=GL_RGB, input_type=GL_FLOAT, gpu_format=GL_RGBA, mipmap_level=0,
                do_flip_y=False):
         """Upload linear data in `values`. height == len(values) / width / typesize(input_format).
@@ -59,7 +62,6 @@ class Texture2D(TextureBase):
             num_chan = len(image.getpixel((0, 0)))
         except TypeError:
             num_chan = 1
-        print(image.getpixel((0, 0)))
         input_format = [GL_LUMINANCE, GL_RG, GL_RGB, GL_RGBA][num_chan-1]
 
         values = image.tobytes("raw")

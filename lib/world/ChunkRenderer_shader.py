@@ -1,5 +1,49 @@
-frag_src = """#version 130
-#line 2
+vert_src = """
+#version 140
+#line 3
+uniform mat4 u_projection;
+
+in vec4 a_position;
+in vec3 a_normal;
+in vec4 a_color;
+in vec2 a_texcoord;
+in vec3 a_ambient;
+
+out vec4 v_pos;
+out vec3 v_normal;
+out vec4 v_color;
+out vec2 v_texcoord;
+out vec3 v_ambient;
+out mat3 v_normal_space;
+
+/** Returns the matrix to multiply the light-direction normal */
+mat3 calc_light_matrix(mat4 transform)
+{
+    // normal in world coordinates
+    vec3 norm = transpose(inverse(mat3(transform))) * a_normal;
+
+    vec3 tangent =  vec3(-norm.z, -norm.y,  norm.x);
+    vec3 binormal = vec3(-norm.x,  norm.z, -norm.y);
+    return mat3(tangent, -binormal, norm);
+}
+
+void main()
+{
+    v_pos = a_position;
+    v_normal = a_normal;
+    v_color = a_color;
+    v_texcoord = a_texcoord;
+    v_ambient = a_ambient;
+    v_normal_space = calc_light_matrix(mat4(1));
+    gl_Position = u_projection * a_position;
+}
+
+"""
+
+
+frag_src = """
+#version 130
+#line 46
 uniform sampler2D u_tex1;
 uniform sampler2D u_tex2;
 uniform sampler3D u_chunktex;
@@ -18,6 +62,7 @@ in vec4 v_pos;
 in vec3 v_normal;
 in vec2 v_texcoord;
 in vec3 v_ambient;
+in mat3 v_normal_space;
 
 out vec4 fragColor;
 
@@ -129,7 +174,7 @@ vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal, in int do_voxel) {
     vec3 lightnorm = normalize(lightpos - pos);
     float lightdist = distance(pos, lightpos);
     float d = max(0., dot(normal, lightnorm));
-    d = pow(d, .5);
+    
     if (d > 0.)
     {
         if (do_voxel==1) 
@@ -138,7 +183,12 @@ vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal, in int do_voxel) {
             d *= distance_field_shadow_ray(pos+0.1*normal, lightnorm, lightdist);
     }
     
-    return clamp(vec3(d,d,pow(d,1.3)), .3, 1.);
+    float phong = .1 + .9 * d;
+    float spec = pow(d, 5.);
+    
+    d = phong + spec*2.;
+    
+    return clamp(vec3(d,d,d), 0., 1.);
 }
 
 void main() {
@@ -148,20 +198,27 @@ void main() {
     
     if (u_debug_view == 0) 
     {
+        vec3 normal = vec3(0, 0, 1);
+        
+        vec2 v_normcoord = v_texcoord + vec2(.5, 0.);
+        normal = normalize(normal*0. + texture2D(u_tex1, v_normcoord).xyz);
+
+        normal = v_normal_space * normal;
+            
         //col = mix(col, poscol(v_pos), .4);
-        //col = mix(col, v_normal*.5+.5, .5);
+        //col = mix(col, normal*.5+.5, .5);
         col = mix(col, tex.rgb, 1.);
         
         vec3 light = vec3(0);
-        light += u_lightpos.w * lighting(u_lightpos.xyz, v_pos.xyz, v_normal, 0);
+        light += u_lightpos.w * lighting(u_lightpos.xyz, v_pos.xyz, normal, 0);
         // moonlight
-        //light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, v_normal, 1);
+        //light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, normal, 1);
         // player light
-        light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, v_normal, 0);
+        light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, normal, 0);
         col *= light;
         
         //col.x += v_pos.y/10.;
-        //col = mix(col, vec3(voxel_at(v_pos.xyz-v_normal*.01)), .8);
+        //col = mix(col, vec3(voxel_at(v_pos.xyz-normal*.01)), .8);
         //col = mix(col, texture2D(u_tex1, v_pos.xy).xyz, .5);
         //col += texture(u_chunktex, v_pos.xyz*2.1).xyz;
         
@@ -173,7 +230,7 @@ void main() {
         
         //col += distance_at(vec3(v_pos.xy, u_time))/3.;
         
-        //col *= .5+.5*ambient_occlusion(v_pos.xyz, v_normal);
+        //col *= .5+.5*ambient_occlusion(v_pos.xyz, normal);
         col *= v_ambient;
         
         // hit highlight

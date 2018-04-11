@@ -150,33 +150,25 @@ class WorldChunk:
                     b = self.block(x, y, z)
                     if b.space_type:
                         uvquad = self.tileset.get_uv_quad(b.texture)
-                        if 1:
-                            # bottom
-                            if not self.is_wall(x, y, z-1, self.TOP):
-                                add_quad((x, y1, z), (x1, y1, z), (x1, y, z), (x, y, z), *uvquad)
-                            # top
-                            if not self.is_wall(x, y, z+1, self.BOTTOM):
-                                add_quad((x, y, z1), (x1, y, z1), (x1, y1, z1), (x, y1, z1), *uvquad)
-                            # front
-                            if not self.is_wall(x, y-1, z, self.BACK):
-                                add_quad((x, y, z), (x1, y, z), (x1, y, z1), (x, y, z1), *uvquad)
-                            # back
-                            if not self.is_wall(x, y+1, z, self.FRONT):
-                                add_quad((x, y1, z), (x, y1, z1), (x1, y1, z1), (x1, y1, z), *uvquad)
-                            # left
-                            if not self.is_wall(x-1, y, z, self.RIGHT):
-                                add_quad((x, y1, z), (x, y, z), (x, y, z1), (x, y1, z1), *uvquad)
-                            # right
-                            if not self.is_wall(x+1, y, z, self.LEFT):
-                                add_quad((x1, y, z), (x1, y1, z), (x1, y1, z1), (x1, y, z1), *uvquad)
-                        else:
-                            v = [[[[],[]],[[],[]]],[[[],[]],[[],[]]]]
-                            for k in range(2):
-                                for j in range(2):
-                                    for i in range(2):
-                                        v[i][j][k] = mesh.add_vertex((x, y, z))
-                                        mesh.add_attribute("a_ambient", self.get_ambient_color(x, y, z))
-                            mesh.add_quad_idx(v[0][1][0], v[1][1][0], v[1][0][0], v[0][0][0])
+                        # bottom
+                        if not self.is_wall(x, y, z-1, self.TOP):
+                            add_quad((x, y1, z), (x1, y1, z), (x1, y, z), (x, y, z), *uvquad)
+                        # top
+                        if not self.is_wall(x, y, z+1, self.BOTTOM):
+                            add_quad((x, y, z1), (x1, y, z1), (x1, y1, z1), (x, y1, z1), *uvquad)
+                        # front
+                        if not self.is_wall(x, y-1, z, self.BACK):
+                            add_quad((x, y, z), (x1, y, z), (x1, y, z1), (x, y, z1), *uvquad)
+                        # back
+                        if not self.is_wall(x, y+1, z, self.FRONT):
+                            add_quad((x, y1, z), (x, y1, z1), (x1, y1, z1), (x1, y1, z), *uvquad)
+                        # left
+                        if not self.is_wall(x-1, y, z, self.RIGHT):
+                            add_quad((x, y1, z), (x, y, z), (x, y, z1), (x, y1, z1), *uvquad)
+                        # right
+                        if not self.is_wall(x+1, y, z, self.LEFT):
+                            add_quad((x1, y, z), (x1, y1, z), (x1, y1, z1), (x1, y, z1), *uvquad)
+
         #print("LEN", len(mesh._vertices), len(mesh._attributes["a_ambient"]["values"]))
         return mesh
 

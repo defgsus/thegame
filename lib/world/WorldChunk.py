@@ -270,7 +270,7 @@ class WorldChunk:
 
         return t, hit
 
-    def create_waypoints(self, steps=2):
+    def create_waypoints(self, steps=1):
         from ..ai import WayPoints
         wp = WayPoints()
         z = 1
@@ -293,13 +293,22 @@ class WorldChunk:
                     if doit:
                         wp.add_edge_pos((x, y, z), (x, y+steps, z))
 
-                    doit = True
-                    for i in range(steps+1):
-                        if self.block(x+i, y+i, z).space_type != 0:
-                            doit = False
-                            break
-                    if doit:
-                        wp.add_edge_pos((x, y, z), (x+steps, y+steps, z))
+                    if steps > 0:
+                        doit = True
+                        for i in range(steps+1):
+                            if self.block(x+i, y+i, z).space_type != 0:
+                                doit = False
+                                break
+                        if doit:
+                            wp.add_edge_pos((x, y, z), (x+steps, y+steps, z))
+
+                        doit = True
+                        for i in range(steps+1):
+                            if self.block(x+i, y-i, z).space_type != 0:
+                                doit = False
+                                break
+                        if doit:
+                            wp.add_edge_pos((x, y, z), (x+steps, y-steps, z))
 
         print("waypoints", wp.num_nodes, wp.num_edges)
         return wp

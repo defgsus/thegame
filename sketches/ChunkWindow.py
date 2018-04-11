@@ -305,12 +305,21 @@ class ChunkWindow(pyglet.window.Window):
                 else:
                     if self.waypoint2 is None:
                         self.waypoint2 = node
-                        pathfinder = AStar(self.waypoints)
-                        self.path = pathfinder.search(self.waypoint1, self.waypoint2)
-                        self.path_changed = True
+                    else:
+                        d1 = glm.distance(ihit, self.waypoints.id_to_pos[self.waypoint1])
+                        d2 = glm.distance(ihit, self.waypoints.id_to_pos[self.waypoint2])
+                        if d1 < d2:
+                            self.waypoint1 = node
+                        else:
+                            self.waypoint2 = node
 
-                    self.waypoint1 = None
-                    self.waypoint2 = None
+                if self.waypoint1 is not None and self.waypoint2 is not None:
+                    pathfinder = AStar(self.waypoints)
+                    tstart = time.time()
+                    self.path = pathfinder.search(self.waypoint1, self.waypoint2)
+                    tend = time.time()
+                    self.path_changed = True
+                    print("path took %ss (%s fps)" % (tend-tstart, round(1./(tend-tstart), 2)))
 
     def on_mouse_motion(self, x, y, dx, dy):
         if not self.edit_mode:
@@ -325,7 +334,6 @@ class ChunkWindow(pyglet.window.Window):
                 mesh = LineMesh()
                 mesh.add_cube(pos, 1.1)
                 mesh.update_drawable(self.edit_drawable)
-
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:

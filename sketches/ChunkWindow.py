@@ -88,6 +88,8 @@ class ChunkWindow(pyglet.window.Window):
         self.player_pos = glm.vec3(2, 2, 10) + .5
         self.splayer_pos = glm.vec3(self.player_pos)
 
+        self.player_renderer = AgentRenderer()
+
         # projection
         self.projection = WorldProjection(self.width, self.height, WorldProjection.P_ISOMETRIC)
         self.projection.update(.4)
@@ -251,6 +253,8 @@ class ChunkWindow(pyglet.window.Window):
                 mat = glm.translate(proj, (.6,.6,.4))
                 self.path_drawable.shader.set_uniform("u_projection", mat)
                 self.path_drawable.draw()
+
+        self.player_renderer.render(self.projection, self.splayer_pos)
 
         # coordinate system
         if 0:

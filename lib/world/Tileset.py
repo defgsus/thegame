@@ -78,7 +78,7 @@ class Tileset:
 
     def _create_bumpmaps(self):
         for j in range(6):
-            for i in range(10, 15):
+            for i in range(self.width//2, self.width):
                 self._create_bumpmap(i, j)
 
     def _create_bumpmap(self, tilex, tiley):

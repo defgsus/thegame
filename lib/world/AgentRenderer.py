@@ -36,6 +36,8 @@ out vec4 fragColor;
 
 void main() {
     vec4 col = texture(u_tex1, v_texcoord + u_tex_offset);
+    if (col.w < 0.01)
+        discard;
     fragColor = col;
 }
 """

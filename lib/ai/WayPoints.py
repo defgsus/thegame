@@ -2,11 +2,13 @@ import math
 
 
 class WayPoints:
+    """An undirected graph"""
 
     def __init__(self):
         self.id_to_pos = dict()
         self.pos_to_id = dict()
-        self.edges = dict()
+        self._edge_fwd = dict()
+        self._edge_back = dict()
         self.distances = dict()
 
     @property
@@ -15,9 +17,10 @@ class WayPoints:
 
     @property
     def num_edges(self):
-        return len(self.edges) // 2
+        return len(self._edge_fwd) // 2
 
-    def add_node_pos(self, pos):
+    def _add_node_pos(self, pos):
+        """adding a node without connection leads to undefined behaviour"""
         if pos in self.pos_to_id:
             return self.pos_to_id[pos]
         idx = len(self.id_to_pos)
@@ -25,21 +28,30 @@ class WayPoints:
         self.id_to_pos[idx] = pos
         return idx
 
+    def has_edge(self, i1, i2):
+        if i1 in self._edge_fwd:
+            return i2 in self._edge_fwd[i1]
+        if i1 in self._edge_back:
+            return i2 in self._edge_back[i1]
+        return False
+
     def add_edge(self, i1, i2):
         if i1 == i2:
-            raise ValueError("WayPoints.add_edge_idx() with equal indices")
-        if i1 not in self.edges:
-            self.edges[i1] = [i2]
+            raise ValueError("WayPoints.add_edge(%s, %s)" % (i1, i2))
+        if self.has_edge(i1, i2):
+            return
+        if i1 not in self._edge_fwd:
+            self._edge_fwd[i1] = {i2}
         else:
-            self.edges[i1].append(i2)
-        if i2 not in self.edges:
-            self.edges[i2] = [i1]
+            self._edge_fwd[i1].add(i2)
+        if i2 not in self._edge_back:
+            self._edge_back[i2] = {i1}
         else:
-            self.edges[i2].append(i1)
+            self._edge_back[i2].add(i1)
 
     def add_edge_pos(self, p1, p2):
-        i1 = self.add_node_pos(p1)
-        i2 = self.add_node_pos(p2)
+        i1 = self._add_node_pos(p1)
+        i2 = self._add_node_pos(p2)
         self.add_edge(i1, i2)
 
     def distance(self, i1, i2):
@@ -58,12 +70,20 @@ class WayPoints:
                 n, md = self.pos_to_id[p], d
         return n
 
+    def adjacent_nodes(self, node):
+        adj = set()
+        if node in self._edge_fwd:
+            adj |= self._edge_fwd[node]
+        if node in self._edge_back:
+            adj |= self._edge_back[node]
+        return adj
+
     def create_mesh(self, color=(1, 1, 1)):
         from ..geom import LineMesh
         mesh = LineMesh()
         mesh.set_color(*color)
-        for e1 in self.edges:
-            for e2 in self.edges[e1]:
+        for e1 in self._edge_fwd:
+            for e2 in self._edge_fwd[e1]:
                 mesh.add_line(
                     self.id_to_pos[e1],
                     self.id_to_pos[e2],

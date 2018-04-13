@@ -18,9 +18,9 @@ class Agent:
         self.sposition = glm.vec3(pos)
 
     def move(self, dir):
-        newpos = self.position + dir
-        if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
-            self.position = newpos
+        self.position = self.sposition + dir
+        #if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
+        #    self.position = newpos
 
         adir = glm.abs(dir)
         if adir.z > adir.x and adir.z > adir.y:
@@ -37,12 +37,27 @@ class Agent:
     def update(self, dt):
         d = min(1, dt*5)
 
-        newpos = self.position + d * glm.vec3(0,0,-1)
+        # gravity
+        newpos = self.position + d * glm.vec3(0,0,-3)
         if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
             self.position = newpos
 
+        # advance to spos to pos
         move = (self.position - self.sposition)
-        self.sposition += d * move
+        if 0:
+            newpos = self.sposition + d * move
+            if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
+                self.sposition = newpos
+        else:
+            nextpos = glm.vec3(self.sposition)
+            for i, ax in enumerate(((1,0,0), (0,1,0), (0,0,1))):
+                newpos = self.sposition + d * move * ax
+                if self.chunk.block(int(newpos.x-.2), int(newpos.y-.2), int(newpos.z)).space_type == 0\
+                    and self.chunk.block(int(newpos.x+.2), int(newpos.y-.2), int(newpos.z)).space_type == 0\
+                    and self.chunk.block(int(newpos.x-.2), int(newpos.y+.2), int(newpos.z)).space_type == 0\
+                    and self.chunk.block(int(newpos.x+.2), int(newpos.y+.2), int(newpos.z)).space_type == 0:
+                    nextpos[i] = newpos[i]
+            self.sposition = nextpos
 
         amt = glm.dot(move, move)
         if amt > .1:

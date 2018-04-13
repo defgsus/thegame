@@ -303,7 +303,9 @@ class WorldChunk:
                     if steps > 0:
                         doit = True
                         for i in range(steps+1):
-                            if self.block(x+i, y+i, z).space_type != 0:
+                            if self.block(x+i, y+i, z).space_type != 0 or \
+                                    (self.block(x+i+1, y+i, z).space_type != 0 and
+                                     self.block(x+i, y+i+1, z).space_type != 0):
                                 doit = False
                                 break
                         if doit:
@@ -311,7 +313,9 @@ class WorldChunk:
 
                         doit = True
                         for i in range(steps+1):
-                            if self.block(x+i, y-i, z).space_type != 0:
+                            if self.block(x+i, y-i, z).space_type != 0 or \
+                                    (self.block(x+i+1, y-i, z).space_type != 0 and
+                                     self.block(x+i, y-i-1, z).space_type != 0):
                                 doit = False
                                 break
                         if doit:

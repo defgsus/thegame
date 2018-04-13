@@ -1,3 +1,4 @@
+from .Agent import Agent
 from .AgentRenderer import AgentRenderer
 from .TiledImport import TiledImport
 from .Tileset import Tileset

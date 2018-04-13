@@ -67,6 +67,11 @@ class Tileset:
             (x  / self.width, y1 / self.height),
         )
 
+    def get_uv_offset(self, idx):
+        x = idx % self.width
+        y = idx // self.width
+        return x / self.width, -y / self.height
+
     def _flip_y(self, values):
         width = self.width * self.tile_width
         height = self.height * self.tile_height

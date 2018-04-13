@@ -27,6 +27,7 @@ void main()
 FRAGMENT_SRC = """
 #version 130
 uniform sampler2D u_tex1;
+uniform vec2 u_tex_offset;
 
 in vec4 v_pos;
 in vec2 v_texcoord;
@@ -34,7 +35,7 @@ in vec2 v_texcoord;
 out vec4 fragColor;
 
 void main() {
-    vec4 col = texture(u_tex1, v_texcoord);
+    vec4 col = texture(u_tex1, v_texcoord + u_tex_offset);
     fragColor = col;
 }
 """
@@ -42,9 +43,15 @@ void main() {
 
 class AgentRenderer:
 
+    DOWN = 1
+    LEFT = 2
+    UP = 3
+    RIGHT = 4
+
     def __init__(self):
         self.tileset = Tileset(32, 32)
-        self.tileset.load("./assets/player32.png")
+        self.tileset.load("./assets/pokeson.png")
+        print("agent", self.tileset)
         self.texture = None
         self.mesh = TriangleMesh()
         self.drawable = Drawable()
@@ -60,7 +67,7 @@ class AgentRenderer:
             self.texture.release()
         self.drawable.release()
 
-    def render(self, projection, pos):
+    def render(self, projection, pos, dir, frame_num):
         self._update()
 
         trans = projection.matrix
@@ -75,8 +82,11 @@ class AgentRenderer:
 
         mat = glm.rotate(mat, glm.pi()/2., (1,0,0))
 
+        tile_idx = self.get_tileset_idx(dir, frame_num)
+
         self.texture.bind()
         self.drawable.shader.set_uniform("u_projection", mat)
+        self.drawable.shader.set_uniform("u_tex_offset", self.tileset.get_uv_offset(tile_idx))
         self.drawable.draw()
 
     def _update(self):
@@ -85,3 +95,8 @@ class AgentRenderer:
 
         if self.drawable.is_empty():
             self.mesh.update_drawable(self.drawable)
+
+    def get_tileset_idx(self, dir, frame_num):
+        idx = (dir-1) * self.tileset.width + frame_num
+        return idx
+

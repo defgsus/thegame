@@ -48,10 +48,10 @@ class AgentRenderer:
     UP = 3
     RIGHT = 4
 
-    def __init__(self):
+    def __init__(self, filename="./assets/pokeson.png"):
         self.tileset = Tileset(32, 32)
-        self.tileset.load("./assets/pokeson.png")
-        print("agent", self.tileset)
+        self.tileset.load(filename)
+        #print("agent", self.tileset)
         self.texture = None
         self.mesh = TriangleMesh()
         self.drawable = Drawable()
@@ -72,7 +72,7 @@ class AgentRenderer:
 
         trans = projection.matrix
 
-        mat = glm.translate(trans, pos + (0,0,-.5))
+        mat = glm.translate(trans, pos + (0,0,0))
 
         p1 = mat * glm.vec4(0,0,0,1)
         p2 = mat * glm.vec4(0,1,0,1)

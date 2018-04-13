@@ -1,13 +1,14 @@
 import glm
+from .AgentRenderer import AgentRenderer
 
 
 class Agent:
 
-    def __init__(self, chunk, renderer):
+    def __init__(self, chunk, renderer=None):
         self.chunk = chunk
         self.position = glm.vec3(0,0,0)
         self.sposition = glm.vec3(self.position)
-        self.renderer = renderer
+        self.renderer = renderer if renderer is not None else AgentRenderer()
 
         self.anim_stage = 0.
         self.direction = renderer.DOWN
@@ -37,7 +38,7 @@ class Agent:
         d = min(1, dt*5)
 
         newpos = self.position + d * glm.vec3(0,0,-1)
-        if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z-.5)).space_type == 0:
+        if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
             self.position = newpos
 
         move = (self.position - self.sposition)

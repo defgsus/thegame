@@ -225,7 +225,7 @@ void main() {
         // moonlight
         //light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, normal, 1);
         // player light
-        light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.3), v_pos.xyz, normal, 0);
+        light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.9), v_pos.xyz, normal, 0);
         col *= light;
         
         col += .09*environment_color(normal);

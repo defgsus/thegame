@@ -85,8 +85,13 @@ class ChunkWindow(pyglet.window.Window):
             self.fbo = None
 
         # player
-        self.player = Agent(self.chunk, AgentRenderer())
-        self.player.set_position(glm.vec3(2, 2, 10) + .5)
+        self.agents = Agents(self.chunk)
+        self.agents.create_agent("player", "./assets/pokeson.png")
+        self.agents["player"].set_position(glm.vec3(2, 2, 10) + .5)
+
+        # other guy
+        self.agents.create_agent("other", "./assets/pokeson2.png")
+        self.agents["other"].set_position(glm.vec3(10, 15, 10) + .5)
 
         # projection
         self.projection = WorldProjection(self.width, self.height, WorldProjection.P_ISOMETRIC)
@@ -100,11 +105,11 @@ class ChunkWindow(pyglet.window.Window):
     def update(self, dt):
         self.check_keys(dt)
 
-        self.player.update(dt)
+        self.agents.update(dt)
 
         self.projection.width = self.width
         self.projection.height = self.height
-        self.projection.user_transformation = glm.translate(glm.mat4(1), -self.player.sposition)
+        self.projection.user_transformation = glm.translate(glm.mat4(1), -self.agents["player"].sposition)
         self.projection.update(dt)
 
     def check_keys(self, dt):
@@ -121,7 +126,7 @@ class ChunkWindow(pyglet.window.Window):
                 if self.projection.projection == self.projection.P_ISOMETRIC:
                     dir = glm.vec3(glm.rotate(glm.mat4(1), -glm.pi()/4., (0,0,1)) * glm.vec4(dir, 0))
                 dir *= min(1, dt*10.)
-                self.player.move(dir)
+                self.agents["player"].move(dir)
 
     def on_draw(self):
         glDisable(GL_CULL_FACE)
@@ -185,7 +190,7 @@ class ChunkWindow(pyglet.window.Window):
         self.drawable.shader.set_uniform("u_vdf_tex", 3)
         self.drawable.shader.set_uniform("u_vdf_size", self.vdf.size())
         self.drawable.shader.set_uniform("u_vdf_scale", self.vdf_scale)
-        self.drawable.shader.set_uniform("u_player_pos", self.player.sposition)
+        self.drawable.shader.set_uniform("u_player_pos", self.agents["player"].sposition)
         self.drawable.shader.set_uniform("u_hit_voxel", self.hit_voxel)
         self.drawable.shader.set_uniform("u_debug_view", self.debug_view)
 
@@ -245,7 +250,8 @@ class ChunkWindow(pyglet.window.Window):
                 self.path_drawable.shader.set_uniform("u_projection", mat)
                 self.path_drawable.draw()
 
-        self.player.render(self.projection)
+        glDisable(GL_DEPTH_TEST)
+        self.agents.render(self.projection)
 
         # coordinate system
         if 0:
@@ -292,6 +298,10 @@ class ChunkWindow(pyglet.window.Window):
                 block.space_type = 1
                 block.texture = 40
                 self.chunk_changed = True
+
+            if not self.edit_mode:
+
+                self.agents.set_goal("player", ihit)
 
             if self.edit_mode:
                 node = self.waypoints.closest_node((ihit[0], ihit[1], 1))

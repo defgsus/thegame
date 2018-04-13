@@ -1,5 +1,6 @@
 from .Agent import Agent
 from .AgentRenderer import AgentRenderer
+from .Agents import Agents
 from .TiledImport import TiledImport
 from .Tileset import Tileset
 from .VoxelDistanceField import VoxelDistanceField

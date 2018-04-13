@@ -31,6 +31,7 @@ class WorldChunk:
         self.blocks = []
         self.tileset = tileset
         self.filename = None
+        self._waypoints = None
 
     def size(self):
         return self.num_x, self.num_y, self.num_z
@@ -269,6 +270,12 @@ class WorldChunk:
         t = max(mini)
 
         return t, hit
+
+    @property
+    def waypoints(self):
+        if self._waypoints is None:
+            self._waypoints = self.create_waypoints()
+        return self._waypoints
 
     def create_waypoints(self, steps=1):
         from ..ai import WayPoints

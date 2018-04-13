@@ -2,6 +2,8 @@ import glm
 
 from .Agent import Agent
 from .AgentRenderer import AgentRenderer
+from ..opengl import Drawable
+from ..geom import LineMesh
 from ..ai import AStar
 
 
@@ -14,6 +16,7 @@ class Agents:
         self._pathfinder = AStar(self.chunk.waypoints)
         self._paths = dict()
         self._follower = dict()
+        self._path_debug_renderer = None
 
     def __getitem__(self, name):
         return self._agents[name]
@@ -29,6 +32,8 @@ class Agents:
     def release(self):
         for a in self._agents.values():
             a.release()
+        if self._path_debug_renderer:
+            self._path_debug_renderer.release()
 
     def render(self, projection):
         for agent in self._agents.values():
@@ -85,6 +90,14 @@ class Agents:
             return
         if len(path) > 1:
             self._paths[name] = AgentPath(self, name, path)
+            if self._path_debug_renderer:
+                self._path_debug_renderer.path_changed = True
+
+    @property
+    def path_debug_renderer(self):
+        if self._path_debug_renderer is None:
+            self._path_debug_renderer = AgentsPathDebugRenderer(self)
+        return self._path_debug_renderer
 
 
 class AgentPath:
@@ -132,3 +145,54 @@ class AgentPath:
 
         if dist <= self.min_dist:
             self.cur_index += 1
+
+
+class AgentsPathDebugRenderer:
+    def __init__(self, agents):
+
+        self.agents = agents
+        self.waypoints = agents.chunk.waypoints
+        self.waypoints_mesh = self.waypoints.create_mesh(color=(.3,.5,.5))
+        self.waypoints_drawable = Drawable()
+        self.waypoint1 = None
+        self.waypoint2 = None
+        self.path_changed = False
+        self.path_drawable = Drawable()
+
+    def release(self):
+        self.waypoints_drawable.release()
+        self.path_drawable.release()
+
+    def render(self, projection):
+        proj = projection.matrix
+
+        if not self.waypoints_mesh.is_empty():
+            print("waypoint mesh", len(self.waypoints_mesh.lines_array()))
+            self.waypoints_mesh.update_drawable(self.waypoints_drawable)
+            self.waypoints_mesh.clear()
+
+        if not self.waypoints_drawable.is_empty():
+            mat = glm.translate(proj, (.5,.5,.2))
+            self.waypoints_drawable.shader.set_uniform("u_projection", mat)
+            self.waypoints_drawable.draw()
+
+        if self.path_changed:
+            if self.agents._paths:
+                mesh = LineMesh()
+                for path in self.agents._paths.values():
+                    prev_node = None
+                    for node in path.path:
+                        if prev_node is not None:
+                            mesh.add_line(
+                                self.waypoints.id_to_pos[prev_node],
+                                self.waypoints.id_to_pos[node]
+                            )
+                        prev_node = node
+                mesh.update_drawable(self.path_drawable)
+            else:
+                self.path_drawable.clear()
+
+        if not self.path_drawable.is_empty():
+            mat = glm.translate(proj, (.49, .49, .21))
+            self.path_drawable.shader.set_uniform("u_projection", mat)
+            self.path_drawable.draw()

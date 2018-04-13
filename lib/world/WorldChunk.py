@@ -17,12 +17,12 @@ class WorldBlock:
 
 class WorldChunk:
 
-    LEFT = 1
-    RIGHT = 2
-    FRONT = 3
-    BACK = 4
-    BOTTOM = 5
-    TOP = 6
+    LEFT = 1<<0
+    RIGHT = 1<<1
+    FRONT = 1<<2
+    BACK = 1<<3
+    BOTTOM = 1<<4
+    TOP = 1<<5
 
     def __init__(self, tileset):
         self.num_x = 0
@@ -98,6 +98,9 @@ class WorldChunk:
         if b.space_type:
             return True
         return False
+
+    def is_occupied(self, x, y, z):
+        return self.block(x, y, z).space_type != 0
 
     def density_at(self, x, y, z, radius=1):
         dens = 0.
@@ -277,7 +280,7 @@ class WorldChunk:
             self._waypoints = self.create_waypoints()
         return self._waypoints
 
-    def create_waypoints(self, steps=1):
+    def create_waypoints_old(self, steps=1):
         from ..ai import WayPoints
         wp = WayPoints()
         z = 1
@@ -320,6 +323,72 @@ class WorldChunk:
                                 break
                         if doit:
                             wp.add_edge_pos((x, y, z), (x+steps, y-steps, z))
+
+        print("waypoints", wp.num_nodes, wp.num_edges)
+        return wp
+
+    def create_waypoints(self):
+        """floodfill"""
+        from ..ai import WayPoints
+        wp = WayPoints()
+        # find start pos
+        x, y, z = 2, 2, self.num_z+1
+        while not self.is_wall(x, y, z-1, self.TOP):
+            z -= 1
+
+        visited = set()
+        visit = {(x, y, z)}
+
+        while visit:
+            cur = visit.pop()
+
+            def _add(x, y, z):
+                if self.is_wall(x, y, z-1, self.TOP):
+                    to = (x, y, z)
+                    wp.add_edge_pos(cur, to)
+                    if to not in visited:
+                        visit.add(to)
+
+            def _check(x, y, z, against):
+                if 0 <= x < self.num_x and 0 <= y < self.num_y:
+                    if self.is_wall(x, y, z+1, against):
+                        return
+                    if not self.is_wall(x, y, z, against):
+                        if self.is_occupied(x, y, z-1):
+                            _add(x, y, z)
+                        elif self.is_occupied(x, y, z-2):
+                            _add(x, y, z-1)
+
+                    # walk up
+                    elif 0 and not self.is_wall(x, y, z+1, against):
+                        if self.is_wall(x, y, z, self.TOP):
+                            _add(x, y, z+1)
+
+            def _check_diag(xo, yo, z, against):
+                if 0 <= x+xo < self.num_x and 0 <= y+yo < self.num_y:
+                    if self.is_wall(x+xo, y+yo, z, against) or (
+                            self.is_wall(x+xo, y, z, against) or self.is_wall(x, y+yo, z, against)):
+                        return
+                    if self.is_wall(x+xo, y+yo, z+1, against) or (
+                            self.is_wall(x+xo, y, z+1, against) or self.is_wall(x, y+yo, z+1, against)):
+                        return
+                    if self.is_occupied(x+xo, y+yo, z-1):
+                        _add(x+xo, y+yo, z)
+                    elif self.is_occupied(x+xo, y+yo, z-2):
+                        _add(x+xo, y+yo, z-1)
+
+            x, y, z = cur
+            _check(x-1, y, z, self.RIGHT)
+            _check(x+1, y, z, self.LEFT)
+            _check(x, y-1, z, self.BACK)
+            _check(x, y+1, z, self.FRONT)
+
+            _check_diag(-1, -1, z, self.RIGHT | self.BACK)
+            _check_diag(+1, -1, z, self.LEFT | self.BACK)
+            _check_diag(+1, +1, z, self.LEFT | self.FRONT)
+            _check_diag(-1, +1, z, self.RIGHT | self.FRONT)
+
+            visited.add(cur)
 
         print("waypoints", wp.num_nodes, wp.num_edges)
         return wp

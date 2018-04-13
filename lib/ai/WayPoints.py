@@ -50,6 +50,8 @@ class WayPoints:
             self._edge_back[i2].add(i1)
 
     def add_edge_pos(self, p1, p2):
+        if p1 == p2:
+            raise ValueError("WayPoint.add_edge_pos(%s, %s)" % (p1, p2))
         i1 = self._add_node_pos(p1)
         i2 = self._add_node_pos(p2)
         self.add_edge(i1, i2)
@@ -59,6 +61,15 @@ class WayPoints:
         p2 = self.id_to_pos[i2]
         px, py, pz = p1[0]-p2[0], p1[1]-p2[1], p1[2]-p2[2]
         return math.sqrt(px*px+py*py+pz*pz)
+
+    def direction(self, i1, i2, normalized=True):
+        p1 = self.id_to_pos[i1]
+        p2 = self.id_to_pos[i2]
+        px, py, pz = p1[0]-p2[0], p1[1]-p2[1], p1[2]-p2[2]
+        if normalized:
+            d = math.sqrt(px*px+py*py+pz*pz)
+            px, py, pz = px/d, py/d, pz/d
+        return px, py, pz
 
     def closest_node(self, pos):
         if pos in self.pos_to_id:
@@ -89,3 +100,4 @@ class WayPoints:
                     self.id_to_pos[e2],
                 )
         return mesh
+

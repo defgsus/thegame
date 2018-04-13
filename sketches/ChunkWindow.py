@@ -67,16 +67,6 @@ class ChunkWindow(pyglet.window.Window):
         self.edit_drawable = Drawable()
         self.cur_edit_voxel = (-1,-1,-1)
 
-        # waypoints test
-        self.waypoints = self.chunk.create_waypoints()
-        self.waypoints_mesh = self.waypoints.create_mesh(color=(.3,.3,.3))
-        self.waypoints_drawable = Drawable()
-        self.waypoint1 = None
-        self.waypoint2 = None
-        self.path = None
-        self.path_changed = False
-        self.path_drawable = Drawable()
-
         # post-fx
         if 1:
             self.fbo = Framebuffer2D(self.width, self.height)
@@ -123,15 +113,20 @@ class ChunkWindow(pyglet.window.Window):
             pyglet.window.key.RIGHT: glm.vec3(1,0,0),
             pyglet.window.key.UP: glm.vec3(0,1,0),
             pyglet.window.key.DOWN: glm.vec3(0,-1,0),
-            pyglet.window.key.SPACE: glm.vec3(0,0,4),
+            pyglet.window.key.SPACE: glm.vec3(0,0,1),
         }
+        sum_dir = glm.vec3(0)
+        num = 0
         for symbol in dir_mapping:
             if self.keys[symbol]:
                 dir = dir_mapping[symbol]
                 if self.projection.projection == self.projection.P_ISOMETRIC:
                     dir = glm.vec3(glm.rotate(glm.mat4(1), -glm.pi()/4., (0,0,1)) * glm.vec4(dir, 0))
                 #dir *= min(1, dt*10.)
-                self.agents["player"].move(dir)
+                sum_dir += dir
+                num += 1
+        if num:
+            self.agents["player"].move(sum_dir / num * 1.5)
 
     def on_draw(self):
         glDisable(GL_CULL_FACE)
@@ -229,32 +224,7 @@ class ChunkWindow(pyglet.window.Window):
 
         # waypoints debugger
         if self.edit_mode:
-            if not self.waypoints_mesh.is_empty():
-                print("waypoint mesh", len(self.waypoints_mesh.lines_array()))
-                self.waypoints_mesh.update_drawable(self.waypoints_drawable)
-                self.waypoints_mesh.clear()
-
-            if not self.waypoints_drawable.is_empty():
-                mat = glm.translate(proj, (.5,.5,.2))
-                self.waypoints_drawable.shader.set_uniform("u_projection", mat)
-                self.waypoints_drawable.draw()
-
-            if self.path_changed:
-                if self.path:
-                    mesh = LineMesh()
-                    prev_node = None
-                    for node in self.path:
-                        if prev_node is not None:
-                            mesh.add_line(self.waypoints.id_to_pos[prev_node], self.waypoints.id_to_pos[node])
-                        prev_node = node
-                    mesh.update_drawable(self.path_drawable)
-                else:
-                    self.path_drawable.clear()
-
-            if not self.path_drawable.is_empty():
-                mat = glm.translate(proj, (.6,.6,.4))
-                self.path_drawable.shader.set_uniform("u_projection", mat)
-                self.path_drawable.draw()
+            self.agents.path_debug_renderer.render(self.projection)
 
         #glDepthMask(False)
         self.agents.render(self.projection)
@@ -298,18 +268,14 @@ class ChunkWindow(pyglet.window.Window):
             pos = glm.floor(ro + t * rd)
             self.hit_voxel = pos
             ihit = tuple(int(x) for x in pos)
-            block = self.chunk.block(*ihit)
-            #print(hit, t, ihit, block.texture)
-            if 0:
+            self.agents.set_goal("player", ihit)
+
+            if 0:  # editor
+                block = self.chunk.block(*ihit)
+                #print(hit, t, ihit, block.texture)
                 block.space_type = 1
                 block.texture = 40
                 self.chunk_changed = True
-
-            self.agents.set_goal("player", ihit)
-
-            if self.edit_mode:
-                self.path = self.agents._paths["player"].path
-                self.path_changed = True
 
     def on_mouse_motion(self, x, y, dx, dy):
         if not self.edit_mode:

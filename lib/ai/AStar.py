@@ -1,3 +1,5 @@
+import math
+import glm
 
 
 class AStar:
@@ -5,13 +7,24 @@ class AStar:
     def __init__(self, waypoints):
         self.nodes = waypoints
 
-    def heuristic_cost(self, n1, n2):
-        import math
+    def heuristic_goal_cost(self, n1, n2):
+        if n1 == n2:
+            return 0
         d = self.nodes.distance(n1, n2)
-        #return d
-        return pow(d, .001)  # prefer diagonals
+        return d
+        #return pow(d, .001)  # prefer diagonals
         #return d * (1.1+math.sin(n1))
         #return 1. / (.01+d)
+
+    def heuristic_step_cost(self, n1, n2, goal):
+        if n1 == n2:
+            return 0
+        d = self.nodes.distance(n1, n2)
+        if 0:  # avoid towards goal
+            dir1 = self.nodes.direction(n1, n2)
+            dir2 = self.nodes.direction(n1, goal)
+            return glm.dot(dir1, dir2) * d
+        return d
 
     def search(self, start_node, end_node):
         infinity = 2 << 31
@@ -23,7 +36,7 @@ class AStar:
         g_score = {start_node: 0}
 
         # total cost if getting from start to end, through this node
-        f_score = {end_node: self.heuristic_cost(start_node, end_node)}
+        f_score = {end_node: self.heuristic_goal_cost(start_node, end_node)}
 
         came_from = dict()
 
@@ -56,7 +69,7 @@ class AStar:
                 if neighbor_node not in open_set:
                     open_set.add(neighbor_node)
 
-                g = g_score.get(current_node) + self.heuristic_cost(current_node, neighbor_node)
+                g = g_score.get(current_node) + self.heuristic_step_cost(current_node, neighbor_node, end_node)
                 # prune this path
                 if g >= g_score.get(neighbor_node, infinity):
                     continue
@@ -64,7 +77,7 @@ class AStar:
                 # continue this path
                 came_from[neighbor_node] = current_node
                 g_score[neighbor_node] = g
-                f_score[neighbor_node] = g + self.heuristic_cost(neighbor_node, end_node)
+                f_score[neighbor_node] = g + self.heuristic_goal_cost(neighbor_node, end_node)
 
         return None
 

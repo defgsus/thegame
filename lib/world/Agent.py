@@ -5,8 +5,10 @@ from .AgentRenderer import AgentRenderer
 class Agent:
 
     def __init__(self, chunk, renderer=None):
+        self.name = ""
         self.chunk = chunk
         self.position = glm.vec3(0,0,0)
+        self.velocity = glm.vec3(0)
         self.sposition = glm.vec3(self.position)
         self.renderer = renderer if renderer is not None else AgentRenderer()
 
@@ -17,6 +19,9 @@ class Agent:
         self.position = glm.vec3(pos)
         self.sposition = glm.vec3(pos)
 
+    def jump(self, amt=1):
+        self.velocity += (0, 0, amt)
+
     def move(self, dir):
         self.position = self.sposition + dir
         #if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
@@ -26,16 +31,15 @@ class Agent:
         if adir.z > adir.x and adir.z > adir.y:
             return
 
-        dm = max(adir)
-        if dm == adir.x:
+        if adir.x > adir.y:
             self.direction = self.renderer.RIGHT if dir.x > 0 else self.renderer.LEFT
-        elif dm == adir.y:
-            self.direction = self.renderer.UP if dir.y > 0 else self.renderer.DOWN
         else:
-            self.direction = self.renderer.DOWN
+            self.direction = self.renderer.UP if dir.y > 0 else self.renderer.DOWN
 
     def update(self, dt):
         d = min(1, dt*5)
+
+
 
         # gravity
         newpos = self.position + d * glm.vec3(0,0,-3)
@@ -43,7 +47,7 @@ class Agent:
             self.position = newpos
 
         # advance to spos to pos
-        move = (self.position - self.sposition)
+        move = (self.position - self.sposition) + self.velocity
         if 0:
             newpos = self.sposition + d * move
             if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
@@ -58,6 +62,8 @@ class Agent:
                     and self.chunk.block(int(newpos.x+.2), int(newpos.y+.2), int(newpos.z)).space_type == 0:
                     nextpos[i] = newpos[i]
             self.sposition = nextpos
+
+        self.velocity -= self.velocity * d * .5
 
         amt = glm.dot(move, move)
         if amt > .1:

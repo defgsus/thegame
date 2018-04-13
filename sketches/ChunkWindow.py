@@ -113,7 +113,7 @@ class ChunkWindow(pyglet.window.Window):
             pyglet.window.key.RIGHT: glm.vec3(1,0,0),
             pyglet.window.key.UP: glm.vec3(0,1,0),
             pyglet.window.key.DOWN: glm.vec3(0,-1,0),
-            pyglet.window.key.SPACE: glm.vec3(0,0,1),
+            #pyglet.window.key.SPACE: glm.vec3(0,0,1),
         }
         sum_dir = glm.vec3(0)
         num = 0
@@ -127,6 +127,9 @@ class ChunkWindow(pyglet.window.Window):
                 num += 1
         if num:
             self.agents["player"].move(sum_dir / num * 1.5)
+
+        if self.keys[pyglet.window.key.SPACE]:
+            self.agents["player"].jump()
 
     def on_draw(self):
         glDisable(GL_CULL_FACE)

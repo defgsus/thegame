@@ -23,6 +23,7 @@ class Agents:
 
     def add_agent(self, name, agent):
         agent.chunk = self.chunk
+        agent.name = name
         self._agents[name] = agent
 
     def create_agent(self, name, tileset_filename=None):
@@ -128,12 +129,13 @@ class AgentPath:
         i1 = i+1
         if i1 >= len(self.path):
             i, i1 = i-1, i1-1
-        return glm.normalize(self.pos_at(i1) - glm.normalize(self.pos_at(i)))
+        return glm.normalize(self.pos_at(i1) - self.pos_at(i))
 
     def update(self, dt):
         if self.cur_index+1 >= len(self.path):
             return False
 
+        this_pos = self.waypoints.id_to_pos[self.path[self.cur_index]] + glm.vec3(.5,.5,0)
         next_node = self.path[self.cur_index+1]
         next_pos = self.waypoints.id_to_pos[next_node] + glm.vec3(.5,.5,0)
         #print(self.path, self.cur_index, next_node, self.agent.sposition, next_pos)
@@ -142,6 +144,10 @@ class AgentPath:
         dir = (next_pos - self.agent.sposition) / dist
 
         self.agent.move(dir)
+        if self.agent.name == "player":
+            print(this_pos.y, next_pos.y, self.agent.sposition.y)
+        if next_pos.y > this_pos.y + .5 and next_pos.y > self.agent.sposition.y:
+            self.agent.jump()
 
         if dist <= self.min_dist:
             self.cur_index += 1

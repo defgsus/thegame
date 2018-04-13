@@ -360,7 +360,7 @@ class WorldChunk:
                             _add(x, y, z-1)
 
                     # walk up
-                    elif 0 and not self.is_wall(x, y, z+1, against):
+                    elif not self.is_wall(x, y, z+1, against):
                         if self.is_wall(x, y, z, self.TOP):
                             _add(x, y, z+1)
 

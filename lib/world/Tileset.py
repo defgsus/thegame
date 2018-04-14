@@ -121,10 +121,11 @@ class Tileset:
             for x in range(self.tile_width):
                 ofs = ((tiley*self.tile_height+y) * self.tile_width*self.width + (tilex*self.tile_width) + x)*4
                 n = normals[y*self.tile_width+x]
+                # keep green as specular map
+                self.values[ofs+3] = self.values[ofs+1]
                 self.values[ofs] = n[0]
                 self.values[ofs+1] = n[1]
                 self.values[ofs+2] = n[2]
-                self.values[ofs+3] = 1
 
     def _get_pixel(self, tilex, tiley, x, y):
         if x < 0:

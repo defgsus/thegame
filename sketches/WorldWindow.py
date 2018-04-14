@@ -34,8 +34,6 @@ class WorldWindow(pyglet.window.Window):
 
     def update(self, dt):
         self.check_keys(dt)
-        self.world.screen_width = self.width
-        self.world.screen_height = self.height
         self.world.update(dt)
 
     def check_keys(self, dt):
@@ -64,7 +62,7 @@ class WorldWindow(pyglet.window.Window):
 
     def on_draw(self):
         self.clear()
-        self.world.render(time.time() - self.start_time)
+        self.world.render(self.width, self.height, time.time() - self.start_time)
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.world.projection._rotation[0] -= scroll_y / 30.

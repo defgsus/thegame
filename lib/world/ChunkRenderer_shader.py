@@ -169,7 +169,7 @@ float ambient_occlusion(vec3 origin, vec3 ray) {
     return r;
 }
 
-vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal, in int do_voxel) {
+vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal, in int do_voxel, in float spec_amt) {
     vec3 lightnorm = normalize(lightpos - pos);
     float lightdist = distance(pos, lightpos);
     float d = max(0., dot(normal, lightnorm));
@@ -183,9 +183,9 @@ vec3 lighting(in vec3 lightpos, in vec3 pos, in vec3 normal, in int do_voxel) {
     }
     
     float phong = .1 + .9 * d;
-    float spec = pow(d, 5.);
+    float spec = pow(d, 2. + spec_amt * 3.);
     
-    d = phong + spec*2.;
+    d = phong + spec * spec_amt * 50.;
     
     return clamp(vec3(d,d,d), 0., 1.);
 }
@@ -210,7 +210,8 @@ void main() {
     
     vec3 normal = vec3(0, 0, 1);        
     vec2 v_normcoord = v_texcoord + vec2(.5, 0.);
-    normal = normalize(normal*0. + texture2D(u_tex1, v_normcoord).xyz);
+    vec4 normal_texel = texture2D(u_tex1, v_normcoord);
+    normal = normalize(mix(normal, normal_texel.xyz, normal_texel.w));
     normal = v_normal_space * normal;
     
     if (u_debug_view == 0) 
@@ -219,12 +220,18 @@ void main() {
         //col = mix(col, normal*.5+.5, .5);
         col = mix(col, tex.rgb, 1.);
         
+        // ambient occlusion #1
+        col *= pow(distance_at(v_pos.xyz), .5);
+        // ambient occlusion #2
+        col *= v_ambient;
+        
         vec3 light = vec3(0);
-        light += u_lightpos.w * lighting(u_lightpos.xyz, v_pos.xyz, normal, 0);
+        float spec_amt = normal_texel.w;
+        light += u_lightpos.w * lighting(u_lightpos.xyz, v_pos.xyz, normal, 0, spec_amt);
         // moonlight
-        //light += .1*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, normal, 1);
+        //light += .5*vec3(0,1,1)*lighting(vec3(-20,30,40), v_pos.xyz, normal, 1, spec_amt);
         // player light
-        light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.9), v_pos.xyz, normal, 0);
+        light += vec3(1,.6,.3)*lighting(u_player_pos + vec3(0,0,.9), v_pos.xyz, normal, 0, spec_amt);
         col *= light;
         
         col += .09*environment_color(normal);
@@ -243,7 +250,6 @@ void main() {
         //col += distance_at(vec3(v_pos.xy, u_time))/3.;
         
         //col *= .5+.5*ambient_occlusion(v_pos.xyz, normal);
-        col *= v_ambient;
         
         // hit highlight
         vec3 hitbox = abs(u_hit_voxel + .5 - v_pos.xyz);

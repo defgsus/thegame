@@ -84,10 +84,8 @@ def gen_heightmap(w=16, h=32):
 
 class ChunkRenderer:
 
-    def __init__(self, world, width, height):
+    def __init__(self, world):
         self.world = world
-        self.width = width
-        self.height = height
 
         self.edit_mode = False
         self.debug_view = 0
@@ -125,7 +123,7 @@ class ChunkRenderer:
 
         # post-fx
         if 1:
-            self.fbo = Framebuffer2D(self.width, self.height)
+            self.fbo = Framebuffer2D(16, 16)
             self.screen_quad = ScreenQuad()
         else:
             self.fbo = None
@@ -150,9 +148,9 @@ class ChunkRenderer:
     
         if do_postproc:
             if self.fbo.is_created():
-                if self.fbo.width != self.width or self.fbo.height != self.height:
+                if self.fbo.width != projection.width or self.fbo.height != projection.height:
                     self.fbo.release()
-                    self.fbo = Framebuffer2D(self.width, self.height)
+                    self.fbo = Framebuffer2D(projection.width, projection.height)
     
             if not self.fbo.is_created():
                 self.fbo.create()
@@ -201,6 +199,6 @@ class ChunkRenderer:
     
             self.fbo.color_texture(0).bind()
             #self.fbo.depth_texture().bind()
-            self.screen_quad.draw(self.width, self.height)
+            self.screen_quad.draw(projection.width, projection.height)
     
         #OpenGlBaseObject.dump_instances()

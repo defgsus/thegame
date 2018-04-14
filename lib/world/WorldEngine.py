@@ -47,15 +47,15 @@ class WorldEngine:
             follow = name
 
     def update(self, dt):
-
         self.agents.update(dt)
 
-        self.projection.width = self.screen_width
-        self.projection.height = self.screen_height
         self.projection.user_transformation = glm.translate(glm.mat4(1), -self.agents["player"].sposition)
         self.projection.update(dt)
 
-    def render(self, time):
+    def render(self, width, height, time):
+        self.projection.width = width
+        self.projection.height = height
+
         if self.renderer is None:
-            self.renderer = ChunkRenderer(self, self.screen_width, self.screen_height)
+            self.renderer = ChunkRenderer(self)
         self.renderer.render(self.projection, time)

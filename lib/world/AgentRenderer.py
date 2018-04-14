@@ -51,8 +51,7 @@ class AgentRenderer:
     RIGHT = 4
 
     def __init__(self, filename="./assets/pokeson.png"):
-        self.tileset = Tileset(32, 32)
-        self.tileset.load(filename)
+        self.tileset = Tileset.from_image(32, 32, filename)
         #print("agent", self.tileset)
         self.texture = None
         self.mesh = TriangleMesh()

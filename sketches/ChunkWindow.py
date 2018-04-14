@@ -24,9 +24,7 @@ class ChunkWindow(pyglet.window.Window):
         self.keys = pyglet.window.key.KeyStateHandler()
         self.push_handlers(self.keys)
 
-        self.tileset = Tileset(16, 16)
-        #self.tileset.load("./assets/tileset01.png")
-        self.tileset.load("./assets/tileset02.png")
+        self.tileset = Tileset.from_image(16, 16, "./assets/tileset02.png")
         print(self.tileset)
 
         # ---- world chunk ----

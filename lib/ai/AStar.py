@@ -20,6 +20,9 @@ class AStar:
         if n1 == n2:
             return 0
         d = self.nodes.distance(n1, n2)
+        p1 = self.nodes.id_to_pos[n1]
+        p2 = self.nodes.id_to_pos[n2]
+        d += abs(p1[2]-p2[2]) * 5
         if 0:  # avoid towards goal
             dir1 = self.nodes.direction(n1, n2)
             dir2 = self.nodes.direction(n1, goal)

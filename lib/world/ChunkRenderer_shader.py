@@ -211,7 +211,7 @@ void main() {
     vec3 normal = vec3(0, 0, 1);        
     vec2 v_normcoord = v_texcoord + vec2(.5, 0.);
     normal = normalize(normal*0. + texture2D(u_tex1, v_normcoord).xyz);
-    //normal = v_normal_space * normal;
+    normal = v_normal_space * normal;
     
     if (u_debug_view == 0) 
     {    

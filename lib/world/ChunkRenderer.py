@@ -6,7 +6,7 @@ from pyglet.gl import *
 from lib.opengl import *
 from lib.geom import *
 from lib.world import *
-from .ChunkRenderer_shader import frag_src
+from .ChunkRenderer_shader import frag_src, vert_src
 
 
 HEIGHTMAP2 = [
@@ -119,6 +119,7 @@ class ChunkRenderer:
             self.mesh_drawable = OpenGlAssets.get(mesh_name)
         else:
             self.mesh_drawable = self.mesh.create_drawable()
+            self.mesh_drawable.shader.set_vertex_source(vert_src)
             self.mesh_drawable.shader.set_fragment_source(frag_src)
             OpenGlAssets.register(mesh_name, self.mesh_drawable)
 

@@ -144,9 +144,9 @@ class AgentPath:
         dir = (next_pos - self.agent.sposition) / dist
 
         self.agent.move(dir)
-        if self.agent.name == "player":
-            print(this_pos.y, next_pos.y, self.agent.sposition.y)
-        if next_pos.y > this_pos.y + .5 and next_pos.y > self.agent.sposition.y:
+        #if self.agent.name == "player":
+        #    print(this_pos.y, next_pos.y, self.agent.sposition.y)
+        if next_pos.z > this_pos.z + .3 and next_pos.z > self.agent.sposition.z:
             self.agent.jump()
 
         if dist <= self.min_dist:

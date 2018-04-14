@@ -20,12 +20,17 @@ class Agent:
         self.sposition = glm.vec3(pos)
 
     def jump(self, amt=1):
-        self.velocity += (0, 0, amt)
+        if self.chunk.is_wall(int(self.sposition.x), int(self.sposition.y), int(self.sposition.z-.5), self.chunk.TOP):
+            self.velocity += (0, 0, amt)
 
     def move(self, dir):
         self.position = self.sposition + dir
         #if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
         #    self.position = newpos
+        #newpos = self.position + glm.vec3(0,0,-.1)
+        #if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
+        #    self.position = newpos
+        #self.position.z -= self.velocity.z
 
         adir = glm.abs(dir)
         if adir.z > adir.x and adir.z > adir.y:
@@ -39,14 +44,18 @@ class Agent:
     def update(self, dt):
         d = min(1, dt*5)
 
-
-
         # gravity
-        newpos = self.position + d * glm.vec3(0,0,-3)
-        if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
-            self.position = newpos
+        if 1:
+            newpos = self.position + d * glm.vec3(0,0,-3)
+            if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
+                self.position = newpos
+        else:
+            t, hit = self.chunk.cast_voxel_ray(self.position+(0,0,0), (0,0,-1))
+            if hit:
+                self.position.z -= t
+                self.sposition.z -= t
 
-        # advance to spos to pos
+        # advance spos to pos
         move = (self.position - self.sposition) + self.velocity
         if 0:
             newpos = self.sposition + d * move

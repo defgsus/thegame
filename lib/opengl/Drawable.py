@@ -65,6 +65,12 @@ class Drawable:
         self._attributes = dict()
         self._elements = dict()
 
+    def __str__(self):
+        return "Drawable(%s, %s)" % (
+            ", ".join("'%s'" % e for e in sorted(self._attributes)),
+            ", ".join("%s" % e for e in sorted(self._elements)),
+        )
+
     def is_empty(self):
         return not self._elements
 

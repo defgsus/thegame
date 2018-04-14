@@ -1,10 +1,10 @@
 import glm
 
 from .Agent import Agent
-from .AgentRenderer import AgentRenderer
-from ..opengl import Drawable
-from ..geom import LineMesh
-from ..ai import AStar
+from lib.world.AgentRenderer import AgentRenderer
+from lib.opengl import Drawable
+from lib.geom import LineMesh
+from lib.ai.AStar import AStar
 
 
 class Agents:

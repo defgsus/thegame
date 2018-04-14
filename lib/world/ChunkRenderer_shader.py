@@ -45,7 +45,6 @@ frag_src = """
 #version 130
 #line 46
 uniform sampler2D u_tex1;
-uniform sampler2D u_tex2;
 uniform sampler3D u_chunktex;
 uniform sampler3D u_vdf_tex;
 
@@ -212,7 +211,7 @@ void main() {
     vec3 normal = vec3(0, 0, 1);        
     vec2 v_normcoord = v_texcoord + vec2(.5, 0.);
     normal = normalize(normal*0. + texture2D(u_tex1, v_normcoord).xyz);
-    normal = v_normal_space * normal;
+    //normal = v_normal_space * normal;
     
     if (u_debug_view == 0) 
     {    
@@ -259,6 +258,15 @@ void main() {
         col = vec3(.6);
         
         col += .2*environment_color(normal);
+        
+        col *= v_ambient;
+    }
+    
+    if (u_debug_view == 2) 
+    {
+        col = vec3(distance_at(v_pos.xyz));
+        
+        col += .4*normal;
         
         col *= v_ambient;
     }

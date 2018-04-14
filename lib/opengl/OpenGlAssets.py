@@ -54,3 +54,11 @@ class OpenGlAssets:
                     asset[0].release()
         for name in remove:
             del cls._global_assets[name]
+
+    @classmethod
+    def dump(cls):
+        fmts = "%30s | %8s | %s"
+        print(fmts % ("name", "users", "object"))
+        for name in cls._global_assets:
+            a = cls._global_assets[name]
+            print(fmts % (name, a[1], a[0]))

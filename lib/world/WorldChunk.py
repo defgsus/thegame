@@ -2,7 +2,7 @@ import os
 import glm
 from pyglet.gl import *
 from lib.geom import TriangleMesh
-from lib.opengl import Texture3D
+from lib.opengl import Texture3D, OpenGlAssets
 from .VoxelDistanceField import VoxelDistanceField
 
 
@@ -32,6 +32,7 @@ class WorldChunk:
         self.tileset = tileset
         self.filename = None
         self._waypoints = None
+        self.id = "chunk01"
 
     def size(self):
         return self.num_x, self.num_y, self.num_z
@@ -111,11 +112,19 @@ class WorldChunk:
                         dens += 1.
         return dens / pow(1 + 2 * radius, 3)
 
+    @property
+    def voxel_texture_name(self):
+        return "chunk-voxels-%s-" % self.id
+
     def create_texture3d(self):
+        name = self.voxel_texture_name
+        if OpenGlAssets.has(name):
+            return OpenGlAssets.get(name)
+
         tex = Texture3D(name="voxels")
         tex.create()
         tex = self.update_texture3d(tex)
-        print("voxels", tex)
+        OpenGlAssets.register(name, tex)
         return tex
 
     def update_texture3d(self, tex):
@@ -227,6 +236,7 @@ class WorldChunk:
                 if os.path.getmtime(cache_filename) >= os.path.getmtime(self.filename):
                     vox = VoxelDistanceField(0,0,0)
                     vox.load_json(cache_filename)
+                    vox.chunk = self
                     return vox
 
         vox = VoxelDistanceField(self.num_x*scale, self.num_y*scale, self.num_z*scale)
@@ -241,6 +251,7 @@ class WorldChunk:
         vox.calc_distances()
         if self.filename:
             vox.save_json(cache_filename)
+        vox.chunk = self
         return vox
 
     def cast_voxel_ray(self, ro, rd, max_steps=None):

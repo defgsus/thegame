@@ -82,75 +82,124 @@ def gen_heightmap(w=16, h=32):
     return rows
 
 
-
 class ChunkRenderer:
 
-    def __init__(self, width, height):
+    def __init__(self, world, width, height):
+        self.world = world
         self.width = width
         self.height = height
 
         self.edit_mode = False
         self.debug_view = 0
+        self.asset_id = "level01"
 
-        self.load_chunk()
         self.create_opengl_objects()
 
-    def load_chunk(self):
-        self.tileset = Tileset(16, 16)
-        #self.tileset.load("./assets/tileset01.png")
-        self.tileset.load("./assets/tileset02.png")
-        print(self.tileset)
-
-        # ---- world chunk ----
-
-        self.chunk = WorldChunk(self.tileset)
-        self.chunk_changed = False
-        if 0:
-            #self.chunk.from_heightmap(gen_heightmap())
-            self.chunk.from_heightmap(HEIGHTMAP, do_flip_y=True)
-        else:
-            tiled = TiledImport()
-            self.chunk.from_tiled("./assets/tiled/level01.json")
+    @property
+    def chunk(self):
+        return self.world.chunk
 
     def create_opengl_objects(self):
-        # click in world
-        self.hit_voxel = (-1,-1,-1)
-        self.click_mesh = LineMesh()
-        self.click_mesh_changed = False
-        self.click_drawable = Drawable()
 
         # voxel texture
-        self.chunktex = None
+        self.chunk_tex = None
+
+        # tileset texture
+        self.tileset_tex = None
 
         # distance map
         self.vdf_scale = 1
         self.vdf = self.chunk.create_voxel_distance_field(self.vdf_scale)
         self.vdf_tex = None
 
-        # mesh and texture
-        self.texture = Texture2D()
+        # level mesh
+        mesh_name = "%s-mesh-drawable" % self.chunk.id
         self.mesh = self.chunk.create_mesh()
-        self.drawable = self.mesh.create_drawable()
-        self.drawable.shader.set_fragment_source(frag_src)
-
-        self.texture2 = Texture2D()
-
-        # edit mesh
-        self.edit_drawable = Drawable()
-        self.cur_edit_voxel = (-1,-1,-1)
+        if OpenGlAssets.has(mesh_name):
+            self.mesh_drawable = OpenGlAssets.get(mesh_name)
+        else:
+            self.mesh_drawable = self.mesh.create_drawable()
+            self.mesh_drawable.shader.set_fragment_source(frag_src)
+            OpenGlAssets.register(mesh_name, self.mesh_drawable)
 
         # post-fx
         if 1:
             self.fbo = Framebuffer2D(self.width, self.height)
-            self.quad = ScreenQuad()
+            self.screen_quad = ScreenQuad()
         else:
             self.fbo = None
 
-        # player
-        self.player_pos = glm.vec3(2, 2, 10) + .5
-        self.splayer_pos = glm.vec3(self.player_pos)
+    def render(self, projection, time):
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glDepthMask(True)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    
+        if self.chunk_tex is None:
+            self.chunk_tex = self.chunk.create_texture3d()
+        
+        if self.vdf_tex is None:
+            self.vdf_tex = self.vdf.create_texture3d("vdf")
+    
+        if self.tileset_tex is None:
+            self.tileset_tex = self.world.tileset.create_texture2d()
 
-        # projection
-        self.projection = WorldProjection(self.width, self.height, WorldProjection.P_ISOMETRIC)
-        self.projection.update(.4)
+        do_postproc = self.fbo and not self.world.edit_mode
+    
+        if do_postproc:
+            if self.fbo.is_created():
+                if self.fbo.width != self.width or self.fbo.height != self.height:
+                    self.fbo.release()
+                    self.fbo = Framebuffer2D(self.width, self.height)
+    
+            if not self.fbo.is_created():
+                self.fbo.create()
+    
+            self.fbo.bind()
+            self.fbo.clear()
+        
+        proj = projection.matrix
+    
+        lightpos = glm.vec3(self.world.click_voxel) + (.5,.5,1.5)
+        self.mesh_drawable.shader.set_uniform("u_projection", proj)
+        self.mesh_drawable.shader.set_uniform("u_time", time)
+        self.mesh_drawable.shader.set_uniform("u_lightpos", glm.vec4(lightpos, 1))
+        self.mesh_drawable.shader.set_uniform("u_tex1", 0)
+        self.mesh_drawable.shader.set_uniform("u_chunktex", 1)
+        self.mesh_drawable.shader.set_uniform("u_chunksize", self.chunk.size())
+        self.mesh_drawable.shader.set_uniform("u_vdf_tex", 2)
+        self.mesh_drawable.shader.set_uniform("u_vdf_size", self.vdf.size())
+        self.mesh_drawable.shader.set_uniform("u_vdf_scale", self.vdf_scale)
+        self.mesh_drawable.shader.set_uniform("u_player_pos", self.world.agents["player"].sposition)
+        self.mesh_drawable.shader.set_uniform("u_hit_voxel", self.world.click_voxel)
+        self.mesh_drawable.shader.set_uniform("u_debug_view", self.world.debug_view)
+    
+        self.tileset_tex.set_active_texture(0)
+        self.tileset_tex.bind()
+        self.tileset_tex.set_active_texture(1)
+        self.chunk_tex.bind()
+        self.tileset_tex.set_active_texture(2)
+        self.vdf_tex.bind()
+        self.tileset_tex.set_active_texture(0)
+    
+        # main scene
+        self.mesh_drawable.draw()
 
+        # waypoints debugger
+        if self.world.edit_mode:
+            self.world.agents.path_debug_renderer.render(projection)
+    
+        #glDepthMask(False)
+        self.world.agents.render(projection)
+
+        # post-proc
+    
+        if do_postproc:
+            self.fbo.unbind()
+    
+            self.fbo.color_texture(0).bind()
+            #self.fbo.depth_texture().bind()
+            self.screen_quad.draw(self.width, self.height)
+    
+        #OpenGlBaseObject.dump_instances()

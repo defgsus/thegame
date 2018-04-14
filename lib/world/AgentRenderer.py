@@ -2,7 +2,7 @@ import glm
 
 from .Tileset import Tileset
 from ..geom import TriangleMesh
-from ..opengl import Drawable
+from ..opengl import Drawable, OpenGlAssets
 from ..pector import quat
 
 
@@ -55,18 +55,26 @@ class AgentRenderer:
         #print("agent", self.tileset)
         self.texture = None
         self.mesh = TriangleMesh()
-        self.drawable = Drawable()
-        self.drawable.shader.set_vertex_source(VERTEX_SRC)
-        self.drawable.shader.set_fragment_source(FRAGMENT_SRC)
-
         s = 1
         uv = self.tileset.get_uv_quad(0)
         self.mesh.add_quad((-s, 0, 0), (s, 0, 0), (s, 2*s, 0), (-s, 2*s, 0), *uv)
 
+        self.drawable_name = "agent-drawable"
+
+        if not OpenGlAssets.has(self.drawable_name):
+            draw = Drawable()
+            draw.shader.set_vertex_source(VERTEX_SRC)
+            draw.shader.set_fragment_source(FRAGMENT_SRC)
+            self.mesh.update_drawable(draw)
+            OpenGlAssets.register(self.drawable_name, draw)
+            self.drawable = draw
+        else:
+            self.drawable = OpenGlAssets.get(self.drawable_name)
+
     def release(self):
-        if self.texture is not None and self.texture.is_created():
-            self.texture.release()
-        self.drawable.release()
+        if self.texture is not None:
+            OpenGlAssets.unregister(self.texture)
+        OpenGlAssets.unregister(self.drawable)
 
     def render(self, projection, pos, dir, frame_num):
         self._update()
@@ -94,8 +102,6 @@ class AgentRenderer:
         if not self.texture:
             self.texture = self.tileset.create_texture2d()
 
-        if self.drawable.is_empty():
-            self.mesh.update_drawable(self.drawable)
 
     def get_tileset_idx(self, dir, frame_num):
         idx = (dir-1) * self.tileset.width + frame_num

@@ -21,6 +21,7 @@ class Tileset:
         self.num_tiles = 0
         self.padding = .5/16.
         self.values = None
+        self.filename = None
 
     def __str__(self):
         return "Tileset(%sx%s, %sx%s)" % (
@@ -53,16 +54,23 @@ class Tileset:
         self.num_tiles = self.width * self.height
         #self.values = self._flip_y(self.values)
         self._create_bumpmaps()
+        self.filename = "%s" % file
 
     def create_texture2d(self):
         from ..opengl import Texture2D
         from ..opengl.core.base import GL_RGBA, GL_FLOAT
-        tex = Texture2D(name="tileset")
-        tex.create()
-        tex.bind()
-        tex.upload(self.values, self.width*self.tile_width, self.height*self.tile_height,
-                   input_format=GL_RGBA, input_type=GL_FLOAT, do_flip_y=True)
-        return tex
+        from ..opengl import OpenGlAssets
+        texture_name = self.filename
+        if OpenGlAssets.has(self.filename):
+            return OpenGlAssets.get(texture_name)
+        else:
+            tex = Texture2D(name="tileset")
+            tex.create()
+            tex.bind()
+            tex.upload(self.values, self.width*self.tile_width, self.height*self.tile_height,
+                       input_format=GL_RGBA, input_type=GL_FLOAT, do_flip_y=True)
+            OpenGlAssets.register(texture_name, tex)
+            return tex
 
     def get_uv_quad(self, idx):
         x = idx % self.width

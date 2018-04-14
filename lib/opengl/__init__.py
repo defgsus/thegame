@@ -6,4 +6,5 @@ from .core.VertexArrayObject import VertexArrayObject
 
 from .CoordinateGrid import CoordinateGrid
 from .Drawable import Drawable
+from .OpenGlAssets import OpenGlAssets
 from .ScreenQuad import ScreenQuad

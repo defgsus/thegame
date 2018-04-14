@@ -7,7 +7,6 @@ from ..geom import LineMesh
 from ..ai import AStar
 
 
-
 class Agents:
 
     def __init__(self, chunk):

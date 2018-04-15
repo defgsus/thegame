@@ -89,7 +89,7 @@ class Blur(PostProcBase):
             
             /*float D = texture(u_tex2, texCoord).x;
             float e = smoothstep(0.001, .0, abs(D-.999));
-            fragColor = vec4(D,e,e,1)*/;
+            fragColor += vec4(D,e,e,1);*/
         }
 
         """ % {

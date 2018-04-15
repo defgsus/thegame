@@ -12,7 +12,7 @@ class WorldEngine:
 
     def __init__(self):
         self.edit_mode = False
-        self.click_voxel = (0,0,0)
+        self.click_voxel = (30,10,10)
         self.debug_view = 0
 
         self.renderer = None

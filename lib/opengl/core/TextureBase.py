@@ -18,6 +18,7 @@ class TextureBase(OpenGlBaseObject):
         self.mag_filter = GL_LINEAR
         self.min_filter = GL_NEAREST
         self.wrap_mode = GL_CLAMP
+        self.multi_sample = 0
 
     @staticmethod
     def set_active_texture(idx):
@@ -39,6 +40,8 @@ class TextureBase(OpenGlBaseObject):
         glBindTexture(self.target, 0)
 
     def set_parameter(self, enum, value=None):
+        if self.multi_sample:
+            return
         if value is None:
             if enum == GL_TEXTURE_MAG_FILTER:
                 value = self.mag_filter

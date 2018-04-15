@@ -3,14 +3,17 @@ from .base import *
 
 
 class Framebuffer2D(OpenGlBaseObject):
-    def __init__(self, width, height, num_color_tex=1, with_depth_tex=True, name=None):
+    def __init__(self, width, height, num_color_tex=1, with_depth_tex=True, name=None,
+                 multi_sample=0):
         from .Texture2D import Texture2D
         super(Framebuffer2D, self).__init__(name=name)
         self.width = width
         self.height = height
+        self.multi_sample = multi_sample
         self._rbo = -1
-        self._color_textures = [Texture2D("%s-color-%s" % (self.name, i)) for i in range(num_color_tex)]
-        self._depth_texture = Texture2D() if with_depth_tex else None
+        self._color_textures = [Texture2D(multi_sample=self.multi_sample, name="%s-color-%s" % (self.name, i))
+                                for i in range(num_color_tex)]
+        self._depth_texture = Texture2D(multi_sample=self.multi_sample, name="%s-depth" % self.name) if with_depth_tex else None
         self._color_texture_changed = set()
 
     def color_texture(self, index):
@@ -86,7 +89,7 @@ class Framebuffer2D(OpenGlBaseObject):
             if bind_tex:
                 glBindFramebuffer(GL_FRAMEBUFFER, self._handle)
                 glFramebufferTexture2D(
-                    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex.handle, 0
+                    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, tex.target, tex.handle, 0
                 )
 
         if self._rbo >= 0:
@@ -98,6 +101,6 @@ class Framebuffer2D(OpenGlBaseObject):
                                                input_format=GL_DEPTH_COMPONENT, gpu_format=GL_DEPTH_COMPONENT)
                     glBindRenderbuffer(GL_RENDERBUFFER, self._rbo)
                     glFramebufferTexture2D(
-                        GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self._depth_texture.handle, 0
+                        GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, self._depth_texture.target, self._depth_texture.handle, 0
                     )
 

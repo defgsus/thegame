@@ -3,8 +3,10 @@ from .TextureBase import *
 
 class Texture2D(TextureBase):
 
-    def __init__(self, name=None):
-        super(Texture2D, self).__init__(GL_TEXTURE_2D, name=name)
+    def __init__(self, multi_sample=0, name=None):
+        target = GL_TEXTURE_2D if multi_sample < 1 else GL_TEXTURE_2D_MULTISAMPLE
+        super(Texture2D, self).__init__(target, name=name)
+        self.multi_sample = multi_sample
 
     def __str__(self):
         return "Texture2D(%s, %sx%s)" % (self.name, self.width, self.height)
@@ -25,8 +27,11 @@ class Texture2D(TextureBase):
         else:
             ptr = None
 
-        glTexImage2D(self.target, mipmap_level, self.gpu_format, self.width, self.height, 0,
-                     input_format, input_type, ptr)
+        if self.multi_sample < 1:
+            glTexImage2D(self.target, mipmap_level, self.gpu_format, self.width, self.height, 0,
+                         input_format, input_type, ptr)
+        else:
+            glTexImage2DMultisample(self.target, self.multi_sample, self.gpu_format, self.width, self.height, GL_TRUE)
 
         self.set_parameter(GL_TEXTURE_MIN_FILTER, self.min_filter)
         self.set_parameter(GL_TEXTURE_MAG_FILTER, self.mag_filter)

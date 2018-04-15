@@ -46,6 +46,14 @@ class Shader(OpenGlBaseObject):
             raise KeyError("attribute '%s' not found, possible values: %s" % (name, self.dump_variables(do_print=False)))
         return self._attributes[name]
 
+    @property
+    def vertex_source(self):
+        return self._vertex_source
+
+    @property
+    def fragment_source(self):
+        return self._fragment_source
+
     def set_vertex_source(self, src):
         self._source_changed = src != self._vertex_source
         self._vertex_source = src
@@ -137,6 +145,8 @@ class Shader(OpenGlBaseObject):
         status = GLint(0)
         glGetShaderiv(shader, GL_COMPILE_STATUS, ctypes.byref(status))
         if not status:
+            #for i, line in enumerate(source.split("\n")):
+            #    print(i, line)
             print(self._log)
             raise OpenGlError("%s compilation error" % shader_type_name)
 

@@ -1,3 +1,5 @@
+from .Blur import Blur
+from .Desaturize import Desaturize
 from .PostProcessing import PostProcessing
-from .Pixelizer import Pixelizer
-
+from .Pixelize import Pixelize
+from .Wave import Wave

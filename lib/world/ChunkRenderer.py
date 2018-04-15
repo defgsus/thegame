@@ -125,7 +125,11 @@ class ChunkRenderer:
         # post-fx
         if 1:
             self.postproc = postproc.PostProcessing()
-            self.postproc.add_stage(postproc.Pixelizer())
+            self.postproc.add_stage(postproc.Wave())
+            self.postproc.add_stage(postproc.Desaturize())
+            #self.postproc.add_stage(postproc.Blur(dir=(0,1)))
+            #self.postproc.add_stage(postproc.Blur(dir=(1,0)))
+            #self.postproc.add_stage(postproc.Pixelize())
         else:
             self.postproc = None
 

@@ -32,6 +32,7 @@ class ScreenQuad:
     uniform sampler2D u_tex1;
     uniform sampler2D u_tex2;
     uniform vec4 u_resolution;
+    uniform float u_time;
     
     in vec4 v_pos;
     in vec2 v_texcoord;
@@ -39,17 +40,18 @@ class ScreenQuad:
     out vec4 o_color;
     
     %(mainImage)s
-        
+
     void main() {
-        vec2 scr = (v_pos.xy*.5+.5) * u_resolution.xy;
-        mainImage(o_color, scr, v_pos.xy);
+        vec2 _tec = (v_pos.xy*.5+.5);
+        vec2 _scr = _tec * u_resolution.xy;
+        mainImage(o_color, _scr, _tec);
     }
     """
 
     DEFAULT_MAIN_IMAGE = """
     #line 50
-    void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 uv) {
-        fragColor = texture(u_tex1, uv*.5+.5).zyxw;
+    void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
+        fragColor = texture(u_tex1, uv).zyxw;
     }
     """
 

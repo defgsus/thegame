@@ -1,11 +1,11 @@
 from .base import PostProcBase
 
 
-class Pixelizer(PostProcBase):
+class Pixelize(PostProcBase):
 
     def get_code(self):
         return """
-        void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 uv) {
+        void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             const int NUMX = 2;
             const int NUMY = 2;
             vec2 fac = vec2(NUMX, NUMY);

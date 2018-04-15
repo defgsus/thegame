@@ -23,6 +23,12 @@ class Framebuffer2D(OpenGlBaseObject):
     def clear(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+    def swap_color_texture(self, index, tex):
+        """Exchange current color texture with given texture"""
+        ret = self._color_textures[index]
+        self._color_textures[index] = tex
+        return ret
+
     def _create(self):
         h = GLuint(0)
         glGenFramebuffers(1, ctypes.byref(h))
@@ -61,6 +67,14 @@ class Framebuffer2D(OpenGlBaseObject):
                 glFramebufferTexture2D(
                     GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex.handle, 0
                 )
+            elif tex.width != self.width or tex.height != self.height:
+                tex.bind()
+                tex.upload(None, self.width, self.height, gpu_format=GL_RGBA32F)
+                glBindFramebuffer(GL_FRAMEBUFFER, self._handle)
+                glFramebufferTexture2D(
+                    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex.handle, 0
+                )
+
         if self._rbo >= 0:
             if self._depth_texture is not None:
                 if not self._depth_texture.is_created():

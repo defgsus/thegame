@@ -169,8 +169,7 @@ class WorldProjection:
         trans = glm.rotate(glm.mat4(1), self._srotation[0], (1,0,0))
         trans = glm.rotate(trans, self._srotation[1], (0,1,0))
         trans = glm.rotate(trans, self._srotation[2], (0,0,1))
-        trans = glm.translate(trans, (0, 0,
-                                    [-3,-2,-4,-1,0]["oipet".index(self.projection)]))
+        trans = glm.translate(trans, (0, 0, [-3,-2,-4,-1,0]["oipet".index(self.projection)]))
 
         trans = glm.scale(trans, glm.vec3(max(0.01, 1.+self.zoom/10.)))
 

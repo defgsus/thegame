@@ -9,8 +9,9 @@ class Framebuffer2D(OpenGlBaseObject):
         self.width = width
         self.height = height
         self._rbo = -1
-        self._color_textures = [Texture2D("%s-color-%s" % (self.name, i+1)) for i in range(num_color_tex)]
+        self._color_textures = [Texture2D("%s-color-%s" % (self.name, i)) for i in range(num_color_tex)]
         self._depth_texture = Texture2D() if with_depth_tex else None
+        self._color_texture_changed = set()
 
     def color_texture(self, index):
         if index >= len(self._color_textures):
@@ -24,9 +25,15 @@ class Framebuffer2D(OpenGlBaseObject):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     def swap_color_texture(self, index, tex):
-        """Exchange current color texture with given texture"""
+        """
+        Exchange current color texture with given texture.
+        Changes take effect after bind()
+        """
         ret = self._color_textures[index]
+        if tex.width != ret.width or tex.height != ret.height:
+            raise ValueError("Unmatched size (%s, %s) to FBO.swap_color_texture" % (tex.width, tex.height))
         self._color_textures[index] = tex
+        self._color_texture_changed.add(index)
         return ret
 
     def _create(self):
@@ -59,17 +66,24 @@ class Framebuffer2D(OpenGlBaseObject):
 
     def _update_textures(self):
         for i, tex in enumerate(self._color_textures):
+            bind_tex = None
+            # create attachment
             if not tex.is_created():
                 tex.create()
                 tex.bind()
                 tex.upload(None, self.width, self.height, gpu_format=GL_RGBA32F)
-                glBindFramebuffer(GL_FRAMEBUFFER, self._handle)
-                glFramebufferTexture2D(
-                    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex.handle, 0
-                )
+                bind_tex = tex
+            # resize attachment
             elif tex.width != self.width or tex.height != self.height:
                 tex.bind()
                 tex.upload(None, self.width, self.height, gpu_format=GL_RGBA32F)
+                bind_tex = tex
+            # swap attachment
+            elif i in self._color_texture_changed:
+                self._color_texture_changed.remove(i)
+                bind_tex = tex
+
+            if bind_tex:
                 glBindFramebuffer(GL_FRAMEBUFFER, self._handle)
                 glFramebufferTexture2D(
                     GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex.handle, 0

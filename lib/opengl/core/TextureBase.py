@@ -38,5 +38,12 @@ class TextureBase(OpenGlBaseObject):
     def _unbind(self):
         glBindTexture(self.target, 0)
 
-    def set_parameter(self, enum, value):
+    def set_parameter(self, enum, value=None):
+        if value is None:
+            if enum == GL_TEXTURE_MAG_FILTER:
+                value = self.mag_filter
+            elif enum == GL_TEXTURE_MIN_FILTER:
+                value = self.min_filter
+            else:
+                raise ValueError("No value given/known for texture %s.setParameter(%s)" % (self.name, enum))
         glTexParameteri(self.target, enum, value)

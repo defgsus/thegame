@@ -19,16 +19,17 @@ class PostProcBase:
     def update_uniforms(self, shader, stage_num):
         pass
 
-    def draw(self, stage_num, width, height, time):
+    def draw(self, stage_num, rs):
         if self.do_compile:
             self.quad.set_shader_code(self.get_code())
             self.do_compile = False
-        self.width = width
-        self.height = height
+        self.width = rs.render_width
+        self.height = rs.render_height
         self.quad.drawable.shader.set_uniform("u_tex1", 0)
         self.quad.drawable.shader.set_uniform("u_tex2", 1)
-        self.quad.drawable.shader.set_uniform("u_time", time)
+        self.quad.drawable.shader.set_uniform("u_time", rs.time)
         self.update_uniforms(self.quad.drawable.shader, stage_num)
-        self.quad.draw(width, height)
+        self.quad.draw(rs.render_width, rs.render_height)
+        #self.quad.draw_centered(rs.render_width, rs.render_height, rs.render_width, rs.render_height)
 
 

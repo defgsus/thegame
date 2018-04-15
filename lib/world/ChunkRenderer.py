@@ -88,8 +88,8 @@ class ChunkRenderer:
     def __init__(self, world):
         self.world = world
 
-        self.edit_mode = False
-        self.debug_view = 0
+        self.render_settings = world.render_settings
+
         self.asset_id = "level01"
 
         self.create_opengl_objects()
@@ -124,6 +124,7 @@ class ChunkRenderer:
 
         # post-fx
         if 1:
+            self.pp_blur1 = None
             self.postproc = postproc.PostProcessing()
             #self.postproc.add_stage(postproc.Wave())
             #self.postproc.add_stage(postproc.Desaturize())
@@ -133,7 +134,9 @@ class ChunkRenderer:
         else:
             self.postproc = None
 
-    def render(self, projection, time):
+    def render(self):
+        rs = self.render_settings
+
         glDisable(GL_CULL_FACE)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
@@ -149,12 +152,9 @@ class ChunkRenderer:
         if self.tileset_tex is None:
             self.tileset_tex = self.world.tileset.create_texture2d()
 
-        do_postproc = self.postproc and not self.world.edit_mode
-    
-        if do_postproc:
-            self.postproc.bind(projection.width, projection.height)
+        self.postproc.bind(rs)
         
-        proj = projection.matrix
+        proj = rs.projection.matrix
     
         lightpos = glm.vec3(self.world.click_voxel) + (.5,.5,1.5)
         self.mesh_drawable.shader.set_uniform("u_projection", proj)
@@ -183,13 +183,16 @@ class ChunkRenderer:
 
         # waypoints debugger
         if self.world.edit_mode:
-            self.world.agents.path_debug_renderer.render(projection)
+            self.world.agents.path_debug_renderer.render(rs.projection)
     
-        self.world.agents.render(projection)
+        self.world.agents.render(rs.projection)
 
         # post-proc
     
-        if do_postproc:
-            ms = projection.get_depth_mask_values()
-            self.pp_blur1.mask_center, self.pp_blur1.mask_spread = ms
-            self.postproc.draw(projection.width, projection.height, time)
+        if not self.world.edit_mode:
+            ms = rs.projection.get_depth_mask_values()
+            if self.pp_blur1:
+                self.pp_blur1.mask_center, self.pp_blur1.mask_spread = ms
+            self.postproc.render(rs)
+
+        self.postproc.render_output(rs)

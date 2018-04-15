@@ -19,7 +19,7 @@ class WorldWindow(pyglet.window.Window):
             #width=800, height=600,
             vsync=True, **kwargs)
 
-        self.world = WorldEngine(self.width, self.height)
+        self.world = WorldEngine()
 
         self.edit_mode = False
         self.debug_view = 0
@@ -62,7 +62,9 @@ class WorldWindow(pyglet.window.Window):
 
     def on_draw(self):
         self.clear()
-        self.world.render(self.width, self.height, time.time() - self.start_time)
+        self.world.render_settings.screen_width = self.width
+        self.world.render_settings.screen_height = self.height
+        self.world.render(time.time() - self.start_time)
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.world.projection._rotation[0] -= scroll_y / 30.

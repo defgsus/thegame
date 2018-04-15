@@ -5,22 +5,21 @@ from .WorldChunk import WorldChunk
 from .Tileset import Tileset
 from .WorldProjection import WorldProjection
 from .ChunkRenderer import ChunkRenderer
+from .RenderSettings import RenderSettings
 
 
 class WorldEngine:
 
-    def __init__(self, screen_width, screen_height):
+    def __init__(self):
         self.edit_mode = False
         self.click_voxel = (0,0,0)
         self.debug_view = 0
 
-        self.screen_width = screen_width
-        self.screen_height = screen_height
         self.renderer = None
+        self.render_settings = RenderSettings(480, 320)
 
         # projection
-        self.projection = WorldProjection(self.screen_width, self.screen_height, WorldProjection.P_ISOMETRIC)
-        self.projection.update(.4)
+        self.projection = self.render_settings.projection
 
         # chunk
         self.tileset = Tileset.from_image(16, 16, "./assets/tileset02.png")
@@ -52,10 +51,10 @@ class WorldEngine:
         self.projection.user_transformation = glm.translate(glm.mat4(1), -self.agents["player"].sposition)
         self.projection.update(dt)
 
-    def render(self, width, height, time):
-        self.projection.width = width
-        self.projection.height = height
+    def render(self, time):
+        self.render_settings.time = time
 
         if self.renderer is None:
             self.renderer = ChunkRenderer(self)
-        self.renderer.render(self.projection, time)
+
+        self.renderer.render()

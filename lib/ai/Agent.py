@@ -47,8 +47,9 @@ class Agent:
         # gravity
         if 1:
             newpos = self.position + d * glm.vec3(0,0,-3)
-            if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
-                self.position = newpos
+            if int(newpos.z) >= 1:
+                if self.chunk.block(int(newpos.x), int(newpos.y), int(newpos.z)).space_type == 0:
+                    self.position = newpos
         else:
             t, hit = self.chunk.cast_voxel_ray(self.position+(0,0,0), (0,0,-1))
             if hit:

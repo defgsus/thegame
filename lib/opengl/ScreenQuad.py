@@ -44,14 +44,15 @@ class ScreenQuad:
     void main() {
         vec2 _tec = (v_pos.xy*.5+.5);
         vec2 _scr = _tec * u_resolution.xy;
-        mainImage(o_color, _scr, _tec);
+        mainImage(o_color, _scr, v_texcoord);
     }
     """
 
     DEFAULT_MAIN_IMAGE = """
     #line 50
     void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
-        fragColor = texture(u_tex1, uv).zyxw;
+        fragColor = texture(u_tex1, texCoord);
+        //fragColor = vec4(texCoord, 0, 1);
     }
     """
 
@@ -79,7 +80,23 @@ class ScreenQuad:
         self.drawable.release()
 
     def draw(self, width, height):
+        #print("quaddraw", width, height)
         proj = glm.mat4(1.)
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_resolution", (width, height, 1./max(1, width), 1./max(1, height)))
+        self.drawable.draw()
+
+    def draw_centered(self, width, height, tex_width, tex_height):
+        #print("quaddraw_centered", width, height, tex_width, tex_height)
+        if height < width:
+            proj = glm.scale(glm.mat4(1), (height/width, 1, 1))
+        else:
+            proj = glm.scale(glm.mat4(1), (1, width/height, 1))
+        if tex_height < tex_width:
+            proj = glm.scale(proj, (tex_width/tex_height, 1, 1))
+        else:
+            proj = glm.scale(proj, (1, tex_height/tex_width, 1))
+
+        self.drawable.shader.set_uniform("u_projection", proj)
+        self.drawable.shader.set_uniform("u_resolution", (tex_width, tex_height, 1./max(1, tex_width), 1./max(1, tex_height)))
         self.drawable.draw()

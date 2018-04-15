@@ -109,8 +109,26 @@ class WorldProjection:
             return 0.25, .25
         return .999, .002
 
-    def screen_to_ray(self, x, y):
-        """Return tuple with ray-origin and normalized ray-direction for input screen space"""
+    def screen_to_ray(self, x, y, scr_width, scr_height):
+        """Return tuple with ray-origin and normalized ray-direction for input screen coords"""
+        x = x / scr_width * 2. - 1.
+        y = y / scr_height * 2. - 1.
+        if scr_height < scr_width:
+            x /= scr_height / scr_width
+        else:
+            y /= scr_width / scr_height
+
+        if self.height < self.width:
+            x /= self.width / self.height
+        else:
+            y /= self.height / self.width
+        return self.voxel_to_ray(
+            (x * .5 + .5) * self.width,
+            (y * .5 + .5) * self.height,
+        )
+
+    def voxel_to_ray(self, x, y):
+        """Return tuple with ray-origin and normalized ray-direction for input render-res x, y"""
         st = glm.vec2(x / self.width, y / self.height) * 2. - 1.
 
         if self.is_perspective():

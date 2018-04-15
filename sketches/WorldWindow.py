@@ -102,4 +102,5 @@ class WorldWindow(pyglet.window.Window):
             OpenGlAssets.dump()
 
     def get_ray(self, x, y):
-        return self.world.projection.screen_to_ray(x, y)
+        return self.world.projection.screen_to_ray(
+            x, y, self.width, self.height)

@@ -4,6 +4,7 @@ import glm
 import math
 from pyglet.gl import *
 from lib.opengl import *
+from lib.opengl import postproc
 from lib.geom import *
 from lib.world import *
 from .ChunkRenderer_shader import frag_src, vert_src
@@ -123,10 +124,10 @@ class ChunkRenderer:
 
         # post-fx
         if 1:
-            self.fbo = Framebuffer2D(16, 16)
-            self.screen_quad = ScreenQuad()
+            self.postproc = postproc.PostProcessing()
+            self.postproc.add_stage(postproc.Pixelizer())
         else:
-            self.fbo = None
+            self.postproc = None
 
     def render(self, projection, time):
         glDisable(GL_CULL_FACE)
@@ -144,19 +145,10 @@ class ChunkRenderer:
         if self.tileset_tex is None:
             self.tileset_tex = self.world.tileset.create_texture2d()
 
-        do_postproc = self.fbo and not self.world.edit_mode
+        do_postproc = self.postproc and not self.world.edit_mode
     
         if do_postproc:
-            if self.fbo.is_created():
-                if self.fbo.width != projection.width or self.fbo.height != projection.height:
-                    self.fbo.release()
-                    self.fbo = Framebuffer2D(projection.width, projection.height)
-    
-            if not self.fbo.is_created():
-                self.fbo.create()
-    
-            self.fbo.bind()
-            self.fbo.clear()
+            self.postproc.bind(projection.width, projection.height)
         
         proj = projection.matrix
     
@@ -189,16 +181,9 @@ class ChunkRenderer:
         if self.world.edit_mode:
             self.world.agents.path_debug_renderer.render(projection)
     
-        #glDepthMask(False)
         self.world.agents.render(projection)
 
         # post-proc
     
         if do_postproc:
-            self.fbo.unbind()
-    
-            self.fbo.color_texture(0).bind()
-            #self.fbo.depth_texture().bind()
-            self.screen_quad.draw(projection.width, projection.height)
-    
-        #OpenGlBaseObject.dump_instances()
+            self.postproc.draw(projection.width, projection.height, time)

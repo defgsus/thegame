@@ -71,7 +71,6 @@ class WorldWindow(pyglet.window.Window):
         self.world.projection._rotation[1] += dx / 30.
 
     def on_mouse_press(self, x, y, button, modifiers):
-        import random
         ro, rd = self.get_ray(x, y)
         t, hit = self.world.chunk.cast_voxel_ray(ro, rd, 1000)
         if hit:

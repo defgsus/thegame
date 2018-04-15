@@ -30,7 +30,7 @@ class WorldEngine:
             #self.chunk.from_heightmap(gen_heightmap())
             self.chunk.from_heightmap(HEIGHTMAP, do_flip_y=True)
         else:
-            self.chunk.from_tiled("./assets/tiled/level01.json")
+            self.chunk.from_tiled("./assets/tiled/level03.json")
 
         # player
         self.agents = Agents(self.chunk)

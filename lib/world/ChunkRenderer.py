@@ -125,10 +125,10 @@ class ChunkRenderer:
         # post-fx
         if 1:
             self.postproc = postproc.PostProcessing()
-            self.postproc.add_stage(postproc.Wave())
-            self.postproc.add_stage(postproc.Desaturize())
-            #self.postproc.add_stage(postproc.Blur(dir=(0,1)))
-            #self.postproc.add_stage(postproc.Blur(dir=(1,0)))
+            #self.postproc.add_stage(postproc.Wave())
+            #self.postproc.add_stage(postproc.Desaturize())
+            self.pp_blur1 = postproc.Blur(use_mask=True)
+            self.postproc.add_stage(self.pp_blur1)
             #self.postproc.add_stage(postproc.Pixelize())
         else:
             self.postproc = None
@@ -190,4 +190,6 @@ class ChunkRenderer:
         # post-proc
     
         if do_postproc:
+            ms = projection.get_depth_mask_values()
+            self.pp_blur1.mask_center, self.pp_blur1.mask_spread = ms
             self.postproc.draw(projection.width, projection.height, time)

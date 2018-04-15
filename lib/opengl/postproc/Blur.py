@@ -3,26 +3,54 @@ from .base import PostProcBase
 
 class Blur(PostProcBase):
 
-    def __init__(self, size=10, sigma=.7, dir=(1, 0)):
+    def __init__(self, size=2, sigma=.7, num_samples=10,
+                 use_mask=False, mask_center=0.25, mask_spread=0.1):
         """
-        :param size: Radius of the blur kernel i
+        :param size: Radius of the blur kernel - tied to resolution
         :param sigma: A modifier to adjust the amount of blur, range is about [0, 1]
         """
         super().__init__()
         self.size = size
         self.sigma = sigma
-        self.dir = dir
-        self.num_samples = 10
+        self._num_samples = num_samples
+        self._use_mask = use_mask
+        self.mask_center = mask_center
+        self.mask_spread = mask_spread
+        self.num_stages = 2
 
-    def update_uniforms(self, shader):
-        shader.set_uniform("u_size_sigma", (self.size, self.sigma))
-        shader.set_uniform("u_direction",  (self.dir[0]/self.width, self.dir[1]/self.height))
+    @property
+    def num_samples(self):
+        return self._num_samples
+
+    @num_samples.setter
+    def num_samples(self, num):
+        if self._num_samples != num:
+            self.do_compile = True
+        self._num_samples = num
+
+    @property
+    def use_mask(self):
+        return self._use_mask
+
+    @use_mask.setter
+    def use_mask(self, bool):
+        if self._use_mask != bool:
+            self.do_compile = True
+        self._use_mask = bool
+
+    def update_uniforms(self, shader, stage_num):
+        dir = (1, 0) if stage_num == 0 else (0, 1)
+        shader.set_uniform("u_size_sigma", (self.size * self.width / 600.,
+                                            self.sigma * self.num_samples * .5))
+        shader.set_uniform("u_direction",  (dir[0]/self.width, dir[1]/self.height))
+        shader.set_uniform("u_mask_center_spread", (self.mask_center, self.mask_spread))
 
     def get_code(self):
         return """
         #line 22
         uniform vec2        u_size_sigma;   // size, smoothness
         uniform vec2        u_direction;    // (1,0) or (0,1)
+        uniform vec2        u_mask_center_spread;
 
         /* http://callumhay.blogspot.de/2010/09/gaussian-blur-shader-glsl.html */
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) 
@@ -31,6 +59,12 @@ class Blur(PostProcBase):
                   size = u_size_sigma.x,
                   sum = 0.;
         
+        #if %(mask)s
+            sigma = max(0.001,
+                sigma * (1.-smoothstep(u_mask_center_spread.y, 0., abs(texture(u_tex2, texCoord).x - u_mask_center_spread.x)))
+                );
+        #endif
+
             vec3 inc;
             inc.x = 1. / (sqrt(3.14159265*2.) * sigma);
             inc.y = exp(-.5 / (sigma * sigma));
@@ -41,7 +75,7 @@ class Blur(PostProcBase):
             inc.xy *= inc.yz;
         
             vec2 stp = u_direction * size;
-            for (float i=1.; i<%(num)s; ++i)
+            for (float i=1.; i<float(%(num)s); ++i)
             {
                 c += texture(u_tex1, texCoord + stp * i) * inc.x;
                 c += texture(u_tex1, texCoord - stp * i) * inc.x;
@@ -52,9 +86,14 @@ class Blur(PostProcBase):
             c /= sum;
         
             fragColor = clamp(vec4(c.xyz, 1.), 0., 1.);
+            
+            /*float D = texture(u_tex2, texCoord).x;
+            float e = smoothstep(0.001, .0, abs(D-.999));
+            fragColor = vec4(D,e,e,1)*/;
         }
 
         """ % {
             "num": self.num_samples,
+            "mask": 1 if self.use_mask else 0,
         }
 

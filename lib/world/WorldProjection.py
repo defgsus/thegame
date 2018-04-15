@@ -104,6 +104,11 @@ class WorldProjection:
         self._smat_project += d * (self._mat_project - self._smat_project)
         self._smat_transform += d * (self._mat_transform - self._smat_transform)
 
+    def get_depth_mask_values(self):
+        if self.projection in "iot":
+            return 0.25, .25
+        return .999, .002
+
     def screen_to_ray(self, x, y):
         """Return tuple with ray-origin and normalized ray-direction for input screen space"""
         st = glm.vec2(x / self.width, y / self.height) * 2. - 1.

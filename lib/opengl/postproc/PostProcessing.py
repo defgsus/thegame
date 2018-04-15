@@ -48,36 +48,44 @@ class PostProcessing:
             self.fbo.depth_texture().bind()
             Texture2D.set_active_texture(0)
 
-        if len(self.stages) == 1:
-            self.stages[0].draw(width, height, time)
+        stages = []
+        for stage in self.stages:
+            for i in range(stage.num_stages):
+                stages.append((stage, i))
 
-        elif len(self.stages) > 1:
-            if self.fbo2 is None:
+        if not stages:
+            raise ValueError("empty postprocessing")
+
+        if len(stages) == 1:
+            stages[0][0].draw(stages[0][1], width, height, time)
+            return
+
+        if self.fbo2 is None:
+            self.fbo2 = Framebuffer2D(width, height)
+
+        if self.fbo2.is_created():
+            if self.fbo2.width != width or self.fbo2.height != height:
+                self.fbo2.release()
                 self.fbo2 = Framebuffer2D(width, height)
 
-            if self.fbo2.is_created():
-                if self.fbo2.width != width or self.fbo2.height != height:
-                    self.fbo2.release()
-                    self.fbo2 = Framebuffer2D(width, height)
+        if not self.fbo2.is_created():
+            self.fbo2.create()
 
-            if not self.fbo2.is_created():
-                self.fbo2.create()
+        self.fbo2.bind()
+        self.fbo2.clear()
 
-            self.fbo2.bind()
-            self.fbo2.clear()
+        for i, stage in enumerate(stages):
+            last_frame = i+1 == len(stages)
 
-            for i, stage in enumerate(self.stages):
-                last_frame = i+1 == len(self.stages)
+            if last_frame:
+                self.fbo2.unbind()
 
-                if last_frame:
-                    self.fbo2.unbind()
+            stage[0].draw(stage[1], width, height, time)
 
-                stage.draw(width, height, time)
-
-                if self.swap_tex is None:
-                    self.swap_tex = Texture2D("pp-swap")
-                    self.swap_tex.create()
-                    self.swap_tex.bind()
-                    self.swap_tex.upload(None, width, height, gpu_format=GL_RGBA32F)
-                self.swap_tex = self.fbo2.swap_color_texture(0, self.swap_tex)
+            if self.swap_tex is None:
+                self.swap_tex = Texture2D("pp-swap")
+                self.swap_tex.create()
                 self.swap_tex.bind()
+                self.swap_tex.upload(None, width, height, gpu_format=GL_RGBA32F)
+            self.swap_tex = self.fbo2.swap_color_texture(0, self.swap_tex)
+            self.swap_tex.bind()

@@ -65,8 +65,11 @@ class RenderStage:
 
     def __str__(self):
         inf = "%s" % self.node
+        outs = self.node.output_slots()
+        if outs:
+            inf += ", outs=[%s]" % ", ".join("%s" % o for o in outs)
         if self.inputs:
-            inf += ", ins=(%s)" % ", ".join(
+            inf += ", ins=[%s]" % ", ".join(
                 "%(to_slot)s: %(from_node)s:%(from_slot)s" % i for i in self.inputs)
         inf += ")"
         return "Stage(%s)" % inf

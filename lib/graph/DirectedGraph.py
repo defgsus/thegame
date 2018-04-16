@@ -31,6 +31,9 @@ class DirectedGraph:
         g._inputs = {n: self._inputs[n].copy() for n in self._inputs}
         return g
 
+    def add_node(self, n):
+        self._nodes.add(n)
+
     def add_edge(self, n1, n2):
         self._nodes.add(n1)
         self._nodes.add(n2)

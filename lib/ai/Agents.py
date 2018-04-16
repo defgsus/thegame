@@ -1,7 +1,7 @@
 import glm
 
 from .Agent import Agent
-from lib.world.AgentRenderer import AgentRenderer
+from lib.world.render.AgentRenderer import AgentRenderer
 from lib.opengl import Drawable
 from lib.geom import LineMesh
 from lib.ai.AStar import AStar

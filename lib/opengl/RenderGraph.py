@@ -32,6 +32,7 @@ class RenderGraph:
         if node.name in self.nodes:
             raise ValueError("Multiple RenderGraph.add_node('%s')" % node.name)
         self.nodes[node.name] = node
+        self.graph.add_node(node.name)
 
     def connect(self, node_from, output, node_to, input=0):
         """Connect to existing nodes by name or instance"""

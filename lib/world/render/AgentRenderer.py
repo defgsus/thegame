@@ -1,9 +1,9 @@
 import glm
 
-from .Tileset import Tileset
-from ..geom import TriangleMesh
-from ..opengl import Drawable, OpenGlAssets
-from ..pector import quat
+from lib.world.Tileset import Tileset
+from lib.geom import TriangleMesh
+from lib.opengl import Drawable, OpenGlAssets
+from lib.pector import quat
 
 
 VERTEX_SRC = """

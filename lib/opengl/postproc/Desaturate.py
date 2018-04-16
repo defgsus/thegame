@@ -1,7 +1,7 @@
-from .base import PostProcBase
+from .base import PostProcNode
 
 
-class Desaturize(PostProcBase):
+class Desaturate(PostProcNode):
 
     def get_code(self):
         return """

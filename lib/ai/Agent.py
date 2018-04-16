@@ -1,5 +1,5 @@
 import glm
-from lib.world.AgentRenderer import AgentRenderer
+from lib.world.render.AgentRenderer import AgentRenderer
 
 
 class Agent:

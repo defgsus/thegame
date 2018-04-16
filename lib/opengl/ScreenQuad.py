@@ -31,6 +31,8 @@ class ScreenQuad:
     #line 31
     uniform sampler2D u_tex1;
     uniform sampler2D u_tex2;
+    uniform sampler2D u_tex3;
+    uniform sampler2D u_tex4;
     uniform vec4 u_resolution;
     uniform float u_time;
     

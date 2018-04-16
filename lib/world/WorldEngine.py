@@ -3,9 +3,8 @@ import glm
 from lib.ai import *
 from .WorldChunk import WorldChunk
 from .Tileset import Tileset
-from .WorldProjection import WorldProjection
-from .ChunkRenderer import ChunkRenderer
-from .RenderSettings import RenderSettings
+from .render.ChunkRenderer import ChunkRenderer
+from .render.RenderSettings import RenderSettings
 
 
 class WorldEngine:

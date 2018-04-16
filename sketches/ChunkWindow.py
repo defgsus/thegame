@@ -6,7 +6,7 @@ from pyglet.gl import *
 from lib.opengl import *
 from lib.geom import *
 from lib.world import *
-from lib.world.ChunkRenderer_shader import vert_src, frag_src
+from lib.world.render.ChunkRenderer_shader import vert_src, frag_src
 from lib.ai import *
 
 

@@ -1,7 +1,7 @@
-from .base import PostProcBase
+from .base import PostProcNode
 
 
-class Wave(PostProcBase):
+class Wave(PostProcNode):
 
     def get_code(self):
         return """

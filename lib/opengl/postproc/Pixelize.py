@@ -1,7 +1,7 @@
-from .base import PostProcBase
+from .base import PostProcNode
 
 
-class Pixelize(PostProcBase):
+class Pixelize(PostProcNode):
 
     def get_code(self):
         return """

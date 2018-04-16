@@ -1,4 +1,4 @@
-from .WorldProjection import WorldProjection
+from lib.world.WorldProjection import WorldProjection
 
 
 class RenderSettings:

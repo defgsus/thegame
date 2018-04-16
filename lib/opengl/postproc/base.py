@@ -27,7 +27,7 @@ class PostProcNode(RenderNode):
         #self.quad.draw_centered(rs.render_width, rs.render_height, rs.render_width, rs.render_height)
 
     def get_code(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def update_uniforms(self, shader, rs, pass_num):
         pass

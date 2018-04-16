@@ -2,7 +2,81 @@ import glm
 
 from ...opengl import *
 from ...opengl.core.base import *
-from .ChunkRenderer_shader import frag_src, vert_src
+
+vert_src = """
+#version 140
+#line 8
+uniform mat4 u_projection;
+
+in vec4 a_position;
+in vec3 a_normal;
+in vec4 a_color;
+in vec2 a_texcoord;
+in vec3 a_ambient;
+
+out vec4 v_pos;
+out vec3 v_normal;
+out vec4 v_color;
+out vec2 v_texcoord;
+out vec3 v_ambient;
+out mat3 v_normal_space;
+
+/** Returns the matrix to multiply the light-direction normal */
+mat3 calc_light_matrix(mat4 transform)
+{
+    // normal in world coordinates
+    vec3 norm = transpose(inverse(mat3(transform))) * a_normal;
+
+    vec3 tangent =  vec3(-norm.z, -norm.y,  norm.x);
+    vec3 binormal = vec3(-norm.x,  norm.z, -norm.y);
+    return mat3(tangent, -binormal, norm);
+}
+
+void main()
+{
+    v_pos = a_position;
+    v_normal = a_normal;
+    v_color = a_color;
+    v_texcoord = a_texcoord;
+    v_ambient = a_ambient;
+    v_normal_space = calc_light_matrix(mat4(1));
+    gl_Position = u_projection * a_position;
+}
+
+"""
+
+frag_src = """
+#version 130
+#line 46
+uniform sampler2D u_tex1;
+
+uniform float u_time;
+
+in vec4 v_pos;
+in vec3 v_normal;
+in vec2 v_texcoord;
+in vec3 v_ambient;
+in mat3 v_normal_space;
+
+out vec4 fragColor;
+out vec4 fragNormal;
+out vec4 fragPosition;
+
+void main() {
+    vec4 tex = texture2D(u_tex1, v_texcoord);
+            
+    vec3 normal = vec3(0, 0, 1);        
+    vec2 v_normcoord = v_texcoord + vec2(.5, 0.);
+    vec4 normal_texel = texture2D(u_tex1, v_normcoord);
+    normal = normalize(mix(normal, normal_texel.xyz, normal_texel.w));
+    normal = v_normal_space * normal;
+    
+    fragColor = tex;
+    fragColor.xyz *= v_ambient;
+    fragNormal = vec4(normal, normal_texel.w);
+    fragPosition = vec4(v_pos.xyz, 1);
+}
+"""
 
 
 class ChunkMeshRenderNode(RenderNode):
@@ -13,10 +87,10 @@ class ChunkMeshRenderNode(RenderNode):
         self.renderer = renderer
         self.mesh = None
         self.mesh_drawable = None
-        self.chunk_tex = None
         self.tileset_tex = None
-        self.vdf_tex = None
-        self.vdf_scale = 1
+
+    def num_color_outputs(self):
+        return 3
 
     def has_depth_output(self):
         return True
@@ -29,16 +103,6 @@ class ChunkMeshRenderNode(RenderNode):
         return self.world.chunk
 
     def create(self, render_settings):
-        # voxel texture
-        self.chunk_tex = None
-
-        # tileset texture
-        self.tileset_tex = None
-
-        # distance map
-        self.vdf = self.chunk.create_voxel_distance_field(self.vdf_scale)
-        self.vdf_tex = None
-
         # level mesh
         mesh_name = "%s-mesh-drawable" % self.chunk.id
         self.mesh = self.chunk.create_mesh()
@@ -57,38 +121,17 @@ class ChunkMeshRenderNode(RenderNode):
         glDepthMask(True)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        if self.chunk_tex is None:
-            self.chunk_tex = self.chunk.create_texture3d()
-
-        if self.vdf_tex is None:
-            self.vdf_tex = self.vdf.create_texture3d("vdf")
-
         if self.tileset_tex is None:
             self.tileset_tex = self.world.tileset.create_texture2d()
 
         proj = rs.projection.matrix
 
-        lightpos = glm.vec3(self.world.click_voxel) + (.5,.5,1.5)
         self.mesh_drawable.shader.set_uniform("u_projection", proj)
-        self.mesh_drawable.shader.set_uniform("u_time", rs.time)
-        self.mesh_drawable.shader.set_uniform("u_lightpos", glm.vec4(lightpos, 1))
         self.mesh_drawable.shader.set_uniform("u_tex1", 0)
-        self.mesh_drawable.shader.set_uniform("u_chunktex", 1)
-        self.mesh_drawable.shader.set_uniform("u_chunksize", self.chunk.size())
-        self.mesh_drawable.shader.set_uniform("u_vdf_tex", 2)
-        self.mesh_drawable.shader.set_uniform("u_vdf_size", self.vdf.size())
-        self.mesh_drawable.shader.set_uniform("u_vdf_scale", self.vdf_scale)
-        self.mesh_drawable.shader.set_uniform("u_player_pos", self.world.agents["player"].sposition)
-        self.mesh_drawable.shader.set_uniform("u_hit_voxel", self.world.click_voxel)
-        self.mesh_drawable.shader.set_uniform("u_debug_view", self.world.debug_view)
 
         self.tileset_tex.set_active_texture(0)
         self.tileset_tex.bind()
         self.tileset_tex.set_active_texture(1)
-        self.chunk_tex.bind()
-        self.tileset_tex.set_active_texture(2)
-        self.vdf_tex.bind()
-        self.tileset_tex.set_active_texture(0)
 
         # main scene
         self.mesh_drawable.draw()

@@ -65,11 +65,13 @@ class Framebuffer2D(OpenGlBaseObject):
             h = (GLuint * 1)(self._rbo)
             glDeleteRenderbuffers(1, h)
             self._rbo = -1
-        h = (GLuint *1)(self._handle)
+        h = (GLuint * 1)(self._handle)
         glDeleteFramebuffers(1, h)
 
     def _bind(self):
         glBindFramebuffer(GL_FRAMEBUFFER, self._handle)
+        a = (GLuint * self.num_color_textures())(*(GL_COLOR_ATTACHMENT0 + i for i in range(self.num_color_textures())))
+        glDrawBuffers(self.num_color_textures(), a)
         self._update_textures()
 
     def _unbind(self):

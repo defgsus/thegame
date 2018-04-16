@@ -22,6 +22,9 @@ class RenderNode:
     def num_multi_sample(self):
         return 0
 
+    def num_passes(self):
+        return 1
+
     def output_slots(self):
         s = list(range(self.num_color_outputs()))
         if self.has_depth_output():
@@ -34,5 +37,5 @@ class RenderNode:
     def release(self):
         pass
 
-    def render(self, render_settings):
+    def render(self, render_settings, pass_num):
         raise NotImplementedError

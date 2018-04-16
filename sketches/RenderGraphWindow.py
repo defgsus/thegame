@@ -5,7 +5,9 @@ import glm
 
 from lib.opengl.core.base import *
 from lib.opengl import *
+from lib.opengl import postproc
 from lib.world import *
+from lib.world.render import *
 from lib.geom import *
 
 
@@ -15,7 +17,7 @@ class ColorNode(RenderNode):
         super().__init__(name)
         self.quad = ScreenQuad()
         self.quad.set_shader_code("""
-        #line 15
+        #line 20
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             //fragColor = texture(u_tex1, texCoord);
             vec3 col = .5 + .5 * sin(texCoord.xyx * vec3(1,1,1.3) * 2 + u_time * vec3(3,5,7)/5.);
@@ -26,7 +28,7 @@ class ColorNode(RenderNode):
     def release(self):
         self.quad.release()
 
-    def render(self, rs):
+    def render(self, rs, pass_num):
         self.quad.drawable.shader.set_uniform("u_time", rs.time)
         self.quad.draw(rs.render_width, rs.render_height)
 
@@ -37,7 +39,7 @@ class GridNode(RenderNode):
         super().__init__(name)
         self.quad = ScreenQuad()
         self.quad.set_shader_code("""
-        #line 37
+        #line 42
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec2 mp = mod(texCoord * 10., 1.);
             float grid = max(smoothstep(.1,.0,abs(mp.x-.5)), smoothstep(.1,.0,abs(mp.y-.5)));
@@ -48,7 +50,7 @@ class GridNode(RenderNode):
     def release(self):
         self.quad.release()
 
-    def render(self, rs):
+    def render(self, rs, pass_num):
         self.quad.drawable.shader.set_uniform("u_time", rs.time)
         self.quad.draw(rs.render_width, rs.render_height)
 
@@ -60,7 +62,7 @@ class CombineNode(RenderNode):
         self.operator = operator
         self.quad = ScreenQuad()
         self.quad.set_shader_code("""
-        #line 60
+        #line 65
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec4 c1 = texture(u_tex1, texCoord);
             vec4 c2 = texture(u_tex2, texCoord);
@@ -71,7 +73,7 @@ class CombineNode(RenderNode):
     def release(self):
         self.quad.release()
 
-    def render(self, rs):
+    def render(self, rs, pass_num):
         self.quad.drawable.shader.set_uniform("u_time", rs.time)
         self.quad.drawable.shader.set_uniform("u_tex1", 0)
         self.quad.drawable.shader.set_uniform("u_tex2", 1)
@@ -84,7 +86,7 @@ class DepthNode(RenderNode):
         super().__init__(name)
         self.quad = ScreenQuad()
         self.quad.set_shader_code("""
-        #line 37
+        #line 89
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec3 col = texture(u_tex1, texCoord).xyz;
             float depth = texture(u_tex2, texCoord).x;
@@ -97,7 +99,7 @@ class DepthNode(RenderNode):
     def release(self):
         self.quad.release()
 
-    def render(self, rs):
+    def render(self, rs, pass_num):
         self.quad.drawable.shader.set_uniform("u_time", rs.time)
         self.quad.drawable.shader.set_uniform("u_tex1", 0)
         self.quad.drawable.shader.set_uniform("u_tex2", 1)
@@ -140,7 +142,7 @@ class GeometryNode(RenderNode):
     def release(self):
         self.drawable.release()
 
-    def render(self, rs):
+    def render(self, rs, pass_num):
         #proj = glm.ortho(-3, 3, -3, 3, -3, 3)
         proj = glm.perspectiveFov(0.7, rs.render_width, rs.render_height, 0.01, 5.)
         proj = glm.translate(proj, (0,0,-2))
@@ -173,26 +175,35 @@ class RenderGraphWindow(pyglet.window.Window):
         if 0:
             self.graph.add_node(ColorNode("color"))
             self.graph.add_node(GeometryNode("geom"))
-            self.graph.add_node(DepthNode("depth"))
+            self.graph.add_node(DepthNode("out"))
 
             self.graph.connect("color", 0, "geom", 0)
-            self.graph.connect("geom", 0, "depth", 0)
-            self.graph.connect("geom", "depth", "depth", 1)
-        else:
+            self.graph.connect("geom", 0, "out", 0)
+            self.graph.connect("geom", "depth", "out", 1)
+        elif 1:
             self.graph.add_node(ColorNode("color"))
             self.graph.add_node(GridNode("grid"))
             self.graph.add_node(CombineNode("mul", "*"))
             self.graph.add_node(GeometryNode("geom"))
             self.graph.add_node(CombineNode("add", "+"))
-            self.graph.add_node(DepthNode("depth"))
+            self.graph.add_node(DepthNode("out"))
 
             self.graph.connect("color", 0, "mul", 0)
             self.graph.connect("grid", 0, "mul", 1)
             self.graph.connect("mul", 0, "geom", 0)
             self.graph.connect("mul", 0, "add", 0)
             self.graph.connect("geom", 0, "add", 1)
-            self.graph.connect("add", 0, "depth", 0)
-            self.graph.connect("geom", "depth", "depth", 1)
+            self.graph.connect("add", 0, "out", 0)
+            self.graph.connect("geom", "depth", "out", 1)
+
+        else:
+            self.graph.add_node(GridNode("out"))
+
+        if 1:
+            self.graph.add_node(postproc.Blur("pp1"))
+            self.graph.add_node(postproc.Wave("pp2"))
+            self.graph.connect("out", 0, "pp1", 0)
+            self.graph.connect("pp1", 0, "pp2", 0)
 
         self.pipeline = self.graph.create_pipeline()
         self.pipeline.dump()

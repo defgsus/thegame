@@ -9,5 +9,5 @@ from .Drawable import Drawable
 from .OpenGlAssets import OpenGlAssets
 from .RenderGraph import RenderGraph
 from .RenderNode import RenderNode
-from .RenderPipeline import RenderPipeline
+#from .RenderPipeline import RenderPipeline
 from .ScreenQuad import ScreenQuad

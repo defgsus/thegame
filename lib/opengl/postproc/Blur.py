@@ -1,22 +1,26 @@
-from .base import PostProcBase
+from .base import PostProcNode
 
 
-class Blur(PostProcBase):
+class Blur(PostProcNode):
 
-    def __init__(self, size=2, sigma=.7, num_samples=10,
-                 use_mask=False, mask_center=0.25, mask_spread=0.1):
+    def __init__(self, name, size=2, sigma=.7, num_samples=10,
+                 use_mask=False, mask_center=0.25, mask_spread=0.1,
+                 num_passes=1):
         """
         :param size: Radius of the blur kernel - tied to resolution
         :param sigma: A modifier to adjust the amount of blur, range is about [0, 1]
         """
-        super().__init__()
+        super().__init__(name)
         self.size = size
         self.sigma = sigma
         self._num_samples = num_samples
         self._use_mask = use_mask
         self.mask_center = mask_center
         self.mask_spread = mask_spread
-        self.num_stages = 2
+        self._num_passes = num_passes
+
+    def num_passes(self):
+        return 2 * self._num_passes
 
     @property
     def num_samples(self):
@@ -38,11 +42,11 @@ class Blur(PostProcBase):
             self.do_compile = True
         self._use_mask = bool
 
-    def update_uniforms(self, shader, stage_num):
-        dir = (1, 0) if stage_num == 0 else (0, 1)
-        shader.set_uniform("u_size_sigma", (self.size * self.width / 600.,
+    def update_uniforms(self, shader, rs, pass_num):
+        dir = [(1, 0), (0,1)][pass_num%2]
+        shader.set_uniform("u_size_sigma", (self.size * rs.render_width / 600.,
                                             self.sigma * self.num_samples * .5))
-        shader.set_uniform("u_direction",  (dir[0]/self.width, dir[1]/self.height))
+        shader.set_uniform("u_direction",  (dir[0]/rs.render_width, dir[1]/rs.render_height))
         shader.set_uniform("u_mask_center_spread", (self.mask_center, self.mask_spread))
 
     def get_code(self):

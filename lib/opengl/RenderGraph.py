@@ -31,6 +31,8 @@ class RenderGraph:
     def add_node(self, node):
         if node.name in self.nodes:
             raise ValueError("Multiple RenderGraph.add_node('%s')" % node.name)
+        if node.num_passes() > 1 and node.num_multi_sample() > 1:
+            raise ValueError("multi-pass with multi-sample is not allowed for RenderNode '%s'" % node.name)
         self.nodes[node.name] = node
         self.graph.add_node(node.name)
 

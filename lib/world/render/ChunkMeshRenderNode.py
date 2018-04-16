@@ -50,7 +50,7 @@ class ChunkMeshRenderNode(RenderNode):
             self.mesh_drawable.shader.set_fragment_source(frag_src)
             OpenGlAssets.register(mesh_name, self.mesh_drawable)
 
-    def render(self, rs):
+    def render(self, rs, pass_num):
         glDisable(GL_CULL_FACE)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)

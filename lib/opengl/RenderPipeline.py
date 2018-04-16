@@ -59,6 +59,7 @@ class RenderStage:
         self.node = node
         self.fbo = None
         self.fbo_down = None
+        self.swap_texture = None
 
         self.inputs = []
         if self.node.name in self.graph.inputs:
@@ -116,8 +117,24 @@ class RenderStage:
             Texture2D.set_active_texture(input["to_slot"])
             tex.bind()
 
-        self.node.render(self.pipeline.render_settings)
-        self.fbo.unbind()
+        if self.node.num_passes() < 2:
+            self.node.render(self.pipeline.render_settings, 0)
+            self.fbo.unbind()
+        else:
+            for pass_num in range(self.node.num_passes()):
+
+                if pass_num > 0:
+                    Texture2D.set_active_texture(0)
+                    self.swap_texture.bind()
+
+                glDisable(GL_DEPTH_TEST)
+                self.node.render(self.pipeline.render_settings, pass_num)
+
+                if pass_num + 1 < self.node.num_passes():
+                    self._swap_texture()
+                    self.fbo.bind()
+
+            self.fbo.unbind()
 
         if self.node.num_multi_sample():
             self._downsample()
@@ -187,3 +204,14 @@ class RenderStage:
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0)
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
 
+    def _swap_texture(self):
+        if not self.swap_texture:
+            self.swap_texture = Texture2D(name="%s-fbo-swap" % self.node.name)
+
+        if self.swap_texture.width != self.fbo.width and self.swap_texture.height != self.fbo.height:
+            if not self.swap_texture.is_created():
+                self.swap_texture.create()
+            self.swap_texture.bind()
+            self.swap_texture.upload(None, self.fbo.width, self.fbo.height, gpu_format=GL_RGBA32F)
+
+        self.swap_texture = self.fbo.swap_color_texture(0, self.swap_texture)

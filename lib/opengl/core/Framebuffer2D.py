@@ -10,7 +10,7 @@ class Framebuffer2D(OpenGlBaseObject):
         self.width = width
         self.height = height
         self.multi_sample = multi_sample
-        self._rbo = -1
+        self._rbo = None
         self._color_textures = [Texture2D(multi_sample=self.multi_sample, name="%s-color-%s" % (self.name, i))
                                 for i in range(num_color_tex)]
         self._depth_texture = Texture2D(multi_sample=self.multi_sample, name="%s-depth" % self.name) if with_depth_tex else None
@@ -103,7 +103,7 @@ class Framebuffer2D(OpenGlBaseObject):
                     GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, tex.target, tex.handle, 0
                 )
 
-        if self._rbo >= 0:
+        if self._rbo is not None:
             if self._depth_texture is not None:
                 if not self._depth_texture.is_created():
                     self._depth_texture.create()

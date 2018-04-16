@@ -55,6 +55,7 @@ float distance_field_shadow_ray(in vec3 ro, in vec3 rd, in float max_dist)
         if (any(lessThan(pos, vec3(0))) || any(greaterThanEqual(pos, u_chunksize-1.)))
             break;
         float h = distance_at(pos) - .3;
+        if (h < 0.05) { res = 0.; break; }
         #if 0
             res = min( res, 10.0*h/t );
         #else
@@ -128,11 +129,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
     
     if (u_debug_view == 0) 
     {    
-        // ambient occlusion #1
-        col *= pow(distance_at(v_pos.xyz), .5);
-        // ambient occlusion #2
-        //col *= v_ambient;
-        
         vec3 light = vec3(0);
         light += u_lightpos.w * lighting(u_lightpos.xyz, position, normal, spec_amt);
         // moonlight
@@ -143,31 +139,42 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
         
         col += .09*environment_color(normal);
         
-        
         // hit highlight
         vec3 hitbox = abs(u_hit_voxel + .5 - position);
         float hit = clamp(1.4-dot(hitbox, hitbox), 0., 1.);
         col = (col * (1.+pow(hit, 2.))) + .3*u_lightpos.w*pow(hit, 3.);
         
-        col = mix(vec3(1), col, tex.w);
+        //col = mix(vec3(1), col, tex.w);
     }
     
     if (u_debug_view == 1) 
     {
-        col = vec3(.6);
+        col = vec3(.5);
         
-        col += .2*environment_color(normal);
+        col += .6*environment_color(normal);
         
-        //col *= v_ambient;
+        //col *= vec3(distance_at(position));
     }
     
     if (u_debug_view == 2) 
     {
-        col = vec3(distance_at(position));
+        //col = vec3(distance_at(position));
         
-        col += .4*normal;
+        col = .5+.4*normal;
         
         //col *= v_ambient;
+    }
+    
+    if (u_debug_view == 3) 
+    {
+        col = .7+.3*sin(position*5.);
+    }
+    
+    if (u_debug_view == 4) 
+    {
+        vec3 ln = normalize(u_lightpos.xyz - position);
+        float d = .5+.5*dot(normal, ln);
+        col = vec3(d);
     }
     
     fragColor = vec4(col, 1);
@@ -193,10 +200,8 @@ class ChunkMeshLightingNode(PostProcNode):
 
     def create(self, render_settings):
         # voxel distance field
-        self.vdf = self.chunk.create_voxel_distance_field(self.vdf_scale)
-
         if self.vdf_tex is None:
-            self.vdf_tex = self.vdf.create_texture3d("vdf")
+            self.vdf_tex = self.chunk.create_voxel_distance_texture3d(scale=self.vdf_scale)
 
     def update_uniforms(self, shader, rs, pass_num):
 
@@ -211,7 +216,7 @@ class ChunkMeshLightingNode(PostProcNode):
         shader.set_uniform("u_position_tex", 2)
         shader.set_uniform("u_vdf_tex", 3)
         shader.set_uniform("u_chunksize", self.chunk.size())
-        shader.set_uniform("u_vdf_size", self.vdf.size())
+        shader.set_uniform("u_vdf_size", self.vdf_tex.size())
         shader.set_uniform("u_vdf_scale", self.vdf_scale)
         shader.set_uniform("u_player_pos", self.world.agents["player"].sposition)
         shader.set_uniform("u_hit_voxel", self.world.click_voxel)

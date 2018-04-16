@@ -11,6 +11,9 @@ class Texture2D(TextureBase):
     def __str__(self):
         return "Texture2D(%s, %sx%s)" % (self.name, self.width, self.height)
 
+    def size(self):
+        return self.width, self.height
+
     def upload(self, values, width, height, input_format=GL_RGB, input_type=GL_FLOAT, gpu_format=GL_RGBA, mipmap_level=0,
                do_flip_y=False):
         """Upload linear data in `values`. height == len(values) / width / typesize(input_format).

@@ -116,6 +116,7 @@ class RenderStage:
             tex = stage.get_output_texture(input["from_slot"])
             Texture2D.set_active_texture(input["to_slot"])
             tex.bind()
+            #tex.set_parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
         if self.node.num_passes() < 2:
             self.node.render(self.pipeline.render_settings, 0)

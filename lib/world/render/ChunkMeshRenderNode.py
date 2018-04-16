@@ -47,10 +47,14 @@ void main()
 
 frag_src = """
 #version 130
-#line 46
+#line 50
 uniform sampler2D u_tex1;
+uniform sampler3D u_vdf_tex;
 
 uniform float u_time;
+uniform vec3 u_chunksize;
+uniform vec3 u_vdf_size;
+uniform float u_vdf_scale;
 
 in vec4 v_pos;
 in vec3 v_normal;
@@ -62,16 +66,26 @@ out vec4 fragColor;
 out vec4 fragNormal;
 out vec4 fragPosition;
 
+float distance_at(in vec3 pos) {
+    pos /= u_vdf_scale;
+    if (any(lessThan(pos, vec3(0))) || any(greaterThanEqual(pos, u_chunksize)))
+        return 15.;
+    return texture(u_vdf_tex, pos / u_chunksize).x / u_vdf_scale;
+}
+
 void main() {
     vec4 tex = texture2D(u_tex1, v_texcoord);
-            
+    
+    // bump-mapping        
     vec3 normal = vec3(0, 0, 1);        
     vec2 v_normcoord = v_texcoord + vec2(.5, 0.);
     vec4 normal_texel = texture2D(u_tex1, v_normcoord);
     normal = normalize(mix(normal, normal_texel.xyz, normal_texel.w));
     normal = v_normal_space * normal;
     
-    fragColor = vec4(tex.xyz, 1);
+    vec3 col = tex.xyz * pow(distance_at(v_pos.xyz), .5);
+    
+    fragColor = vec4(col, 1);
     fragColor.xyz *= v_ambient;
     fragNormal = vec4(normal, 1);
     fragPosition = vec4(v_pos.xyz, 1);
@@ -88,6 +102,8 @@ class ChunkMeshRenderNode(RenderNode):
         self.mesh = None
         self.mesh_drawable = None
         self.tileset_tex = None
+        self.vdf_tex = None
+        self.vdf_scale = 1
 
     def num_color_outputs(self):
         return 3
@@ -124,14 +140,24 @@ class ChunkMeshRenderNode(RenderNode):
         if self.tileset_tex is None:
             self.tileset_tex = self.world.tileset.create_texture2d()
 
+        # voxel distance field
+        if self.vdf_tex is None:
+            self.vdf_tex = self.chunk.create_voxel_distance_texture3d(scale=self.vdf_scale)
+
         proj = rs.projection.matrix
 
         self.mesh_drawable.shader.set_uniform("u_projection", proj)
         self.mesh_drawable.shader.set_uniform("u_tex1", 0)
+        self.mesh_drawable.shader.set_uniform("u_vdf_tex", 1)
+        self.mesh_drawable.shader.set_uniform("u_chunksize", self.chunk.size())
+        self.mesh_drawable.shader.set_uniform("u_vdf_size", self.vdf_tex.size())
+        self.mesh_drawable.shader.set_uniform("u_vdf_scale", self.vdf_scale)
 
-        self.tileset_tex.set_active_texture(0)
+        Texture2D.set_active_texture(0)
         self.tileset_tex.bind()
-        self.tileset_tex.set_active_texture(1)
+        Texture2D.set_active_texture(1)
+        self.vdf_tex.bind()
+        Texture2D.set_active_texture(0)
 
         # main scene
         self.mesh_drawable.draw()

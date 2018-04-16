@@ -254,6 +254,15 @@ class WorldChunk:
         vox.chunk = self
         return vox
 
+    def create_voxel_distance_texture3d(self, scale=1):
+        name = "%s-vdf-%s-tex" % (self.id, scale)
+        if OpenGlAssets.has(name):
+            return OpenGlAssets.get(name)
+        vdf = self.create_voxel_distance_field(scale)
+        tex = vdf.create_texture3d(name)
+        OpenGlAssets.register(name, tex)
+        return tex
+
     def cast_voxel_ray(self, ro, rd, max_steps=None):
         """
         iq, nijhoff, https://www.shadertoy.com/view/4ds3WS

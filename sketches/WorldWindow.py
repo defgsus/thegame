@@ -93,7 +93,7 @@ class WorldWindow(pyglet.window.Window):
         if text == "-":
             self.world.projection.zoom -= 1.
         if text == "d":
-            self.world.debug_view = (self.world.debug_view + 1) % 3
+            self.world.debug_view = (self.world.debug_view + 1) % 5
         if text == ".":
             OpenGlAssets.dump()
 

@@ -7,6 +7,9 @@ class Texture3D(TextureBase):
         super(Texture3D, self).__init__(GL_TEXTURE_3D, name=name)
         self.depth = 0
 
+    def size(self):
+        return self.width, self.height, self.depth
+
     def infostr(self):
         return "%sx%sx%s" % (self.width, self.height, self.depth)
 

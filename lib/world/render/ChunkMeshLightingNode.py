@@ -170,7 +170,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
         //col *= v_ambient;
     }
     
-    fragColor = vec4(col, tex.w);
+    fragColor = vec4(col, 1);
 }
 """
 

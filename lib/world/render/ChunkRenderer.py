@@ -16,22 +16,29 @@ class ChunkRenderer:
 
         self.render_graph = RenderGraph()
 
-        self.render_graph.add_node(ChunkMeshRenderNode(self.world, self, "mesh"))
-        self.render_graph.add_node(ChunkMeshLightingNode(self.world, self, "light"))
+        if 1:
+            self.render_graph.add_node(ChunkMeshRenderNode(self.world, self, "mesh"))
+            self.render_graph.add_node(ChunkMeshLightingNode(self.world, self, "light"))
 
-        self.render_graph.connect("mesh", 0, "light", 0)
-        self.render_graph.connect("mesh", 1, "light", 1)
-        self.render_graph.connect("mesh", 2, "light", 2)
+            self.render_graph.connect("mesh", 0, "light", 0)
+            self.render_graph.connect("mesh", 1, "light", 1)
+            self.render_graph.connect("mesh", 2, "light", 2)
 
-        self.pp_depth_blur = postproc.Blur("depth-blur", use_mask=True)
-        self.render_graph.add_node(self.pp_depth_blur)
+            self.pp_depth_blur = postproc.Blur("depth-blur", use_mask=True)
+            self.render_graph.add_node(self.pp_depth_blur)
 
-        self.render_graph.connect("light", 0, "depth-blur", 0)
-        self.render_graph.connect("mesh", "depth", "depth-blur", 1)
+            self.render_graph.connect("light", 0, "depth-blur", 0)
+            self.render_graph.connect("mesh", "depth", "depth-blur", 1)
+        else:
+            self.render_graph.add_node(ChunkMeshRenderNode(self.world, self, "mesh"))
+            self.render_graph.add_node(postproc.Bypass("out", alpha=1))
+            self.render_graph.connect("mesh", 1, "out", 0)
+
 
         self.pipeline = self.render_graph.create_pipeline()
 
     def render(self):
-        self.pp_depth_blur.mask_center, self.pp_depth_blur.mask_spread = self.render_settings.projection.get_depth_mask_values()
+        if hasattr(self, "pp_depth_blur"):
+            self.pp_depth_blur.mask_center, self.pp_depth_blur.mask_spread = self.render_settings.projection.get_depth_mask_values()
         self.pipeline.render(self.render_settings)
         self.pipeline.render_to_screen(self.render_settings)

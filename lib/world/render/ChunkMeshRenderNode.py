@@ -71,9 +71,9 @@ void main() {
     normal = normalize(mix(normal, normal_texel.xyz, normal_texel.w));
     normal = v_normal_space * normal;
     
-    fragColor = tex;
+    fragColor = vec4(tex.xyz, 1);
     fragColor.xyz *= v_ambient;
-    fragNormal = vec4(normal, normal_texel.w);
+    fragNormal = vec4(normal, 1);
     fragPosition = vec4(v_pos.xyz, 1);
 }
 """
@@ -141,3 +141,6 @@ class ChunkMeshRenderNode(RenderNode):
             self.world.agents.path_debug_renderer.render(rs.projection)
 
         self.world.agents.render(rs.projection)
+
+        glDisable(GL_DEPTH_TEST)
+        glDisable(GL_BLEND)

@@ -1,14 +1,14 @@
 from .core.base import *
+from ..graph.DirectedGraph import DirectedGraph
 
 
 class RenderGraph:
     """
     Defines a directed graph for rendering stages
     """
-
     def __init__(self):
+        self.graph = DirectedGraph()
         self.nodes = dict()
-        self.edges = dict()
         self.inputs = dict()
 
     def create_pipeline(self):
@@ -39,11 +39,9 @@ class RenderGraph:
         node_to = self.to_name(node_to)
         assert node_from in self.nodes
         assert node_to in self.nodes
+        assert output in self.to_node(node_from).output_slots()
         # add edge
-        if node_from not in self.edges:
-            self.edges[node_from] = {node_to}
-        else:
-            self.edges[node_from].add(node_to)
+        self.graph.add_edge(node_from, node_to)
         # add connection config
         if node_to not in self.inputs:
             self.inputs[node_to] = {input: (node_from, output)}
@@ -53,17 +51,8 @@ class RenderGraph:
             self.inputs[node_to][input] = (node_from, output)
 
     def output_nodes(self, node):
-        node = self.to_name(node)
-        if node in self.edges:
-            return self.edges[node]
-        return set()
+        self.graph.outputs(self.to_name(node))
 
     def input_nodes(self, node):
-        node = self.to_name(node)
-        if node not in self.inputs:
-            return set()
-        ret = set()
-        for ins in self.inputs[node].values():
-            ret.add(ins[0])
-        return ret
+        self.graph.inputs(self.to_name(node))
 

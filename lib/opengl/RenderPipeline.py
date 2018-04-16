@@ -1,7 +1,9 @@
 from .core.base import *
 from .core.Framebuffer2D import Framebuffer2D
 from .core.Texture2D import Texture2D
+from .ScreenQuad import ScreenQuad
 from .RenderGraph import RenderGraph
+from ..graph.DirectedGraph import DirectedGraph
 
 
 class RenderPipeline:
@@ -9,9 +11,11 @@ class RenderPipeline:
     def __init__(self, graph):
         self.graph = graph
         self.render_settings = None
-        self.stages = []
-        self._linearize()
+        # get serial list of RenderStages
+        node_names = self.graph.graph.serialize()
+        self.stages = [RenderStage(self, self.graph.to_node(n)) for n in node_names]
         self._stage_dict = {s.node.name: s for s in self.stages}
+        self._quad = None
 
     def get_stage(self, name):
         return self._stage_dict.get(name)
@@ -21,80 +25,26 @@ class RenderPipeline:
         for stage in self.stages:
             stage.render()
 
-    def _linearize(self):
-        # build helper struct
-        graph = DirectedGraphHelper()
-        for n1 in self.graph.edges:
-            for n2 in self.graph.edges[n1]:
-                graph.add_edge(n1, n2)
+    def render_to_screen(self, rs):
+        """Render final stage to screen"""
+        assert len(self.stages)
+        if not self._quad:
+            self._quad = ScreenQuad()
+        tex = self.stages[-1].get_output_texture(0)
+        Texture2D.set_active_texture(0)
+        tex.bind()
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        glViewport(0, 0, rs.screen_width, rs.screen_height)
+        self._quad.draw_centered(rs.screen_width, rs.screen_height,
+                                 rs.render_width, rs.render_height)
 
-        # nodes with no inputs (temporary space)
-        beginnings = set()
-
-        # collect them
-        for n in self.graph.nodes:
-            if graph.has_inputs(n):
-                beginnings.add(n)
-
-        if not beginnings:
-            raise ValueError("No start nodes in RenderGraph")
-
-        # grab a node from start list
-        while beginnings:
-            n = beginnings.pop()
-
-            # for each outgoing edge
-            for nout in self.graph.node_outputs(n):
-
-                # put to list
-                self.stages.append(
-                    RenderStage(self, self.graph.to_node(nout))
-                )
-
-                # remove this edge
-                graph.remove_edge(n, nout)
-
-                # if no other input node, move to beginnings
-
-                if not graph.has_inputs(nout):
-                    beginnings.add(nout)
-
-        for n in graph.edges:
-            if graph.has_inputs(n):
-                raise ValueError("Loop in RenderGraph involving node '%s'" % n)
-
-
-class DirectedGraphHelper:
-    def __init__(self):
-        self.nodes = set()
-        self.edges = dict()
-        self.inputs = dict()
-
-    def add_edge(self, n1, n2):
-        self.nodes.add(n1)
-        self.nodes.add(n2)
-        if n1 not in self.edges:
-            self.edges[n1] = {n2}
-        else:
-            self.edges[n1].add(n2)
-        if n2 not in self.inputs:
-            self.inputs[n2] = {n1}
-        else:
-            self.inputs[n2].add(n1)
-
-    def remove_edge(self, n1, n2):
-        if n1 in self.edges:
-            if n2 in self.edges[n1]:
-                self.edges[n1].remove(n2)
-        if n2 in self.inputs:
-            if n1 in self.inputs[n2]:
-                self.inputs[n2].remove(n1)
-
-    def has_inputs(self, n):
-        return n in self.inputs and self.inputs[n]
+    def dump(self):
+        for stage in self.stages:
+            print(stage)
 
 
 class RenderStage:
+    """Internal class to handle a RenderNode and it's FBOs"""
 
     def __init__(self, pipeline, node):
         self.pipeline = pipeline
@@ -111,6 +61,15 @@ class RenderStage:
                     "from_slot": ins[in_slot][1],
                     "to_slot": in_slot,
                 })
+        self.inputs.sort(key=lambda i: i["to_slot"])
+
+    def __str__(self):
+        inf = "%s" % self.node
+        if self.inputs:
+            inf += ", ins=(%s)" % ", ".join(
+                "%(to_slot)s: %(from_node)s:%(from_slot)s" % i for i in self.inputs)
+        inf += ")"
+        return "Stage(%s)" % inf
 
     @property
     def graph(self):
@@ -125,6 +84,11 @@ class RenderStage:
         return self.pipeline.render_settings.render_height
 
     def render(self):
+        # create node assets or whatever
+        if not self.node.is_created:
+            self.node.create(self.pipeline.render_settings)
+            self.node.is_created = True
+
         # build and bind this stage's FBO
         self._update_fbo()
         self.fbo.bind()
@@ -133,7 +97,7 @@ class RenderStage:
 
         # bind input textures
         for input in self.inputs:
-            stage = self.graph.get_stage(input["from_node"])
+            stage = self.pipeline.get_stage(input["from_node"])
             tex = stage.get_output_texture(input["from_slot"])
             Texture2D.set_active_texture(input["to_slot"])
             tex.bind()
@@ -149,7 +113,7 @@ class RenderStage:
         if not fbo:
             raise ValueError("FBO not yet initialized in node '%s'" % self.node.name)
         if isinstance(slot, int):
-            if slot >= self.node.num_color_textures():
+            if slot >= self.node.num_color_outputs():
                 raise ValueError("Request for output slot %s ot of range for node '%s'" % (slot, self.node.name))
             return fbo.color_texture(slot)
         elif slot == "depth":
@@ -180,7 +144,7 @@ class RenderStage:
     def _create_fbo(self):
         return Framebuffer2D(
             self.width, self.height, name=self.node.name,
-            num_color_tex=self.node.num_color_textures(),
+            num_color_tex=self.node.num_color_outputs(),
             with_depth_tex=self.node.has_depth_output(),
             multi_sample=self.node.num_multi_sample()
         )
@@ -188,7 +152,7 @@ class RenderStage:
     def _create_downsample_fbo(self):
         return Framebuffer2D(
             self.width, self.height, name="%s-down" % self.node.name,
-            num_color_tex=self.node.num_color_textures(),
+            num_color_tex=self.node.num_color_outputs(),
             with_depth_tex=self.node.has_depth_output()
         )
 

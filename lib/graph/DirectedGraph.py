@@ -27,8 +27,8 @@ class DirectedGraph:
     def copy(self):
         g = DirectedGraph()
         g._nodes = self._nodes.copy()
-        g._outputs = self._outputs.copy()
-        g._inputs = self._inputs.copy()
+        g._outputs = {n: self._outputs[n].copy() for n in self._outputs}
+        g._inputs = {n: self._inputs[n].copy() for n in self._inputs}
         return g
 
     def add_edge(self, n1, n2):

@@ -51,8 +51,8 @@ class RenderGraph:
             self.inputs[node_to][input] = (node_from, output)
 
     def output_nodes(self, node):
-        self.graph.outputs(self.to_name(node))
+        return self.graph.outputs(self.to_name(node))
 
     def input_nodes(self, node):
-        self.graph.inputs(self.to_name(node))
+        return self.graph.inputs(self.to_name(node))
 

@@ -39,8 +39,16 @@ class RenderPipeline:
                                  rs.render_width, rs.render_height)
 
     def dump(self):
+        print("[%s]" % "->".join(s.node.name for s in self.stages))
         for stage in self.stages:
-            print(stage)
+            if not stage.inputs:
+                self._dump_stage(stage)
+
+    def _dump_stage(self, stage, indent=""):
+        print("%s%s" % (indent, stage))
+        outs = self.graph.output_nodes(stage.node.name)
+        for o in outs:
+            self._dump_stage(self._stage_dict[o], indent + "  ")
 
 
 class RenderStage:
@@ -62,6 +70,9 @@ class RenderStage:
                     "to_slot": in_slot,
                 })
         self.inputs.sort(key=lambda i: i["to_slot"])
+
+    def __repr__(self):
+        return self.__str__()
 
     def __str__(self):
         inf = "%s" % self.node
@@ -171,7 +182,8 @@ class RenderStage:
             glBlitFramebuffer(0, 0, self.fbo.width, self.fbo.height,
                               0, 0, self.fbo.width, self.fbo.height,
                               bits, GL_NEAREST)
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0)
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
         glReadBuffer(GL_COLOR_ATTACHMENT0)
         glDrawBuffer(GL_COLOR_ATTACHMENT0)
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0)
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
+

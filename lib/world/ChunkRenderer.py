@@ -123,16 +123,13 @@ class ChunkRenderer:
             OpenGlAssets.register(mesh_name, self.mesh_drawable)
 
         # post-fx
-        if 1:
-            self.pp_blur1 = None
-            self.postproc = postproc.PostProcessing()
-            #self.postproc.add_stage(postproc.Wave())
-            #self.postproc.add_stage(postproc.Desaturize())
-            self.pp_blur1 = postproc.Blur(use_mask=True)
-            self.postproc.add_stage(self.pp_blur1)
-            #self.postproc.add_stage(postproc.Pixelize())
-        else:
-            self.postproc = None
+        self.pp_blur1 = None
+        self.postproc = postproc.PostProcessing()
+        #self.postproc.add_stage(postproc.Wave())
+        #self.postproc.add_stage(postproc.Desaturize())
+        self.pp_blur1 = postproc.Blur(use_mask=True)
+        self.postproc.add_stage(self.pp_blur1)
+        #self.postproc.add_stage(postproc.Pixelize())
 
     def render(self):
         rs = self.render_settings
@@ -189,10 +186,10 @@ class ChunkRenderer:
 
         # post-proc
     
-        if not self.world.edit_mode:
-            ms = rs.projection.get_depth_mask_values()
-            if self.pp_blur1:
-                self.pp_blur1.mask_center, self.pp_blur1.mask_spread = ms
-            self.postproc.render(rs)
+        #if not self.world.edit_mode:
+        ms = rs.projection.get_depth_mask_values()
+        if self.pp_blur1:
+            self.pp_blur1.mask_center, self.pp_blur1.mask_spread = ms
+        self.postproc.render(rs)
 
         self.postproc.render_output(rs)

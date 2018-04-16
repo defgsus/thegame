@@ -16,6 +16,12 @@ class Framebuffer2D(OpenGlBaseObject):
         self._depth_texture = Texture2D(multi_sample=self.multi_sample, name="%s-depth" % self.name) if with_depth_tex else None
         self._color_texture_changed = set()
 
+    def num_color_textures(self):
+        return len(self._color_textures)
+
+    def has_depth_texture(self):
+        return self._depth_texture is not None
+
     def color_texture(self, index):
         if index >= len(self._color_textures):
             raise IndexError("color texture index %s out of range for %s" % (index, self))
@@ -26,6 +32,9 @@ class Framebuffer2D(OpenGlBaseObject):
 
     def clear(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+    def set_viewport(self):
+        glViewport(0, 0, self.width, self.height)
 
     def swap_color_texture(self, index, tex):
         """

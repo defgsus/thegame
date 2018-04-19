@@ -1,0 +1,4 @@
+# additional requirements for the editor
+# this uses the 'old' pyside-1.2.4 installation which requires python < 3.5
+# see f.e. https://askubuntu.com/questions/849190/python-3-4-on-ubuntu-16-04
+pyside==1.2.4

@@ -79,6 +79,11 @@ class WorldProjection:
     def is_perspective(self):
         return self.projection in "pe"
 
+    def get_direction(self, dir):
+        """Transforms vec3 direction to a direction matching the current transformation"""
+        dir = glm.inverse(self.transformation_matrix) * glm.vec4(dir, 0)
+        return glm.vec3(dir)
+
     def init(self, projection=None):
         if projection is not None:
             self.projection = projection

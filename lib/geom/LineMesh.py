@@ -38,6 +38,12 @@ class AbstractLineMesh:
             self.add_vertex(pos2),
         )
 
+    def add_quad(self, p1, p2, p3, p4):
+        self.add_line(p1, p2)
+        self.add_line(p2, p3)
+        self.add_line(p3, p4)
+        self.add_line(p4, p1)
+
     def create_drawable(self):
         draw = Drawable()
         return self.update_drawable(draw)

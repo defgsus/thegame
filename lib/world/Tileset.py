@@ -56,11 +56,13 @@ class Tileset:
         self._create_bumpmaps()
         self.filename = "%s" % file
 
-    def create_texture2d(self):
+    def create_texture2d(self, asset_suffix=None):
         from ..opengl import Texture2D
         from ..opengl.core.base import GL_RGBA, GL_FLOAT
         from ..opengl import OpenGlAssets
         texture_name = self.filename
+        if asset_suffix is not None:
+            texture_name = "%s-%s" % (texture_name, asset_suffix)
         if OpenGlAssets.has(self.filename):
             return OpenGlAssets.get(texture_name)
         else:

@@ -2,6 +2,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 
 from .ChunkEditorWidget import ChunkEditorWidget
+from .EditedObjects import EditedObjects
 
 
 class MainWindow(QMainWindow):
@@ -10,6 +11,8 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle(self.tr("The Game Editor"))
+
+        self.edited_objects = EditedObjects(self)
 
         self._create_main_menu()
         self._create_widgets()
@@ -46,8 +49,8 @@ class MainWindow(QMainWindow):
 
     def create_tab(self, what):
         if what == "chunk":
-            widget = ChunkEditorWidget(self)
-            self.tab_widget.addTab(widget, "new chunk")
+            obj = self.edited_objects.create_chunk()
+            obj.tab = self.tab_widget.addTab(obj.widget, "new chunk")
         else:
             raise ValueError("Unknown tab '%s'" % what)
-        return widget
+        return obj

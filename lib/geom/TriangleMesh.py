@@ -16,6 +16,9 @@ def vecs_to_list(vecs):
 
 class AbstractTriangleMesh:
 
+    def is_empty(self):
+        return NotImplementedError
+
     def create_attribute(self, name, size):
         raise NotImplementedError
 
@@ -83,6 +86,7 @@ class AbstractTriangleMesh:
         return self.update_drawable(draw)
 
     def update_drawable(self, draw):
+        draw.clear()
         a = self.vertices_array()
         if not a:
             raise ValueError("No vertices to make drawable")
@@ -188,6 +192,9 @@ class TriangleMesh(AbstractTriangleMesh):
         self._triangles = []
         self._lines = []
         self._quads = []
+
+    def is_empty(self):
+        return not self._vertices
 
     def create_attribute(self, name, size):
         self._attributes[name] = {"size": size, "values": []}

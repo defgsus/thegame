@@ -145,14 +145,17 @@ class WorldChunk:
         tex.upload(values, self.num_x, self.num_y, self.num_z, GL_RGB, GL_FLOAT)
         return tex
 
-    def create_mesh(self):
+    def create_mesh(self, do_ambient=True):
         mesh = TriangleMesh()
         mesh.create_attribute("a_ambient", 3)
 
         def add_quad(p1, p2, p3, p4, *uvquad):
             mesh.add_quad(p1, p2, p3, p4, *uvquad)
             for p in (p1, p2, p3, p1, p3, p4):
-                mesh.add_attribute("a_ambient", self.get_ambient_color(*p))
+                if do_ambient:
+                    mesh.add_attribute("a_ambient", self.get_ambient_color(*p))
+                else:
+                    mesh.add_attribute("a_ambient", (1,1,1))
 
         for z in range(self.num_z):
             z1 = z + 1

@@ -6,8 +6,8 @@ from ...geom import MeshFactory, LineMesh
 
 
 vert_src = """
-#version 140
-#line 8
+#version 150
+#line 10
 uniform mat4 u_projection;
 
 in vec4 a_position;
@@ -49,7 +49,7 @@ void main()
 
 frag_src = """
 #version 130
-#line 50
+#line 52
 uniform sampler2D u_tex1;
 uniform float u_time;
 

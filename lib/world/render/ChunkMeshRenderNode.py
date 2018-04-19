@@ -4,7 +4,7 @@ from ...opengl import *
 from ...opengl.core.base import *
 
 vert_src = """
-#version 140
+#version 150
 #line 8
 uniform mat4 u_projection;
 

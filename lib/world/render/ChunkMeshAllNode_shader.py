@@ -1,5 +1,5 @@
 vert_src = """
-#version 140
+#version 150
 #line 3
 uniform mat4 u_projection;
 

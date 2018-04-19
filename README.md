@@ -19,7 +19,7 @@ For the game itself:
 ```bash
 virtualenv -p python3 env
 source env/bin/activate
-git clone git@github.com:defgsus/thegame.git
+git clone https://github.com/defgsus/thegame.git
 cd thegame
 pip install -r requirements
 python main.py

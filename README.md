@@ -21,7 +21,7 @@ virtualenv -p python3 env
 source env/bin/activate
 git clone https://github.com/defgsus/thegame.git
 cd thegame
-pip install -r requirements
+pip install -r requirements.txt
 python main.py
 ```
 

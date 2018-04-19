@@ -58,8 +58,9 @@ class ScreenQuad:
     }
     """
 
-    def __init__(self):
-        self.drawable = Drawable()
+    def __init__(self, name=None):
+        self.name = name or "screenquad"
+        self.drawable = Drawable(name=self.name)
         self.drawable.shader.set_fragment_source(self.FRAGMENT_SRC % {"mainImage": self.DEFAULT_MAIN_IMAGE})
         self.drawable.shader.set_vertex_source(self.VERTEX_SRC)
         self.drawable.set_attribute(

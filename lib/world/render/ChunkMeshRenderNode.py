@@ -130,19 +130,19 @@ class ChunkMeshRenderNode(RenderNode):
             self.mesh_drawable.shader.set_fragment_source(frag_src)
             OpenGlAssets.register(mesh_name, self.mesh_drawable)
 
-    def render(self, rs, pass_num):
-        glDisable(GL_CULL_FACE)
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_BLEND)
-        glDepthMask(True)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
         if self.tileset_tex is None:
             self.tileset_tex = self.world.tileset.create_texture2d()
 
         # voxel distance field
         if self.vdf_tex is None:
             self.vdf_tex = self.chunk.create_voxel_distance_texture3d(scale=self.vdf_scale)
+
+    def render(self, rs, pass_num):
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glDepthMask(True)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         proj = rs.projection.matrix
 

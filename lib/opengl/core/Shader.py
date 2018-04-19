@@ -148,7 +148,7 @@ class Shader(OpenGlBaseObject):
             #for i, line in enumerate(source.split("\n")):
             #    print(i, line)
             print(self._log)
-            raise OpenGlError("%s compilation error" % shader_type_name)
+            raise OpenGlError("%s compilation error (%s)" % (shader_type_name, self.name))
 
         glAttachShader(self._handle, shader)
         self._shaders.append(shader)

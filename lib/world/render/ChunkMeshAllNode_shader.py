@@ -45,7 +45,7 @@ frag_src = """
 #version 130
 #line 46
 uniform sampler2D u_tex1;
-uniform sampler3D u_chunktex;
+uniform sampler3D u_chunk_tex;
 uniform sampler3D u_vdf_tex;
 
 uniform float u_time;
@@ -70,7 +70,7 @@ float voxel_at(in vec3 pos) {
     //    return 1.; 
     if (any(lessThan(pos, vec3(1))) || any(greaterThanEqual(pos, u_chunksize)))
         return 0.;
-    return texelFetch(u_chunktex, ivec3(pos+.5), 0).x;
+    return texelFetch(u_chunk_tex, ivec3(pos+.5), 0).x;
 }
 
 float distance_at(in vec3 pos) {
@@ -82,7 +82,7 @@ float distance_at(in vec3 pos) {
 }
 
 float voxel_density(in vec3 pos) {
-    return texture(u_chunktex, (pos+vec3(0,0,.5)) / u_chunksize).y;
+    return texture(u_chunk_tex, (pos+vec3(0,0,.5)) / u_chunksize).y;
 }
 
 // Inigo Quilez, Reinder Nijhoff, https://www.shadertoy.com/view/4ds3WS
@@ -239,7 +239,7 @@ void main() {
         //col.x += v_pos.y/10.;
         //col = mix(col, vec3(voxel_at(v_pos.xyz-normal*.01)), .8);
         //col = mix(col, texture2D(u_tex1, v_pos.xy).xyz, .5);
-        //col += texture(u_chunktex, v_pos.xyz*2.1).xyz;
+        //col += texture(u_chunk_tex, v_pos.xyz*2.1).xyz;
         
         //col += sin(u_time+v_pos.x);
         //col = mix(col, vec3(v_texcoord, 0.), .9);

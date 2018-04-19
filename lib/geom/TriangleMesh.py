@@ -78,8 +78,8 @@ class AbstractTriangleMesh:
             self.add_vertex(pos2),
         )
 
-    def create_drawable(self):
-        draw = Drawable()
+    def create_drawable(self, name=None):
+        draw = Drawable(name=name)
         return self.update_drawable(draw)
 
     def update_drawable(self, draw):

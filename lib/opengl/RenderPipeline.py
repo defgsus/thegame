@@ -119,8 +119,11 @@ class RenderStage:
             #tex.set_parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
         if self.node.num_passes() < 2:
-            self.node.render(self.pipeline.render_settings, 0)
-            self.fbo.unbind()
+            try:
+                self.node.render(self.pipeline.render_settings, 0)
+                self.fbo.unbind()
+            except BaseException as e:
+                raise e.__class__("%s in RenderNode %s" % (e, self.node.name))
         else:
             for pass_num in range(self.node.num_passes()):
 

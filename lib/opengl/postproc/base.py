@@ -7,7 +7,7 @@ class PostProcNode(RenderNode):
     def __init__(self, name):
         super().__init__(name)
 
-        self.quad = ScreenQuad()
+        self.quad = ScreenQuad(name="pp-quad-%s" % self.name)
         self.do_compile = True
 
     def release(self):

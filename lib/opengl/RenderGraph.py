@@ -35,6 +35,7 @@ class RenderGraph:
             raise ValueError("multi-pass with multi-sample is not allowed for RenderNode '%s'" % node.name)
         self.nodes[node.name] = node
         self.graph.add_node(node.name)
+        return node
 
     def connect(self, node_from, output, node_to, input=0):
         """Connect to existing nodes by name or instance"""

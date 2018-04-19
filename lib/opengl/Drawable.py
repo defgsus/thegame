@@ -58,15 +58,17 @@ class Drawable:
     A_TEXCOORD = "a_texcoord"
     A_COLOR = "a_color"
 
-    def __init__(self):
+    def __init__(self, name=None):
+        self.name = name or "drawable"
         self.vao = VertexArrayObject()
-        self.shader = Shader(DEFAULT_VERTEX_SRC, DEFAULT_FRAGMENT_SRC)
+        self.shader = Shader(DEFAULT_VERTEX_SRC, DEFAULT_FRAGMENT_SRC, name="%s-shader" % (self.name))
         self._attributes_changed = True
         self._attributes = dict()
         self._elements = dict()
 
     def __str__(self):
-        return "Drawable(%s, %s)" % (
+        return "Drawable(%s, %s, %s)" % (
+            self.name,
             ", ".join("'%s'" % e for e in sorted(self._attributes)),
             ", ".join("%s" % e for e in sorted(self._elements)),
         )
@@ -83,9 +85,11 @@ class Drawable:
     def clear_attributes(self):
         self._attributes.clear()
         self._attributes_changed = True
+
     def clear_index(self):
         self._elements.clear()
         self._attributes_changed = True
+
     def clear(self):
         self.clear_attributes()
         self.clear_index()

@@ -58,7 +58,11 @@ class ChunkMeshAllNode(RenderNode):
             self.vdf_tex = self.chunk.create_voxel_distance_texture3d(scale=self.vdf_scale)
 
     def render(self, rs, pass_num):
-        glDisable(GL_CULL_FACE)
+        if 0:
+            glDisable(GL_CULL_FACE)
+        else:
+            glEnable(GL_CULL_FACE)
+            glCullFace(GL_BACK)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glDepthMask(True)

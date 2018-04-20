@@ -33,7 +33,7 @@ class WorldEngine:
         # player
         self.agents = Agents(self.chunk)
         self.agents.create_agent("player", "./assets/pokeson.png")
-        self.agents["player"].set_position(glm.vec3(2, 2, 10) + .5)
+        self.agents["player"].set_position(glm.vec3(14, 14, 10) + .5)
 
         # other guy
         follow = "player"

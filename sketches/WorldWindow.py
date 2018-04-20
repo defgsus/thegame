@@ -7,6 +7,7 @@ from lib.opengl import *
 from lib.world import *
 
 
+
 class WorldWindow(pyglet.window.Window):
 
     def __init__(self, *args, **kwargs):
@@ -18,6 +19,7 @@ class WorldWindow(pyglet.window.Window):
         self.world = WorldEngine()
 
         self.edit_mode = False
+        self.run_benchmark = False
         self.debug_view = 0
 
         self.keys = pyglet.window.key.KeyStateHandler()
@@ -61,6 +63,9 @@ class WorldWindow(pyglet.window.Window):
         self.world.render_settings.screen_width = self.width
         self.world.render_settings.screen_height = self.height
         self.world.render(time.time() - self.start_time)
+        if self.run_benchmark:
+            self.run_benchmark = False
+            self.world.renderer.pipeline.benchmark()
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.world.projection._rotation[0] -= scroll_y / 30.
@@ -96,6 +101,8 @@ class WorldWindow(pyglet.window.Window):
             self.world.debug_view = (self.world.debug_view + 1) % 5
         if text == ".":
             OpenGlAssets.dump()
+        if text == "b":
+            self.run_benchmark = True
 
     def get_ray(self, x, y):
         return self.world.projection.screen_to_ray(

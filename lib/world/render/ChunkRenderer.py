@@ -8,6 +8,24 @@ from .ChunkMeshRenderNode import ChunkMeshRenderNode
 from .ChunkMeshLightingNode import ChunkMeshLightingNode
 from .ChunkMeshAllNode import ChunkMeshAllNode
 
+"""
+some benchmarks:
+    480 x 320 on GTX 1050
+        Mesh with Lighting
+            smooth shadow
+                no MSAA 444 fps
+                16xMSAA 196 fps (213fps backface culling)
+            voxel shadow
+                no MSAA 580 fps
+                16xMSAA 300 fps (320fps backface culling)
+            no shadow
+                no MSAA 725 fps
+                16xMSAA 350 fps
+        deferred lighting
+            smooth shadow
+                16xMSAA 148 fps
+"""
+
 
 class ChunkRenderer:
 

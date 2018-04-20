@@ -50,6 +50,21 @@ class RenderPipeline:
         for o in outs:
             self._dump_stage(self._stage_dict[o], indent + "  ")
 
+    def benchmark(self, rs=None, max_sec=3):
+        import time
+        start_time = time.time()
+        cur_time = 0
+        num_frame = 0
+        while cur_time < max_sec:
+            self.render(rs or self.render_settings)
+            glFlush()
+            glFinish()
+            cur_time = time.time() - start_time
+            num_frame += 1
+        fps = num_frame / cur_time
+        print("rendered %s frames in %s seconds (%s fps)" % (num_frame, round(cur_time, 2), round(fps, 1)))
+        return fps
+
 
 class RenderStage:
     """Internal class to handle a RenderNode and it's FBOs"""

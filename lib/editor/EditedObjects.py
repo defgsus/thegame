@@ -1,5 +1,5 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 
 from lib.world import *
 from .ChunkEditorWidget import ChunkEditorWidget

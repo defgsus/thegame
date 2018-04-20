@@ -1,5 +1,6 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 from .ToolsWidget import ToolsWidget
 from .ChunkRenderWidget import ChunkRenderWidget
@@ -18,9 +19,11 @@ class ChunkEditorWidget(QWidget):
         self.render_widget = ChunkRenderWidget(self.chunk, self)
         l.addWidget(self.render_widget, 10)
 
-        self.tools_widget = ToolsWidget(self)
-        self.tools_widget.add_tool("paint", "paint")
-        self.tools_widget.add_tool("select", "select")
+        tools = (
+            ("paint", "paint"),
+            ("select", "select"),
+        )
+        self.tools_widget = ToolsWidget(tools, self)
         l.addWidget(self.tools_widget)
 
     def mouseMoveEvent(self, e):

@@ -1,35 +1,30 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
+from functools import partial
+
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 from .ChunkRenderWidget import ChunkRenderWidget
 
 
 class ToolsWidget(QWidget):
 
-    def __init__(self, parent):
+    def __init__(self, tools, parent):
         super().__init__(parent)
+        l = QVBoxLayout()
+        self.setLayout(l)
+
         self.tools = dict()
-        self.setLayout(QGridLayout())
+        for name, display in tools:
+            widget = QToolButton(self)
+            widget.setText(display)
+            widget.setAutoRaise(True)
+            widget.clicked.connect(partial(self.on_click, name))
+            l.addWidget(widget)
+            self.tools[name] = widget
 
-    def add_tool(self, name, display):
-        if name in self.tools:
-            self.remove_tool(name)
+        l.addStretch(10)
 
-        widget = QToolButton(self)
-        widget.setText(display)
-        widget.setAutoRaise(True)
-        index = len(self.tools)
-        self.layout().addWidget(widget, index, 0)
-        self.tools[name] = {
-            "index": index,
-            "display": display,
-            "widget": widget
-        }
-
-    def remove_tool(self, name):
-        if name not in self.tools:
-            return
-        t = self.tools[name]
-        self.layout().takeAt(t["index"], 0)
-        t["widget"].deleteLater()
-        del self.tools[name]
+    def on_click(self, name):
+        print(name)
+        self.tools[name].setDown(True)

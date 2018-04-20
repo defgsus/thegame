@@ -1,8 +1,8 @@
 import glm
 
-from PySide.QtCore import *
-from PySide.QtGui import *
-from PySide.QtOpenGL import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtOpenGL import *
 
 from lib.opengl import *
 from lib.world.render import RenderSettings
@@ -55,13 +55,13 @@ class ChunkRenderWidget(QGLWidget):
 
     def keyPressEvent(self, e):
         move_dir = None
-        if e.key() == Qt.Key.Key_Left:
+        if e.key() == Qt.Key_Left:
             move_dir = (-1,0,0)
-        elif e.key() == Qt.Key.Key_Right:
+        elif e.key() == Qt.Key_Right:
             move_dir = (1,0,0)
-        elif e.key() == Qt.Key.Key_Up:
+        elif e.key() == Qt.Key_Up:
             move_dir = (0,1,0)
-        elif e.key() == Qt.Key.Key_Down:
+        elif e.key() == Qt.Key_Down:
             move_dir = (0,-1,0)
 
         if move_dir is None:

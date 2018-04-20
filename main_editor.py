@@ -1,9 +1,10 @@
 import sys
-from PySide import QtGui
+from PyQt5.QtWidgets import *
+
 
 from lib.editor import MainWindow
 
-app = QtGui.QApplication(sys.argv)
+app = QApplication(sys.argv)
 
 win = MainWindow()
 win.show()

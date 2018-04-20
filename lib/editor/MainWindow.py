@@ -1,5 +1,6 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 from .ChunkEditorWidget import ChunkEditorWidget
 from .EditedObjects import EditedObjects
@@ -33,17 +34,14 @@ class MainWindow(QMainWindow):
         self.tab_widget = QTabWidget(self)
         self.setCentralWidget(self.tab_widget)
 
-    @Slot()
     def slot_exit(self):
         self.close()
 
-    @Slot()
     def slot_open(self):
         filename = QFileDialog.getOpenFileName(
             self, self.tr("Open World"), "", self.tr("World Files (*.*)"))
         print(filename)
 
-    @Slot()
     def slot_new_chunk(self):
         self.create_tab("chunk")
 

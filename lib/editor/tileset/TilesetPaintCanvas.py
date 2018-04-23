@@ -2,6 +2,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+from .Brush import Brush
+
 
 class TilesetPaintCanvas(QWidget):
 
@@ -12,9 +14,10 @@ class TilesetPaintCanvas(QWidget):
 
         self.tileset = tileset
         self.qimage = tileset.get_qimage()
+        self.brush = Brush()
 
         self.grid_pen = QPen()
-        self.grid_pen.setColor(QColor(255, 127, 0))
+        self.grid_pen.setColor(QColor(255, 127, 0, 127))
         self.grid_pen.setWidthF(.2)
 
         self._zoom = 10
@@ -36,15 +39,10 @@ class TilesetPaintCanvas(QWidget):
         self._zoom = z
         self._apply_transform()
 
-    @property
-    def brush_radius(self):
-        return 2
-
     def _apply_transform(self):
         self._transform = QTransform()
         self._transform.scale(self._zoom, self._zoom)
         self._itransform, __ = self._transform.inverted()
-        print(self._itransform)
         size = QPointF(self.tileset.image_width, self.tileset.image_height)
         size = self._transform.map(size)
         self.setFixedSize(int(size.x()), int(size.y()))
@@ -73,17 +71,39 @@ class TilesetPaintCanvas(QWidget):
             p.drawLine(urect.left()-self.zoom, i, urect.right()+self.zoom, i)
 
         # hover pos
-        p.drawEllipse(self.hover_pos, 2, 2)
+        p.drawEllipse(self.hover_pos+QPointF(.5,.5), self.brush.radius, self.brush.radius)
 
         #p.drawRect(urect)
 
+    def screen_to_pixel(self, pos):
+        p = self._itransform.map(QPointF(pos))
+        p = p - QPointF(.501, .501)
+        return p.toPoint()
+
     def mouseMoveEvent(self, e):
         prev_hover_pos = self.hover_pos
-        self.hover_pos = self._itransform.map(e.pos())
-        p = self._transform.map(self.hover_pos)
+        self.hover_pos = self.screen_to_pixel(e.pos())
+        if e.buttons() & Qt.LeftButton:
+            self.draw_brush(self.hover_pos)
+            e.accept()
+        self._update_pixels(prev_hover_pos, self.hover_pos, self.brush.radius)
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self.hover_pos = self.screen_to_pixel(e.pos())
+            self.draw_brush(self.hover_pos)
+            e.accept()
+            self._update_pixels(self.hover_pos, None, self.brush.radius)
+
+    def draw_brush(self, pos):
+        self.brush.draw(pos, self.qimage)
+
+    def _update_pixels(self, p1, p2, radius):
+        p = self._transform.map(p1)
         urect = QRect(p, p)
-        p = self._transform.map(prev_hover_pos)
-        urect = urect.united(QRect(p, p))
-        s = (self.brush_radius+1) * self.zoom
+        if p2 is not None:
+            p = self._transform.map(p2)
+            urect = urect.united(QRect(p, p))
+        s = (radius+2) * self.zoom
         urect.adjust(-s, -s, s, s)
         self.update(urect)

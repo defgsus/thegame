@@ -29,6 +29,7 @@ class MainWindow(QMainWindow):
         menu.addAction(self.tr("E&xit"), self.slot_exit)
 
         new_menu.addAction(self.tr("&New Chunk"), self.slot_new_chunk, QKeySequence("Ctrl+N"))
+        new_menu.addAction(self.tr("New &Tileset"), self.slot_new_tileset, QKeySequence("Ctrl+T"))
 
     def _create_widgets(self):
         self.tab_widget = QTabWidget(self)
@@ -45,10 +46,16 @@ class MainWindow(QMainWindow):
     def slot_new_chunk(self):
         self.create_tab("chunk")
 
+    def slot_new_tileset(self):
+        self.create_tab("tileset")
+
     def create_tab(self, what):
         if what == "chunk":
             obj = self.edited_objects.create_chunk()
             obj.tab = self.tab_widget.addTab(obj.widget, "new chunk")
+        elif what == "tileset":
+            obj = self.edited_objects.create_tileset()
+            obj.tab = self.tab_widget.addTab(obj.widget, "new tileset")
         else:
             raise ValueError("Unknown tab '%s'" % what)
         return obj

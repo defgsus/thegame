@@ -1,7 +1,7 @@
 import glm
 
-from ...opengl import *
-from ...opengl.core.base import *
+from lib.opengl import *
+from lib.opengl.core.base import *
 from .ChunkMeshAllNode_shader import vert_src, frag_src
 
 
@@ -22,7 +22,7 @@ class ChunkMeshAllNode(RenderNode):
         return True
 
     def num_multi_sample(self):
-        return 16
+        return 8
 
     @property
     def chunk(self):

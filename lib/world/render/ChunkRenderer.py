@@ -1,12 +1,11 @@
-import time
-import pyglet
-import glm
-import math
 from ...opengl import *
 from ...opengl import postproc
-from .ChunkMeshRenderNode import ChunkMeshRenderNode
-from .ChunkMeshLightingNode import ChunkMeshLightingNode
-from .ChunkMeshAllNode import ChunkMeshAllNode
+from .deferred.ChunkMeshRenderNode import ChunkMeshRenderNode
+from .deferred.ChunkMeshLightingNode import ChunkMeshLightingNode
+from .full.ChunkMeshAllNode import ChunkMeshAllNode
+from .split.ChunkMeshWithoutLight import ChunkMeshWithoutLight
+from .split.ChunkMeshOnlyLight import ChunkMeshOnlyLight
+from .split.CombineNode import CombineNode
 
 """
 some benchmarks:
@@ -14,6 +13,7 @@ some benchmarks:
         Mesh with Lighting
             smooth shadow
                 no MSAA 444 fps
+                 9xMSAA 196 fps (212fps backface culling)
                 16xMSAA 196 fps (213fps backface culling)
             voxel shadow
                 no MSAA 580 fps
@@ -24,6 +24,18 @@ some benchmarks:
         deferred lighting
             smooth shadow
                 16xMSAA 148 fps
+    (below always backface clulling)
+        ChunkMeshWithoutLight
+                16xMSAA 405 fps 
+        ChunkMeshOnlyLight
+                no MSAA 580 fps
+                 4xMSAA 560 fps
+                 9xMSAA 236 fps
+                16xMSAA 237 fps
+        split ligting
+                16/0xMSAA 357 fps
+                16/4xMSAA 376 fps
+                16/9xMSAA 200 fps (first aesthetically acceptable value)
 """
 
 
@@ -36,7 +48,7 @@ class ChunkRenderer:
 
         self.render_graph = RenderGraph()
 
-        if 0:
+        if 0:  # deferred
             self.render_graph.add_node(ChunkMeshRenderNode(self.world, self, "mesh"))
             self.render_graph.add_node(ChunkMeshLightingNode(self.world, self, "light"))
 
@@ -48,13 +60,27 @@ class ChunkRenderer:
 
             self.render_graph.connect("light", 0, "depth-blur", 0)
             self.render_graph.connect("mesh", "depth", "depth-blur", 1)
-        else:
+        elif 0:  # split
+            self.render_graph.add_node(ChunkMeshWithoutLight(self.world, self, "mesh"))
+            self.render_graph.add_node(ChunkMeshOnlyLight(self.world, self, "mesh-light"))
+            self.render_graph.add_node(CombineNode("add"))
+
+            self.pp_depth_blur = self.render_graph.add_node(postproc.Blur("depth-blur", use_mask=True))
+
+            self.render_graph.connect("mesh", 0, "add", 0)
+            self.render_graph.connect("mesh-light", 0, "add", 1)
+
+            self.render_graph.connect("add", 0, "depth-blur", 0)
+            self.render_graph.connect("mesh", "depth", "depth-blur", 1)
+        else:  # all in one
             self.render_graph.add_node(ChunkMeshAllNode(self.world, self, "mesh"))
             self.pp_depth_blur = self.render_graph.add_node(postproc.Blur("depth-blur", use_mask=True))
             self.render_graph.connect("mesh", 0, "depth-blur", 0)
             self.render_graph.connect("mesh", "depth", "depth-blur", 1)
 
         self.pipeline = self.render_graph.create_pipeline()
+        #self.pipeline.dump()
+        #self.pipeline.verbose = 5
 
     def render(self):
         if hasattr(self, "pp_depth_blur"):

@@ -1,8 +1,8 @@
 import glm
 
-from ...opengl import *
-from ...opengl.core.base import *
-from ...opengl.postproc.base import PostProcNode
+from lib.opengl import *
+from lib.opengl.core.base import *
+from lib.opengl.postproc.base import PostProcNode
 
 
 frag_src = """

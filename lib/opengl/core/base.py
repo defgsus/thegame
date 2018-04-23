@@ -70,5 +70,7 @@ class OpenGlBaseObject:
 
     @classmethod
     def dump_instances(cls):
-        for name in sorted(OpenGlObjects.instances):
-            print(OpenGlObjects.instances[name])
+        names = ["%s" % OpenGlObjects.instances[i] for i in OpenGlObjects.instances]
+        names.sort()
+        for name in names:
+            print(name)

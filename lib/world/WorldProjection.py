@@ -36,6 +36,9 @@ class WorldProjection:
 
         self.init()
 
+    def __str__(self):
+        return "Projection('%s', %sx%s)" % (self.projection, self.width, self.height)
+
     @property
     def zoom(self):
         return self._szoom

@@ -1,3 +1,4 @@
+from .base import PostProcNode
 from .Blur import Blur
 from .Bypass import Bypass
 from .Desaturate import Desaturate

@@ -3,6 +3,7 @@ import pyglet
 import glm
 from pyglet.gl import *
 from lib.opengl import *
+from lib.opengl.core.base import OpenGlBaseObject
 
 from lib.world import *
 
@@ -63,6 +64,7 @@ class WorldWindow(pyglet.window.Window):
         self.world.render_settings.screen_width = self.width
         self.world.render_settings.screen_height = self.height
         self.world.render(time.time() - self.start_time)
+        self.world.renderer.pipeline.verbose = 0
         if self.run_benchmark:
             self.run_benchmark = False
             self.world.renderer.pipeline.benchmark()
@@ -100,7 +102,9 @@ class WorldWindow(pyglet.window.Window):
         if text == "d":
             self.world.debug_view = (self.world.debug_view + 1) % 5
         if text == ".":
+            OpenGlBaseObject.dump_instances()
             OpenGlAssets.dump()
+            self.world.renderer.pipeline.verbose = 5
         if text == "b":
             self.run_benchmark = True
 

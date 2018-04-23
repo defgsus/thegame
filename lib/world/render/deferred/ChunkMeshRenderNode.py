@@ -1,7 +1,7 @@
 import glm
 
-from ...opengl import *
-from ...opengl.core.base import *
+from lib.opengl import *
+from lib.opengl.core.base import *
 
 vert_src = """
 #version 150

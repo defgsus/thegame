@@ -64,9 +64,9 @@ class CombineNode(RenderNode):
         self.quad.set_shader_code("""
         #line 65
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
-            vec4 c1 = texture(u_tex1, texCoord);
-            vec4 c2 = texture(u_tex2, texCoord);
-            fragColor = c1 %s c2;
+            vec3 c1 = texture(u_tex1, texCoord).xyz;
+            vec3 c2 = texture(u_tex2, texCoord).xyz;
+            fragColor = vec4(c1 %s c2, 1);
         }
         """ % self.operator)
 
@@ -77,6 +77,35 @@ class CombineNode(RenderNode):
         self.quad.drawable.shader.set_uniform("u_time", rs.time)
         self.quad.drawable.shader.set_uniform("u_tex1", 0)
         self.quad.drawable.shader.set_uniform("u_tex2", 1)
+        self.quad.draw(rs.render_width, rs.render_height)
+
+
+class CombineByDepth(RenderNode):
+
+    def __init__(self, name):
+        super().__init__(name)
+        self.quad = ScreenQuad()
+        self.quad.set_shader_code("""
+        #line 89
+        void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
+            vec3 c1 = texture(u_tex1, texCoord).xyz;
+            vec3 c2 = texture(u_tex3, texCoord).xyz;
+            float d1 = texture(u_tex2, texCoord).x;
+            float d2 = texture(u_tex4, texCoord).x;
+            vec3 col = d1 < d2 ? c1 : c2;
+            fragColor = vec4(col, 1);
+        }
+        """)
+
+    def release(self):
+        self.quad.release()
+
+    def render(self, rs, pass_num):
+        self.quad.drawable.shader.set_uniform("u_time", rs.time)
+        self.quad.drawable.shader.set_uniform("u_tex1", 0)
+        self.quad.drawable.shader.set_uniform("u_tex2", 1)
+        self.quad.drawable.shader.set_uniform("u_tex3", 2)
+        self.quad.drawable.shader.set_uniform("u_tex4", 3)
         self.quad.draw(rs.render_width, rs.render_height)
 
 
@@ -108,14 +137,15 @@ class DepthNode(RenderNode):
 
 class GeometryNode(RenderNode):
 
-    def __init__(self, name):
+    def __init__(self, name, speed=1.):
         super().__init__(name)
+        self.speed = speed
         self.mesh = TriangleMesh()
         MeshFactory.add_cube(self.mesh)
         self.drawable = self.mesh.create_drawable()
         self.drawable.shader.set_fragment_source("""
         #version 130
-        #line 89
+        #line 148
         uniform sampler2D u_tex1;
         uniform sampler2D u_tex2;
         
@@ -127,9 +157,9 @@ class GeometryNode(RenderNode):
         out vec4 fragColor;
         
         void main() {
-            vec4 col = texture(u_tex1, v_texcoord);
+            vec3 col = texture(u_tex1, v_texcoord).xyz;
             col.xyz = .7*(1.-col.xyz);
-            fragColor = col;
+            fragColor = vec4(col, 1);
         }
         """)
 
@@ -143,13 +173,14 @@ class GeometryNode(RenderNode):
         self.drawable.release()
 
     def render(self, rs, pass_num):
+        time = rs.time * self.speed
         #proj = glm.ortho(-3, 3, -3, 3, -3, 3)
         proj = glm.perspectiveFov(0.7, rs.render_width, rs.render_height, 0.01, 5.)
         proj = glm.translate(proj, (0,0,-2))
-        proj = glm.rotate(proj, rs.time*.7, (0,0,1))
-        proj = glm.rotate(proj, rs.time*.8, (0,1,0))
-        proj = glm.rotate(proj, rs.time*.9, (1,0,0))
-        self.drawable.shader.set_uniform("u_time", rs.time)
+        proj = glm.rotate(proj, time*.7, (0,0,1))
+        proj = glm.rotate(proj, time*.8, (0,1,0))
+        proj = glm.rotate(proj, time*.9, (1,0,0))
+        self.drawable.shader.set_uniform("u_time", time)
         self.drawable.shader.set_uniform("u_tex1", 0)
         self.drawable.shader.set_uniform("u_tex2", 1)
         self.drawable.shader.set_uniform("u_projection", proj)
@@ -180,7 +211,7 @@ class RenderGraphWindow(pyglet.window.Window):
             self.graph.connect("color", 0, "geom", 0)
             self.graph.connect("geom", 0, "out", 0)
             self.graph.connect("geom", "depth", "out", 1)
-        elif 1:
+        elif 0:
             self.graph.add_node(ColorNode("color"))
             self.graph.add_node(GridNode("grid"))
             self.graph.add_node(CombineNode("mul", "*"))
@@ -196,17 +227,38 @@ class RenderGraphWindow(pyglet.window.Window):
             self.graph.connect("add", 0, "out", 0)
             self.graph.connect("geom", "depth", "out", 1)
 
-        else:
+        elif 0:
             self.graph.add_node(GridNode("out"))
 
-        if 1:
-            self.graph.add_node(postproc.Blur("pp1"))
-            self.graph.add_node(postproc.Wave("pp2"))
+        else:
+            self.graph.add_node(ColorNode("color"))
+            self.graph.add_node(GridNode("grid"))
+            self.graph.add_node(CombineNode("tex", "*"))
+
+            self.graph.connect("color", 0, "tex", 0)
+            self.graph.connect("grid", 0, "tex", 1)
+
+            self.graph.add_node(GeometryNode("geom1", speed=1))
+            self.graph.add_node(GeometryNode("geom2", speed=1.618))
+
+            self.graph.add_node(CombineByDepth("out"))
+
+            self.graph.connect("tex", 0, "geom1", 0)
+            self.graph.connect("tex", 0, "geom2", 0)
+            self.graph.connect("geom1", 0, "out", 0)
+            self.graph.connect("geom1", "depth", "out", 1)
+            self.graph.connect("geom2", 0, "out", 2)
+            self.graph.connect("geom2", "depth", "out", 3)
+
+        if 0:
+            self.graph.add_node(postproc.Wave("pp1"))
+            self.graph.add_node(postproc.Blur("pp2"))
             self.graph.connect("out", 0, "pp1", 0)
             self.graph.connect("pp1", 0, "pp2", 0)
 
         self.pipeline = self.graph.create_pipeline()
         self.pipeline.dump()
+        #self.pipeline.verbose = 5
 
         self.start_time = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)

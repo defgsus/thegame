@@ -9,7 +9,9 @@ class Texture2D(TextureBase):
         self.multi_sample = multi_sample
 
     def __str__(self):
-        return "Texture2D(%s, %sx%s)" % (self.name, self.width, self.height)
+        return "Texture2D(%s, %sx%s, h=%s)" % (
+            self.name, self.width, self.height, self.handle,
+        )
 
     def size(self):
         return self.width, self.height

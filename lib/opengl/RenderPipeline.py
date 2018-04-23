@@ -16,16 +16,19 @@ class RenderPipeline:
         self.stages = [RenderStage(self, self.graph.to_node(n)) for n in node_names]
         self._stage_dict = {s.node.name: s for s in self.stages}
         self._quad = None
+        self.verbose = 0
 
     def get_stage(self, name):
         return self._stage_dict.get(name)
 
     def render(self, rs):
+        self.debug(1, "render %s" % rs)
         self.render_settings = rs
         for stage in self.stages:
             stage.render()
 
     def render_to_screen(self, rs):
+        self.debug(1, "render_to_screen %s" % rs)
         """Render final stage to screen"""
         assert len(self.stages)
         if not self._quad:
@@ -37,6 +40,10 @@ class RenderPipeline:
         glViewport(0, 0, rs.screen_width, rs.screen_height)
         self._quad.draw_centered(rs.screen_width, rs.screen_height,
                                  rs.render_width, rs.render_height)
+
+    def debug(self, level, text):
+        if self.verbose >= level:
+            print("Pipeline: %s" % text)
 
     def dump(self):
         print("[%s]" % "->".join(s.node.name for s in self.stages))
@@ -101,6 +108,9 @@ class RenderStage:
         inf += ")"
         return "Stage(%s)" % inf
 
+    def debug(self, level, text):
+        self.pipeline.debug(level, "Stage('%s'): %s" % (self.node.name, text))
+
     @property
     def graph(self):
         return self.pipeline.graph
@@ -114,13 +124,16 @@ class RenderStage:
         return self.pipeline.render_settings.render_height
 
     def render(self):
+        self.debug(2, "render")
         # create node assets or whatever
         if not self.node.is_created:
+            self.debug(3, "create node")
             self.node.create(self.pipeline.render_settings)
             self.node.is_created = True
 
         # build and bind this stage's FBO
         self._update_fbo()
+        self.debug(4, "bind fbo %s" % self.fbo)
         self.fbo.bind()
         self.fbo.set_viewport()
         self.fbo.clear()
@@ -130,23 +143,28 @@ class RenderStage:
             stage = self.pipeline.get_stage(input["from_node"])
             tex = stage.get_output_texture(input["from_slot"])
             Texture2D.set_active_texture(input["to_slot"])
+            self.debug(4, "bind tex %s to %s" % (input["to_slot"], tex))
             tex.bind()
             #tex.set_parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
         if self.node.num_passes() < 2:
             try:
+                self.debug(3, "render node %s" % self.node)
                 self.node.render(self.pipeline.render_settings, 0)
                 self.fbo.unbind()
             except BaseException as e:
                 raise e.__class__("%s in RenderNode %s" % (e, self.node.name))
         else:
             for pass_num in range(self.node.num_passes()):
+                self.debug(4, "pass #%s" % pass_num)
 
                 if pass_num > 0:
+                    self.debug(4, "bind tex 0 to %s" % self.swap_texture)
                     Texture2D.set_active_texture(0)
                     self.swap_texture.bind()
 
                 glDisable(GL_DEPTH_TEST)
+                self.debug(3, "render node %s" % self.node)
                 self.node.render(self.pipeline.render_settings, pass_num)
 
                 if pass_num + 1 < self.node.num_passes():
@@ -182,31 +200,37 @@ class RenderStage:
         else:
             self.fbo.create()
 
-        if self.fbo_down is None:
-            self.fbo_down = self._create_downsample_fbo()
-        if self.fbo_down.is_created():
-            if self.fbo_down.width != self.width or self.fbo_down.height != self.height:
-                self.fbo_down.release()
+        if self.node.num_multi_sample() > 0:
+            if self.fbo_down is None:
                 self.fbo_down = self._create_downsample_fbo()
-        if not self.fbo_down.is_created():
-            self.fbo_down.create()
+            if self.fbo_down.is_created():
+                if self.fbo_down.width != self.width or self.fbo_down.height != self.height:
+                    self.fbo_down.release()
+                    self.fbo_down = self._create_downsample_fbo()
+            if not self.fbo_down.is_created():
+                self.fbo_down.create()
 
     def _create_fbo(self):
-        return Framebuffer2D(
-            self.width, self.height, name=self.node.name,
+        fbo = Framebuffer2D(
+            self.width, self.height, name="%s-fbo" % self.node.name,
             num_color_tex=self.node.num_color_outputs(),
             with_depth_tex=self.node.has_depth_output(),
             multi_sample=self.node.num_multi_sample()
         )
+        self.debug(2, "created fbo %s" % fbo)
+        return fbo
 
     def _create_downsample_fbo(self):
-        return Framebuffer2D(
-            self.width, self.height, name="%s-down" % self.node.name,
+        fbo = Framebuffer2D(
+            self.width, self.height, name="%s-downfbo" % self.node.name,
             num_color_tex=self.node.num_color_outputs(),
             with_depth_tex=self.node.has_depth_output()
         )
+        self.debug(2, "created down-fbo %s" % fbo)
+        return fbo
 
     def _downsample(self):
+        self.debug(3, "downsampling")
         glBindFramebuffer(GL_READ_FRAMEBUFFER, self.fbo.handle)
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, self.fbo_down.handle)
         for i in range(self.fbo.num_color_textures()):
@@ -232,5 +256,7 @@ class RenderStage:
                 self.swap_texture.create()
             self.swap_texture.bind()
             self.swap_texture.upload(None, self.fbo.width, self.fbo.height, gpu_format=GL_RGBA32F)
+            self.debug(2, "updated swap texture %s" % self.swap_texture)
 
         self.swap_texture = self.fbo.swap_color_texture(0, self.swap_texture)
+        self.debug(3, "swapped fbo texture %s" % self.swap_texture)

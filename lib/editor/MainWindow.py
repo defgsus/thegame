@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
         self._create_main_menu()
         self._create_widgets()
 
-        self.setGeometry(0, 0, 640, 480)
+        self.setGeometry(0, 0, 800, 600)
 
     def _create_main_menu(self):
         menu = self.menuBar().addMenu(self.tr("&File"))

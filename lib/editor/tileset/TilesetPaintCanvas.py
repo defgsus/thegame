@@ -7,14 +7,14 @@ from .Brush import Brush
 
 class TilesetPaintCanvas(QWidget):
 
-    def __init__(self, tileset, parent):
+    def __init__(self, tileset, brush, parent):
         super().__init__(parent)
 
         self.setMouseTracking(True)
 
         self.tileset = tileset
         self.qimage = tileset.get_qimage()
-        self.brush = Brush()
+        self.brush = brush
 
         self.grid_pen = QPen()
         self.grid_pen.setColor(QColor(255, 127, 0, 127))

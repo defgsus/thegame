@@ -7,10 +7,11 @@ from .TilesetPaintCanvas import TilesetPaintCanvas
 
 class TilesetPaintWidget(QWidget):
 
-    def __init__(self, tileset, parent):
+    def __init__(self, tileset, brush, parent):
         super().__init__(parent)
 
         self.tileset = tileset
+        self.brush = brush
 
         l = QVBoxLayout()
         self.setLayout(l)
@@ -18,7 +19,7 @@ class TilesetPaintWidget(QWidget):
         self.scroll_area = QScrollArea(self)
         l.addWidget(self.scroll_area)
 
-        self.canvas = TilesetPaintCanvas(self.tileset, self)
+        self.canvas = TilesetPaintCanvas(self.tileset, self.brush, self)
         self.scroll_area.setWidget(self.canvas)
 
         self.zoom_bar = QScrollBar(Qt.Horizontal, self)

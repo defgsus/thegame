@@ -23,6 +23,10 @@ class Brush:
     def color(self):
         return self._color
 
+    def set_radius(self, r):
+        self._radius = int(r)
+        self._update_brush_image()
+
     def draw(self, pos, qimage):
         r = self._radius - .5
         if self.mode == self.MODE_ADD:

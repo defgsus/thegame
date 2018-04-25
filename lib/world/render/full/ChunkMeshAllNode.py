@@ -22,7 +22,7 @@ class ChunkMeshAllNode(RenderNode):
         return True
 
     def num_multi_sample(self):
-        return 8
+        return 16
 
     @property
     def chunk(self):

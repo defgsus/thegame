@@ -35,7 +35,6 @@ class Tileset:
                 self.image_width, self.image_height, QImage.Format_RGBA8888)
         return self._qimage
 
-
     def __str__(self):
         return "Tileset(%sx%s, %sx%s)" % (
             self.tile_width, self.tile_height,

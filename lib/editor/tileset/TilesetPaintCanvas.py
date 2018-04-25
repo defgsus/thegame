@@ -7,6 +7,9 @@ from .Brush import Brush
 
 class TilesetPaintCanvas(QWidget):
 
+    selectedTileChanged = pyqtSignal(QRect)
+    imageChanged = pyqtSignal()
+
     def __init__(self, tileset, brush, parent):
         super().__init__(parent)
 
@@ -79,7 +82,11 @@ class TilesetPaintCanvas(QWidget):
 
         # -- hover pos --
         p.setPen(self.hover_pen)
-        p.drawEllipse(self.hover_pos+QPointF(.5,.5), self.brush.radius-.5, self.brush.radius-.5)
+        if self.brush.is_brush() or self.brush.mode == "swipe":
+            p.drawEllipse(self.hover_pos+QPointF(.5,.5), self.brush.radius-.5, self.brush.radius-.5)
+        else:
+            p.drawLine(self.hover_pos+QPointF(.5,0), self.hover_pos+QPointF(.5,1))
+            p.drawLine(self.hover_pos+QPointF(0,.5), self.hover_pos+QPointF(1,.5))
 
         #p.drawRect(urect)
 
@@ -96,13 +103,25 @@ class TilesetPaintCanvas(QWidget):
             self.tileset.tile_height
         )
 
+    def get_tile_qimage(self, rect=None):
+        if rect is None:
+            rect = self.clip_rect
+        return self.qimage.copy(rect)
+
     def mousePressEvent(self, e):
+        prev_clip_rect = self.clip_rect
+
         if e.button() == Qt.LeftButton:
             e.accept()
             self.hover_pos = self.screen_to_pixel(e.pos())
             self.clip_rect = self.get_clip_rect(self.hover_pos)
-            self.draw_brush(self.hover_pos)
+            if self.brush.is_draw_tool():
+                if not self.brush.mode == "swipe":
+                    self.draw_brush(self.hover_pos)
             self._update_pixels(self.hover_pos, None, self.brush.radius)
+
+        if prev_clip_rect != self.clip_rect:
+            self.selectedTileChanged.emit(self.clip_rect)
 
     def mouseReleaseEvent(self, e):
         self.clip_rect = None
@@ -112,12 +131,24 @@ class TilesetPaintCanvas(QWidget):
         if e.buttons() & Qt.LeftButton:
             e.accept()
             if self.hover_pos != self.prev_hover_pos:
-                self.draw_brush(self.hover_pos)
+                if self.brush.is_brush():
+                    self.draw_brush(self.hover_pos)
+                elif self.brush.mode == "swipe":
+                    self.draw_brush(self.hover_pos)
         self._update_pixels(self.prev_hover_pos, self.hover_pos, self.brush.radius)
         self.prev_hover_pos = self.hover_pos
 
     def draw_brush(self, pos):
-        self.brush.draw(pos, self.qimage, self.clip_rect)
+        if self.brush.is_brush():
+            self.brush.draw(pos, self.qimage, self.clip_rect)
+        elif self.brush.mode == "fill":
+            self.brush.flood_fill(pos, self.qimage, self.clip_rect)
+            self.update()
+        elif self.brush.mode == "swipe":
+            self.brush.swipe(self.prev_hover_pos, pos, self.qimage, self.clip_rect)
+        else:
+            return
+        self.imageChanged.emit()
 
     def _update_pixels(self, p1, p2, radius):
         p = self._transform.map(p1)

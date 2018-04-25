@@ -7,6 +7,9 @@ from .TilesetPaintCanvas import TilesetPaintCanvas
 
 class TilesetPaintWidget(QWidget):
 
+    tilesetChanged = pyqtSignal()
+    selectedTileChanged = pyqtSignal()
+
     def __init__(self, tileset, brush, parent):
         super().__init__(parent)
 
@@ -21,6 +24,8 @@ class TilesetPaintWidget(QWidget):
 
         self.canvas = TilesetPaintCanvas(self.tileset, self.brush, self)
         self.scroll_area.setWidget(self.canvas)
+        self.canvas.imageChanged.connect(self.tilesetChanged.emit)
+        self.canvas.selectedTileChanged.connect(self.selectedTileChanged.emit)
 
         self.zoom_bar = QScrollBar(Qt.Horizontal, self)
         l.addWidget(self.zoom_bar)

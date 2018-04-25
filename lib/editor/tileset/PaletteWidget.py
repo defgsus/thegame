@@ -59,6 +59,7 @@ class PaletteWidget(QWidget):
         self.ignore_sbs = False
         self._value_changed()
 
+    @pyqtSlot(int)
     def _value_changed(self):
         if self.ignore_sbs:
             return

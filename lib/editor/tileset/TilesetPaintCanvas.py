@@ -16,7 +16,6 @@ class TilesetPaintCanvas(QWidget):
         self.setMouseTracking(True)
 
         self.tileset = tileset
-        self.qimage = tileset.get_qimage()
         self.brush = brush
         self.clip_rect = None
         self.hover_pos = QPoint(0, 0)
@@ -26,6 +25,10 @@ class TilesetPaintCanvas(QWidget):
     
         self._zoom = 10
         self._apply_transform()
+
+    @property
+    def qimage(self):
+        return self.tileset.color_qimage
 
     @property
     def transform(self):

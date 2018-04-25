@@ -70,6 +70,12 @@ class ImageDisplayCanvas(QWidget):
             return
         p = QPainter(self)
 
+        p.fillRect(
+            0, 0,
+            self.image.width() * self.num_repeat * self.zoom,
+            self.image.height() * self.num_repeat * self.zoom,
+            Qt.black)
+
         t = QTransform()
         t.scale(self.zoom, self.zoom)
 

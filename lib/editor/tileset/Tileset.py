@@ -1,155 +1,68 @@
+from PyQt5.QtGui import QImage, QColor
 
 
 class Tileset:
 
-    @classmethod
-    def from_image(cls, tile_width, tile_height, filename):
-        ts = Tileset(tile_width, tile_height)
-        ts.load(filename)
-        return ts
-
-    def __init__(self, tile_width, tile_height):
-        self.tile_width = tile_width
-        self.tile_height = tile_height
-        self.width = 0
-        self.height = 0
+    def __init__(self, tile_width, tile_height, num_x=0, num_y=0):
+        self.tile_width = 0
+        self.tile_height = 0
+        self.num_tiles_x = 0
+        self.num_tiles_y = 0
         self.num_tiles = 0
-        self.padding = .5/16.
-        self.values = None
         self.filename = None
-        self._qimage = None
-
-    @property
-    def image_width(self):
-        return self.width * self.tile_width
-
-    @property
-    def image_height(self):
-        return self.height * self.tile_height
-
-    def get_qimage(self):
-        if self._qimage is None:
-            from PyQt5.QtGui import QImage
-            self._qimage = QImage(
-                bytes(max(0, min(255, int(v*255))) for v in self.values),
-                self.image_width, self.image_height, QImage.Format_RGBA8888)
-        return self._qimage
+        self.color_qimage = None
+        self.height_qimage = None
+        self._id_to_pos = dict()
+        self._pos_to_id = dict()
+        self.color_qimage = None
+        self.height_qimage = None
+        if num_x and num_y:
+            self.init(tile_width, tile_height, num_x, num_y)
 
     def __str__(self):
-        return "Tileset(%sx%s, %sx%s)" % (
+        return "Tileset(%sx%s, num=%sx%s=%s)" % (
             self.tile_width, self.tile_height,
-            self.width, self.height,
+            self.num_tiles_x, self.num_tiles_y, self.num_tiles
         )
 
     def __repr__(self):
         return self.__str__()
 
-    def load(self, file):
-        from PIL import Image
-        image = Image.open(file)
-        try:
-            num_chan = len(image.getpixel((0, 0)))
-        except TypeError:
-            num_chan = 1
-        self.values = image.tobytes("raw")
-        if num_chan < 4:
-            values = []
-            for v in self.values:
-                values.append(v)
-                for c in range(max(0, 3-num_chan)):
-                    values.append(v)
-                values.append(255)
-            self.values = values
-        self.values = [float(v) / 255 for v in self.values]
-        self.width = image.width // self.tile_width
-        self.height = image.height // self.tile_height
-        self.num_tiles = self.width * self.height
-        #self.values = self._flip_y(self.values)
-        self._create_bumpmaps()
-        self.filename = "%s" % file
+    @property
+    def image_width(self):
+        return self.num_tiles_x * self.tile_width
 
-    def create_texture2d(self, asset_suffix=None):
-        from ..opengl import Texture2D
-        from ..opengl.core.base import GL_RGBA, GL_FLOAT
-        from ..opengl import OpenGlAssets
-        texture_name = self.filename
-        if asset_suffix is not None:
-            texture_name = "%s-%s" % (texture_name, asset_suffix)
-        if OpenGlAssets.has(self.filename):
-            return OpenGlAssets.get(texture_name)
-        else:
-            tex = Texture2D(name="tileset")
-            tex.create()
-            tex.bind()
-            tex.upload(self.values, self.width*self.tile_width, self.height*self.tile_height,
-                       input_format=GL_RGBA, input_type=GL_FLOAT, do_flip_y=True)
-            OpenGlAssets.register(texture_name, tex)
-            return tex
+    @property
+    def image_height(self):
+        return self.num_tiles_y * self.tile_height
 
-    def get_uv_quad(self, idx):
-        x = idx % self.width
-        y = idx // self.width
-        y = self.width - 1 - y
-        x1 = x + 1 - self.padding
-        y1 = y + 1 - self.padding
-        x = x + self.padding
-        y = y + self.padding
-        return (
-            (x  / self.width, y  / self.height),
-            (x1 / self.width, y  / self.height),
-            (x1 / self.width, y1 / self.height),
-            (x  / self.width, y1 / self.height),
-        )
+    def init(self, tile_width, tile_height, num_x, num_y):
+        self.tile_width = tile_width
+        self.tile_height = tile_height
+        self.num_tiles_x = num_x
+        self.num_tiles_y = num_y
+        self.num_tiles = self.num_tiles_x * self.num_tiles_y
 
-    def get_uv_offset(self, idx):
-        x = idx % self.width
-        y = idx // self.width
-        return x / self.width, -y / self.height
+        # create id/pos mapping
+        self._id_to_pos.clear()
+        self._pos_to_id.clear()
+        k = 1
+        for y in range(self.num_tiles_y):
+            for x in range(self.num_tiles_x):
+                p = (x, y)
+                self._id_to_pos[k] = p
+                self._pos_to_id[p] = k
+                k += 1
 
-    def _flip_y(self, values):
-        width = self.width * self.tile_width
-        height = self.height * self.tile_height
-        num_chan = 4
-        ret = []
-        for i in range(height, 0, -1):
-            ret += values[(i-1)*width*num_chan:i*width*num_chan]
-        return ret
+        self.color_qimage = QImage(self.image_width, self.image_height, QImage.Format_RGBA8888)
+        self.height_qimage = QImage(self.image_width, self.image_height, QImage.Format_RGBA8888)
+        self.color_qimage.fill(QColor(255,255,255,0))
+        self.height_qimage.fill(QColor(255,255,255,0))
 
-    def _create_bumpmaps(self):
-        for j in range(6):
-            for i in range(self.width//2, self.width):
-                self._create_bumpmap(i, j)
-
-    def _create_bumpmap(self, tilex, tiley):
-        import glm
-        normals = []
-        for y in range(self.tile_height):
-            for x in range(self.tile_width):
-                n = glm.normalize((
-                    self._get_pixel(tilex, tiley, x+1, y) - self._get_pixel(tilex, tiley, x-1, y),
-                    self._get_pixel(tilex, tiley, x, y-1) - self._get_pixel(tilex, tiley, x, y+1),
-                    .5))
-                normals.append(n)
-
-        for y in range(self.tile_height):
-            for x in range(self.tile_width):
-                ofs = ((tiley*self.tile_height+y) * self.tile_width*self.width + (tilex*self.tile_width) + x)*4
-                n = normals[y*self.tile_width+x]
-                # keep green as specular map
-                self.values[ofs+3] = self.values[ofs+1]
-                self.values[ofs] = n[0]
-                self.values[ofs+1] = n[1]
-                self.values[ofs+2] = n[2]
-
-    def _get_pixel(self, tilex, tiley, x, y):
-        if x < 0:
-            x += self.tile_width
-        elif x >= self.tile_width:
-            x -= self.tile_width
-        if y < 0:
-            y += self.tile_height
-        elif y >= self.tile_height:
-            y -= self.tile_height
-        ofsx = tilex * self.tile_width + x
-        ofsy = tiley * self.tile_height + y
-        return self.values[(ofsy * self.tile_width * self.width + ofsx)*4]
+    def load_image(self, filename):
+        img = QImage(filename)
+        assert img.width() / self.tile_width == img.width() // self.tile_width
+        assert img.height() / self.tile_height == img.height() // self.tile_height
+        self.init(self.tile_width, self.tile_height,
+                  img.width() // self.tile_width, img.height() // self.tile_height)
+        self.color_qimage = img

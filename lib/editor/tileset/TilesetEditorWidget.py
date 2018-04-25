@@ -105,6 +105,9 @@ class TilesetEditorWidget(QWidget):
 
         l.addStretch(2)
 
+    def create_menu(self, menu):
+        menu.addAction("&Import image")
+
     def _on_tileset_change(self):
         img = self.paint_widget.canvas.get_tile_qimage()
         self.tile_display.set_image(img)

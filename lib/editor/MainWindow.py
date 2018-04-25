@@ -15,6 +15,7 @@ class MainWindow(QMainWindow):
 
         self.edited_objects = EditedObjects(self)
 
+        self.tab_menus = dict()
         self._create_main_menu()
         self._create_widgets()
 
@@ -31,9 +32,15 @@ class MainWindow(QMainWindow):
         new_menu.addAction(self.tr("&New Chunk"), self.slot_new_chunk, QKeySequence("Ctrl+N"))
         new_menu.addAction(self.tr("New &Tileset"), self.slot_new_tileset, QKeySequence("Ctrl+T"))
 
+        for tab in sorted(self.edited_objects.object_types):
+            m = self.menuBar().addMenu(self.edited_objects.object_types[tab][0])
+            m.setEnabled(False)
+            self.tab_menus[tab] = m
+
     def _create_widgets(self):
         self.tab_widget = QTabWidget(self)
         self.setCentralWidget(self.tab_widget)
+        self.tab_widget.currentChanged.connect(self._on_tab_changed)
 
     def slot_exit(self):
         self.close()
@@ -50,12 +57,21 @@ class MainWindow(QMainWindow):
         self.create_tab("tileset")
 
     def create_tab(self, what):
-        if what == "chunk":
-            obj = self.edited_objects.create_chunk()
-            obj.tab = self.tab_widget.addTab(obj.widget, "new chunk")
-        elif what == "tileset":
-            obj = self.edited_objects.create_tileset()
-            obj.tab = self.tab_widget.addTab(obj.widget, "new tileset")
-        else:
-            raise ValueError("Unknown tab '%s'" % what)
+        obj = self.edited_objects.create_object(what)
+        obj.tab = self.tab_widget.addTab(obj.widget, obj.title)
+
+        menu = self.tab_menus[obj.id_name]
+        menu.clear()
+        obj.create_menu(menu)
         return obj
+
+    def _on_tab_changed(self):
+        widget = self.tab_widget.currentWidget()
+        obj = self.edited_objects.get_object_by_widget(widget)
+        assert obj is not None
+
+        menu = self.tab_menus[obj.id_name]
+        menu.clear()
+        obj.create_menu(menu)
+        for tab in self.tab_menus:
+            self.tab_menus[tab].setEnabled(tab == obj.id_name)

@@ -7,16 +7,21 @@ from PyQt5.QtWidgets import *
 from .TilesetPaintWidget import TilesetPaintWidget
 from .PaletteWidget import PaletteWidget
 from .ImageDisplayWidget import ImageDisplayWidget
+from .Tileset import Tileset
 from .Brush import Brush
 
 
 class TilesetEditorWidget(QWidget):
+
+    hasChanged = pyqtSignal(bool)
+    titleChanged = pyqtSignal(str)
 
     def __init__(self, tileset, parent):
         super().__init__(parent)
 
         self.tileset = tileset
         self.brush = Brush()
+        self._is_changed = False
 
         lh = QHBoxLayout(self)
         self.setLayout(lh)
@@ -32,7 +37,7 @@ class TilesetEditorWidget(QWidget):
         self.paint_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         lv.addWidget(self.paint_widget, 10)
         self.paint_widget.tilesetChanged.connect(self._on_tileset_change)
-        self.paint_widget.selectedTileChanged.connect(self._on_tileset_change)
+        self.paint_widget.selectedTileChanged.connect(self._on_selected_tileset_change)
 
         self.palette_widget = PaletteWidget(self)
         self.palette_widget.setMaximumHeight(180)
@@ -106,8 +111,39 @@ class TilesetEditorWidget(QWidget):
         l.addStretch(2)
 
     def create_menu(self, menu):
-        menu.addAction("&Import image")
+        menu.addAction("&Import image", self.slot_import_image)
 
-    def _on_tileset_change(self):
+    def set_changed(self, changed=True):
+        do_emit = self._is_changed != changed
+        self._is_changed = changed
+        if do_emit:
+            self.hasChanged.emit(self._is_changed)
+
+    def set_tileset(self, tileset):
+        self.tileset = tileset
+        self.paint_widget.set_tileset(tileset)
+
+    def _on_selected_tileset_change(self):
         img = self.paint_widget.canvas.get_tile_qimage()
         self.tile_display.set_image(img)
+
+    def _on_tileset_change(self):
+        self._on_selected_tileset_change()
+        self.set_changed()
+
+    def slot_import_image(self):
+        filename, __ = QFileDialog.getOpenFileName(
+            self, self.tr("Import Tileset Image"), "", self.tr("Image files (*.*)"))
+        if not filename:
+            return False
+        try:
+            tileset = Tileset(self.tileset.tile_width, self.tileset.tile_height)
+            tileset.load_image(filename)
+        except BaseException as e:
+            QMessageBox.critical(self, "Load error", "Unable to import tileset image '%s'\n%s" % (filename, e))
+            return False
+        self.set_tileset(tileset)
+        self.set_changed(True)
+        #shortname = filename.split("/")[-1]
+        #self.titleChanged.emit(shortname)
+        return True

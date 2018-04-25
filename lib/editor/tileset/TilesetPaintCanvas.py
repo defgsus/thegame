@@ -43,6 +43,10 @@ class TilesetPaintCanvas(QWidget):
         self._zoom = z
         self._apply_transform()
 
+    def set_tileset(self, tileset):
+        self.tileset = tileset
+        self.update()
+
     def _apply_transform(self):
         self._transform = QTransform()
         self._transform.scale(self._zoom, self._zoom)

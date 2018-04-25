@@ -33,6 +33,10 @@ class TilesetPaintWidget(QWidget):
         self.zoom_bar.setValue(self.canvas.zoom)
         self.zoom_bar.valueChanged.connect(self.set_zoom)
 
+    def set_tileset(self, tileset):
+        self.tileset = tileset
+        self.canvas.set_tileset(tileset)
+
     def set_zoom(self, z):
         self.canvas.zoom = z
 

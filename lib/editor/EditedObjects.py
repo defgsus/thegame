@@ -34,32 +34,59 @@ class EditedObjects(QObject):
         return None
 
 
-class EditedChunk:
+class EditedObject(QObject):
+
+    hasChanged = pyqtSignal(bool)
+    titleChanged = pyqtSignal(str)
 
     def __init__(self, parent):
+        super().__init__(parent)
+        assert isinstance(parent, QWidget)
+        self.parent_widget = parent
+        self.title = "new"
+        self.tab = None
+        self.widget = None
+        self.is_changed = False
+
+    def create_menu(self, menu):
+        if hasattr(self.widget, "create_menu"):
+            self.widget.create_menu(menu)
+
+    def set_widget(self, widget):
+        self.widget = widget
+        if hasattr(self.widget, "hasChanged"):
+            self.widget.hasChanged.connect(self._on_change)
+        if hasattr(self.widget, "titleChanged"):
+            self.widget.titleChanged.connect(self.set_title)
+
+    def set_title(self, title):
+        self.title = title
+        title = "%s%s" % ("*" if self.is_changed else "", self.title)
+        self.titleChanged.emit(title)
+
+    def _on_change(self, changed):
+        self.is_changed = changed
+        self.hasChanged.emit(changed)
+        self.set_title(self.title)
+
+
+class EditedChunk(EditedObject):
+
+    def __init__(self, parent):
+        super().__init__(parent)
         self.title = "new chunk"
-        self.parent = parent
         self.tileset = Tileset(16, 16)
         self.tileset.load("./assets/tileset02.png")
         self.chunk = WorldChunk(self.tileset)
         self.chunk.from_tiled("./assets/tiled/level01.json")
-        self.widget = ChunkEditorWidget(self.chunk, self.parent)
-        self.tab = None
-
-    def create_menu(self, menu):
-        pass
+        self.set_widget(ChunkEditorWidget(self.chunk, self.parent_widget))
 
 
-class EditedTileset:
+class EditedTileset(EditedObject):
 
     def __init__(self, parent):
+        super().__init__(parent)
         from .tileset.Tileset import Tileset
         self.title = "new tileset"
-        self.parent = parent
-        self.tileset = Tileset(16, 16, 16, 16)
-        #self.tileset.load("./assets/tileset02.png")
-        self.widget = TilesetEditorWidget(self.tileset, self.parent)
-        self.tab = None
+        self.set_widget(TilesetEditorWidget(Tileset(16, 16, 16, 16), self.parent_widget))
 
-    def create_menu(self, menu):
-        return self.widget.create_menu(menu)

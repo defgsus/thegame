@@ -4,8 +4,8 @@ from PyQt5.QtGui import QImage, QColor
 class Tileset:
 
     def __init__(self, tile_width, tile_height, num_x=0, num_y=0):
-        self.tile_width = 0
-        self.tile_height = 0
+        self.tile_width = tile_width
+        self.tile_height = tile_height
         self.num_tiles_x = 0
         self.num_tiles_y = 0
         self.num_tiles = 0

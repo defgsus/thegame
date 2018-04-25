@@ -1,3 +1,5 @@
+from functools import partial
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -63,6 +65,7 @@ class MainWindow(QMainWindow):
         menu = self.tab_menus[obj.id_name]
         menu.clear()
         obj.create_menu(menu)
+        obj.titleChanged.connect(partial(self.tab_widget.setTabText, obj.tab))
         return obj
 
     def _on_tab_changed(self):

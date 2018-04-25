@@ -1,4 +1,5 @@
-from PyQt5.QtGui import QImage, QColor
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 
 
 class Tileset:
@@ -66,3 +67,46 @@ class Tileset:
         self.init(self.tile_width, self.tile_height,
                   img.width() // self.tile_width, img.height() // self.tile_height)
         self.color_qimage = img
+
+    def save(self, filename):
+        import json
+        with open(filename, "w") as fp:
+            json.dump({
+                "tile_width": self.tile_width,
+                "tile_height": self.tile_height,
+                "num_x": self.num_tiles_x,
+                "num_y": self.num_tiles_y,
+                "ids": self._id_to_pos,
+                "png": {
+                    "color": qimage_to_base64(self.color_qimage),
+                    "height": qimage_to_base64(self.color_qimage),
+                },
+            }, fp)
+        self.filename = filename
+
+
+def qimage_to_base64(qimage):
+    io = QBuffer()
+    io.open(QBuffer.ReadWrite)
+    writer = QImageWriter(io, b"png")
+    writer.write(qimage)
+    io.seek(0)
+    return bytes(io.readAll().toBase64()).decode("ascii")
+
+
+def base64_to_qimage(coded):
+    data = QByteArray.fromBase64(bytes(coded, "ascii"))
+    io = QBuffer(data)
+    reader = QImageReader(io, b"png")
+    img = reader.read()
+    return img
+
+
+if __name__ == "__main__":
+    img = QImage(100, 100, QImage.Format_RGBA8888)
+    b = qimage_to_base64(img)
+    print("[%s|%s]" % (type(b), b))
+    img = base64_to_qimage(b)
+    print(img, img.width(), img.height())
+    b2 = qimage_to_base64(img)
+    assert b == b2

@@ -28,7 +28,6 @@ class MainWindow(QMainWindow):
 
         new_menu = menu.addMenu(self.tr("New"))
 
-        menu.addAction(self.tr("&Open"), self.slot_open, QKeySequence("Ctrl+O"))
         menu.addAction(self.tr("E&xit"), self.slot_exit)
 
         new_menu.addAction(self.tr("&New Chunk"), self.slot_new_chunk, QKeySequence("Ctrl+N"))
@@ -46,11 +45,6 @@ class MainWindow(QMainWindow):
 
     def slot_exit(self):
         self.close()
-
-    def slot_open(self):
-        filename = QFileDialog.getOpenFileName(
-            self, self.tr("Open World"), "", self.tr("World Files (*.*)"))
-        print(filename)
 
     def slot_new_chunk(self):
         self.create_tab("chunk")

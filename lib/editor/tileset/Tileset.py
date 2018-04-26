@@ -68,20 +68,39 @@ class Tileset:
                   img.width() // self.tile_width, img.height() // self.tile_height)
         self.color_qimage = img
 
+    def to_json_data(self):
+        """Returns a json-serializable object"""
+        return {
+            "tile_width": self.tile_width,
+            "tile_height": self.tile_height,
+            "num_x": self.num_tiles_x,
+            "num_y": self.num_tiles_y,
+            "ids": self._id_to_pos,
+            "png": {
+                "color": qimage_to_base64(self.color_qimage),
+                "height": qimage_to_base64(self.color_qimage),
+            },
+        }
+
+    def from_json_data(self, obj):
+        """Initializes the data from a json-serializeable object"""
+        self.init(obj["tile_width"], obj["tile_height"], obj["num_x"], obj["num_y"])
+        self._id_to_pos = {i: tuple(obj["ids"][i]) for i in obj["ids"]}
+        self._pos_to_id = {self._id_to_pos[i]: i for i in self._id_to_pos}
+        self.color_qimage = base64_to_qimage(obj["png"]["color"])
+        self.height_qimage = base64_to_qimage(obj["png"]["height"])
+
     def save(self, filename):
         import json
         with open(filename, "w") as fp:
-            json.dump({
-                "tile_width": self.tile_width,
-                "tile_height": self.tile_height,
-                "num_x": self.num_tiles_x,
-                "num_y": self.num_tiles_y,
-                "ids": self._id_to_pos,
-                "png": {
-                    "color": qimage_to_base64(self.color_qimage),
-                    "height": qimage_to_base64(self.color_qimage),
-                },
-            }, fp)
+            json.dump(self.to_json_data(), fp)
+        self.filename = filename
+
+    def load(self, filename):
+        import json
+        with open(filename) as fp:
+            data = json.load(fp)
+        self.from_json_data(data)
         self.filename = filename
 
 

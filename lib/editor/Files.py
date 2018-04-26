@@ -48,14 +48,14 @@ class Files:
             if filename.endswith(ext):
                 endswith = True
         if not endswith:
-            filename += Files.extensions[type][0]
+            filename = "%s.%s" % (filename, Files.extensions[type][0])
 
         # check for existence
         if os.path.exists(filename):
             res = QMessageBox.question(
                 parent,
                 parent.tr("File already exists"),
-                parent.tr("The file %s already exists.\nDo you want to replace it?") % filename,
+                parent.tr("%s\nThe file already exists.\nDo you want to REPLACE it?") % filename,
                 QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
                 QMessageBox.No
             )

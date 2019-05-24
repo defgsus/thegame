@@ -16,7 +16,7 @@ class ColorNode(RenderNode):
     def __init__(self, name):
         super().__init__(name)
         self.quad = ScreenQuad()
-        self.quad.set_shader_code("""
+        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
         #line 20
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             //fragColor = texture(u_tex1, texCoord);
@@ -38,7 +38,7 @@ class GridNode(RenderNode):
     def __init__(self, name):
         super().__init__(name)
         self.quad = ScreenQuad()
-        self.quad.set_shader_code("""
+        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
         #line 42
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec2 mp = mod(texCoord * 10., 1.);
@@ -61,7 +61,7 @@ class CombineNode(RenderNode):
         super().__init__(name)
         self.operator = operator
         self.quad = ScreenQuad()
-        self.quad.set_shader_code("""
+        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
         #line 65
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec3 c1 = texture(u_tex1, texCoord).xyz;
@@ -85,7 +85,7 @@ class CombineByDepth(RenderNode):
     def __init__(self, name):
         super().__init__(name)
         self.quad = ScreenQuad()
-        self.quad.set_shader_code("""
+        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
         #line 89
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec3 c1 = texture(u_tex1, texCoord).xyz;
@@ -114,8 +114,8 @@ class DepthNode(RenderNode):
     def __init__(self, name):
         super().__init__(name)
         self.quad = ScreenQuad()
-        self.quad.set_shader_code("""
-        #line 89
+        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
+        #line 118
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec3 col = texture(u_tex1, texCoord).xyz;
             float depth = texture(u_tex2, texCoord).x;
@@ -143,8 +143,8 @@ class GeometryNode(RenderNode):
         self.mesh = TriangleMesh()
         MeshFactory.add_cube(self.mesh)
         self.drawable = self.mesh.create_drawable()
-        self.drawable.shader.set_fragment_source("""
-        #version 130
+        self.drawable.shader.set_fragment_source(
+            DEFAULT_SHADER_VERSION + """
         #line 148
         uniform sampler2D u_tex1;
         uniform sampler2D u_tex2;

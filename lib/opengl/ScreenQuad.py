@@ -1,5 +1,7 @@
-from .Drawable import *
 import glm
+
+from . import DEFAULT_SHADER_VERSION
+from .Drawable import *
 
 
 class ScreenQuad:
@@ -7,8 +9,8 @@ class ScreenQuad:
     Helper to render a quad on screen with custom shader
     """
 
-    VERTEX_SRC = """
-    #version 130
+    VERTEX_SRC = DEFAULT_SHADER_VERSION + """
+    #line 13
     uniform mat4 u_projection;
     uniform vec4 u_resolution;
     
@@ -26,9 +28,8 @@ class ScreenQuad:
     }
     """
 
-    FRAGMENT_SRC = """
-    #version 130
-    #line 31
+    FRAGMENT_SRC = DEFAULT_SHADER_VERSION + """
+    #line 32
     uniform sampler2D u_tex1;
     uniform sampler2D u_tex2;
     uniform sampler2D u_tex3;

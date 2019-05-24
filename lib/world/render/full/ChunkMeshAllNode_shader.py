@@ -1,6 +1,7 @@
-vert_src = """
-#version 150
-#line 3
+from lib.opengl import DEFAULT_SHADER_VERSION
+
+vert_src = DEFAULT_SHADER_VERSION + """
+#line 5
 uniform mat4 u_projection;
 
 in vec4 a_position;
@@ -41,8 +42,7 @@ void main()
 """
 
 
-frag_src = """
-#version 130
+frag_src = DEFAULT_SHADER_VERSION + """
 #line 46
 uniform sampler2D u_tex1;
 uniform sampler3D u_chunk_tex;

@@ -2,12 +2,12 @@ import glm
 
 from lib.world.Tileset import Tileset
 from lib.geom import TriangleMesh
-from lib.opengl import Drawable, OpenGlAssets
+from lib.opengl import Drawable, OpenGlAssets, DEFAULT_SHADER_VERSION
 from lib.pector import quat
 
 
-VERTEX_SRC = """
-#version 130
+VERTEX_SRC = DEFAULT_SHADER_VERSION + """
+#line 10
 uniform mat4 u_projection;
 
 in vec4 a_position;
@@ -24,8 +24,8 @@ void main()
 }
 """
 
-FRAGMENT_SRC = """
-#version 130
+FRAGMENT_SRC = DEFAULT_SHADER_VERSION + """
+#line 28
 uniform sampler2D u_tex1;
 uniform vec2 u_tex_offset;
 

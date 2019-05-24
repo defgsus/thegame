@@ -4,10 +4,8 @@ from ...opengl import *
 from ...opengl.core.base import *
 from ...geom import MeshFactory, LineMesh
 
-
-vert_src = """
-#version 150
-#line 10
+vert_src = DEFAULT_SHADER_VERSION + """
+#line 8
 uniform mat4 u_projection;
 
 in vec4 a_position;
@@ -47,9 +45,8 @@ void main()
 
 """
 
-frag_src = """
-#version 130
-#line 52
+frag_src = DEFAULT_SHADER_VERSION + """
+#line 50
 uniform sampler2D u_tex1;
 uniform float u_time;
 

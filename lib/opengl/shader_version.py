@@ -1,0 +1,3 @@
+
+
+DEFAULT_SHADER_VERSION = "#version 140\n"

@@ -1,7 +1,10 @@
 import time
 import pyglet
 import glm
+
 from pyglet.gl import *
+
+from lib.opengl import DEFAULT_SHADER_VERSION
 from lib.opengl.core.Shader import *
 from lib.opengl.core.Texture2D import Texture2D
 from lib.opengl.core.Framebuffer2D import Framebuffer2D
@@ -9,8 +12,8 @@ from lib.opengl.ScreenQuad import ScreenQuad
 
 from lib.geom.TriangleMesh import TriangleMesh
 
-frag_src = """#version 130
-#line 11
+frag_src = DEFAULT_SHADER_VERSION + """
+#line 16
 uniform sampler2D u_tex1;
 uniform float u_time;
 

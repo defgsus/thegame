@@ -1,9 +1,9 @@
 from .Drawable import Drawable
 from ..geom import LineMesh
+from ..opengl import DEFAULT_SHADER_VERSION
 
-FRAGMENT_SRC = """
-#version 130
-
+FRAGMENT_SRC = DEFAULT_SHADER_VERSION + """
+#line 6
 in vec4 v_pos;
 in vec4 v_color;
 

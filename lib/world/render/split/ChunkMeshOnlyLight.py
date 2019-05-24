@@ -3,9 +3,8 @@ import glm
 from lib.opengl import *
 from lib.opengl.core.base import *
 
-vert_src = """
-#version 140
-#line 8
+vert_src = DEFAULT_SHADER_VERSION + """
+#line 7
 uniform mat4 u_projection;
 
 in vec4 a_position;
@@ -45,9 +44,8 @@ void main()
 
 """
 
-frag_src = """
-#version 130
-#line 50
+frag_src = DEFAULT_SHADER_VERSION + """
+#line 49
 uniform sampler2D u_tex1;
 uniform sampler3D u_chunk_tex;
 uniform sampler3D u_vdf_tex;

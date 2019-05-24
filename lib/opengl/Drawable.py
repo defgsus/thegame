@@ -1,11 +1,12 @@
+from . import DEFAULT_SHADER_VERSION
 from .core.base import *
 from .core.Shader import Shader
 from .core.VertexArrayObject import VertexArrayObject
 
 
 
-DEFAULT_VERTEX_SRC = """
-#version 130
+DEFAULT_VERTEX_SRC = DEFAULT_SHADER_VERSION + """
+#line 9
 uniform mat4 u_projection;
 
 in vec4 a_position;
@@ -31,8 +32,8 @@ void main()
 }
 """
 
-DEFAULT_FRAGMENT_SRC = """
-#version 130
+DEFAULT_FRAGMENT_SRC = DEFAULT_SHADER_VERSION + """
+#line 36
 uniform sampler2D u_tex1;
 
 in vec4 v_pos;

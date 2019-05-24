@@ -1,3 +1,5 @@
+from .shader_version import DEFAULT_SHADER_VERSION
+
 from .core.Framebuffer2D import Framebuffer2D
 from .core.Shader import Shader
 from .core.Texture2D import Texture2D

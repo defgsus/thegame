@@ -113,7 +113,7 @@ class Tileset:
         normals = []
         for y in range(self.tile_height):
             for x in range(self.tile_width):
-                n = glm.normalize((
+                n = glm.normalize(glm.vec3(
                     self._get_pixel(tilex, tiley, x+1, y) - self._get_pixel(tilex, tiley, x-1, y),
                     self._get_pixel(tilex, tiley, x, y-1) - self._get_pixel(tilex, tiley, x, y+1),
                     .5))

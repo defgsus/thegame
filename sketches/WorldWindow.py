@@ -29,7 +29,7 @@ class WorldWindow(pyglet.window.Window):
         # time(r)
         self.start_time = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
-        pyglet.clock.set_fps_limit(60)
+        # pyglet.clock.set_fps_limit(60)
 
     def update(self, dt):
         self.check_keys(dt)

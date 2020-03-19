@@ -7,8 +7,8 @@ from sketches.WorldWindow import WorldWindow as MainWindow
 #from sketches.RenderGraphWindow import RenderGraphWindow as MainWindow
 
 
-platform = pyglet.window.get_platform()
-display = platform.get_default_display()
+# platform = pyglet.window.get_platform()
+# display = platform.get_default_display()
 gl_config = pyglet.gl.Config(
     major_version=3,
     minor_version=0,

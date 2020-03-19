@@ -117,7 +117,7 @@ class AgentPath:
     def finished(self):
         if self.cur_index >= len(self.path):
             return True
-        return glm.distance(self.agent.sposition, self.goal_pos) <= self.min_dist
+        return glm.distance(self.agent.sposition, glm.vec3(*self.goal_pos)) <= self.min_dist
 
     def pos_at(self, index):
         node = self.path[int(index)]

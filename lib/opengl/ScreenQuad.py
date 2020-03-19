@@ -93,13 +93,13 @@ class ScreenQuad:
     def draw_centered(self, width, height, tex_width, tex_height):
         #print("quaddraw_centered", width, height, tex_width, tex_height)
         if height < width:
-            proj = glm.scale(glm.mat4(1), (height/width, 1, 1))
+            proj = glm.scale(glm.mat4(1), glm.vec3(height/width, 1, 1))
         else:
-            proj = glm.scale(glm.mat4(1), (1, width/height, 1))
+            proj = glm.scale(glm.mat4(1), glm.vec3(1, width/height, 1))
         if tex_height < tex_width:
-            proj = glm.scale(proj, (tex_width/tex_height, 1, 1))
+            proj = glm.scale(proj, glm.vec3(tex_width/tex_height, 1, 1))
         else:
-            proj = glm.scale(proj, (1, tex_height/tex_width, 1))
+            proj = glm.scale(proj, glm.vec3(1, tex_height/tex_width, 1))
 
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_resolution", (tex_width, tex_height, 1./max(1, tex_width), 1./max(1, tex_height)))

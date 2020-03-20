@@ -2,7 +2,7 @@ import pyglet
 
 from lib.opengl.core.base import *
 from lib.opengl import *
-from lib.geom import TriangleMesh, TriangleHashMesh, MeshFactory
+from lib.geom import TriangleMesh, TriangleHashMesh, MeshFactory, Polygons
 from lib.world.render import RenderSettings
 from lib.world import WorldProjection
 
@@ -10,9 +10,28 @@ from sketches.RenderGraphWindow import RenderGraphWindow as MainWindow
 
 
 def create_mesh():
-    mesh = TriangleMesh()
-    MeshFactory.add_cube(mesh)
-    MeshFactory.add_cube(mesh, origin=(0, 1.1, 0))
+
+    poly = Polygons()
+    factory = MeshFactory()
+
+    #factory.add_cube(poly)
+    factory.add_uv_sphere(poly, 1, num_v=6, num_u=12)
+    #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
+    #factory.rotate_x(30)
+    #factory.translate((0, 1, 0))
+    #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
+
+    #poly.extrude(.5)
+    poly.extrude(.1)
+#    poly.extrude(.1)
+
+    mesh = poly.create_mesh()
+
+    #mesh = TriangleMesh()
+    #MeshFactory.add_cube(mesh)
+    #MeshFactory.add_cube(mesh, origin=(0, 1.1, 0))
+
+    #print(mesh.triangles_array())
 
     return mesh
 

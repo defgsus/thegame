@@ -44,15 +44,12 @@ class RenderGraphWindow(pyglet.window.Window):
         self.pipeline.dump()
         #self.pipeline.verbose = 5
 
-        self.rotate_x = 0.
-        self.rotate_y = 0.
-
         self.start_time = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        self.rotate_y += dx / 30.
-        self.rotate_x += dy / 30.
+        self.render_settings.projection.rotation = \
+            self.render_settings.projection.rotation + glm.vec3(dy, dx, 0) * 1.
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:
@@ -64,7 +61,7 @@ class RenderGraphWindow(pyglet.window.Window):
 
     def update(self, dt):
         self.render_settings.projection.user_transformation = self._calc_trans_matrix()
-        self.render_settings.projection.update(min(1, dt*2))
+        self.render_settings.projection.update(min(1, dt*1))
 
     def on_draw(self):
         try:
@@ -89,6 +86,6 @@ class RenderGraphWindow(pyglet.window.Window):
 
     def _calc_trans_matrix(self):
         trans = glm.translate(glm.mat4(1), glm.vec3(0, 0, 4))
-        trans = glm.rotate(trans, self.rotate_x, glm.vec3(1, 0, 0))
-        trans = glm.rotate(trans, self.rotate_y, glm.vec3(0, 1, 0))
+        #trans = glm.rotate(trans, self.rotate_x, glm.vec3(1, 0, 0))
+        #trans = glm.rotate(trans, self.rotate_y, glm.vec3(0, 1, 0))
         return trans

@@ -102,13 +102,13 @@ class WorldProjection:
         self._calc_matrix()
 
     def update(self, dt):
-        d = min(1, dt * 5)
+        d = min(1, dt)
         self._szoom += d + (self._zoom - self._szoom)
         self._srotation += d * (self._rotation - self._srotation)
 
         self._calc_matrix()
 
-        d = min(1, dt * 3)
+        d = min(1, dt * 25)
         self._smat_project += d * (self._mat_project - self._smat_project)
         self._smat_transform += d * (self._mat_transform - self._smat_transform)
 

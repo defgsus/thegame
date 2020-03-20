@@ -16,7 +16,7 @@ class ColorNode(RenderNode):
     def __init__(self, name):
         super().__init__(name)
         self.quad = ScreenQuad()
-        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
+        self.quad.set_shader_code("""
         #line 20
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             //fragColor = texture(u_tex1, texCoord);
@@ -38,7 +38,7 @@ class GridNode(RenderNode):
     def __init__(self, name):
         super().__init__(name)
         self.quad = ScreenQuad()
-        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
+        self.quad.set_shader_code("""
         #line 42
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec2 mp = mod(texCoord * 10., 1.);
@@ -61,7 +61,7 @@ class CombineNode(RenderNode):
         super().__init__(name)
         self.operator = operator
         self.quad = ScreenQuad()
-        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
+        self.quad.set_shader_code("""
         #line 65
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec3 c1 = texture(u_tex1, texCoord).xyz;
@@ -85,7 +85,7 @@ class CombineByDepth(RenderNode):
     def __init__(self, name):
         super().__init__(name)
         self.quad = ScreenQuad()
-        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
+        self.quad.set_shader_code("""
         #line 89
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec3 c1 = texture(u_tex1, texCoord).xyz;
@@ -114,7 +114,7 @@ class DepthNode(RenderNode):
     def __init__(self, name):
         super().__init__(name)
         self.quad = ScreenQuad()
-        self.quad.set_shader_code(DEFAULT_SHADER_VERSION + """
+        self.quad.set_shader_code("""
         #line 118
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec3 col = texture(u_tex1, texCoord).xyz;
@@ -176,10 +176,10 @@ class GeometryNode(RenderNode):
         time = rs.time * self.speed
         #proj = glm.ortho(-3, 3, -3, 3, -3, 3)
         proj = glm.perspectiveFov(0.7, rs.render_width, rs.render_height, 0.01, 5.)
-        proj = glm.translate(proj, (0,0,-2))
-        proj = glm.rotate(proj, time*.7, (0,0,1))
-        proj = glm.rotate(proj, time*.8, (0,1,0))
-        proj = glm.rotate(proj, time*.9, (1,0,0))
+        proj = glm.translate(proj, glm.vec3(0,0,-2))
+        proj = glm.rotate(proj, time*.7, glm.vec3(0,0,1))
+        proj = glm.rotate(proj, time*.8, glm.vec3(0,1,0))
+        proj = glm.rotate(proj, time*.9, glm.vec3(1,0,0))
         self.drawable.shader.set_uniform("u_time", time)
         self.drawable.shader.set_uniform("u_tex1", 0)
         self.drawable.shader.set_uniform("u_tex2", 1)
@@ -262,7 +262,7 @@ class RenderGraphWindow(pyglet.window.Window):
 
         self.start_time = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
-        pyglet.clock.set_fps_limit(60)
+#        pyglet.clock.set_fps_limit(60)
 
     def update(self, dt):
         pass

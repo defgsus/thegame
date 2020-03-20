@@ -78,19 +78,19 @@ class OrthoWindow(pyglet.window.Window):
             return HEIGHTMAP[max(0,min(9,y))][max(0,min(9,x))] / 10
             #return random.randrange(max(1,random.randrange(3)))/10
         self.mesh.create_height_map(10,10, heightmap, 1./10)
-        self.drawable = self.mesh.get_drawable()
+        self.drawable = self.mesh.create_drawable()
         self.drawable.shader.set_fragment_source(frag_src)
         self.texture = Texture2D()
         self.fbo = Framebuffer2D(self.width, self.height)
         self.quad = ScreenQuad()
 
-        self.projection = "i"
+        self._projection = "i"
         self._init_rotation()
 
         self.start_time = time.time()
 
         pyglet.clock.schedule_interval(self.update, 1.0 / 20.0)
-        pyglet.clock.set_fps_limit(20)
+        # pyglet.clock.set_fps_limit(20)
 
     def update(self, dt):
         pass
@@ -100,7 +100,7 @@ class OrthoWindow(pyglet.window.Window):
         glEnable(GL_DEPTH_TEST)
         self.clear()
 
-        if self.projection in "io":
+        if self._projection in "io":
             proj = glm.ortho(-.5,.5, .5,-.5, -2, 2)
         else:
             proj = glm.perspective(30., self.width / self.height, 0.01, 10.)
@@ -150,17 +150,17 @@ class OrthoWindow(pyglet.window.Window):
 
     def on_text(self, text):
         if text == "o":
-            self.projection = "o"
+            self._projection = "o"
             self._init_rotation()
         if text == "i":
-            self.projection = "i"
+            self._projection = "i"
             self._init_rotation()
             self.rotate_z = glm.pi()/4
         if text == "p":
-            self.projection = "p"
+            self._projection = "p"
             self._init_rotation()
 
     def _init_rotation(self):
-        self.rotate_x = glm.pi()/(3.3 if self.projection=="i" else 4)
+        self.rotate_x = glm.pi()/(3.3 if self._projection == "i" else 4)
         self.rotate_y = 0#-glm.pi()/4.
         self.rotate_z = 0

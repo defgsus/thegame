@@ -153,18 +153,18 @@ class RenderStage:
                 self.node.render(self.pipeline.render_settings, 0)
                 self.fbo.unbind()
             except BaseException as e:
-                raise e.__class__("%s in RenderNode %s" % (e, self.node.name))
+                raise e.__class__(f"in RenderNode {self.node.name}: {e.__class__.__name__}: e")
         else:
             for pass_num in range(self.node.num_passes()):
-                self.debug(4, "pass #%s" % pass_num)
+                self.debug(4, f"pass #{pass_num}")
 
                 if pass_num > 0:
-                    self.debug(4, "bind tex 0 to %s" % self.swap_texture)
+                    self.debug(4, f"bind tex 0 to {self.swap_texture}")
                     Texture2D.set_active_texture(0)
                     self.swap_texture.bind()
 
                 glDisable(GL_DEPTH_TEST)
-                self.debug(3, "render node %s" % self.node)
+                self.debug(3, f"render node {self.node}")
                 self.node.render(self.pipeline.render_settings, pass_num)
 
                 if pass_num + 1 < self.node.num_passes():

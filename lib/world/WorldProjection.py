@@ -184,7 +184,7 @@ class WorldProjection:
             proj = glm.ortho(-sc,sc, -ysc,ysc, self._near, self._far)
         elif self.projection == "p":
             proj = glm.perspectiveFov(1., self.width, self.height, self._near, self._far)
-            proj = glm.translate(proj, (0,0,-5))
+            proj = glm.translate(proj, glm.vec3(0,0,-5))
         else:  # "e"
             proj = glm.perspectiveFov(2., self.width, self.height, self._near, self._far)
 
@@ -192,9 +192,9 @@ class WorldProjection:
 
         # transformation
         
-        trans = glm.rotate(glm.mat4(1), self._srotation[0], (1,0,0))
-        trans = glm.rotate(trans, self._srotation[1], (0,1,0))
-        trans = glm.rotate(trans, self._srotation[2], (0,0,1))
+        trans = glm.rotate(glm.mat4(1), self._srotation[0], glm.vec3(1,0,0))
+        trans = glm.rotate(trans, self._srotation[1], glm.vec3(0,1,0))
+        trans = glm.rotate(trans, self._srotation[2], glm.vec3(0,0,1))
         trans = glm.translate(trans, glm.vec3(0, 0, [-3,-2,-4,-1,0]["oipet".index(self.projection)]))
 
         trans = glm.scale(trans, glm.vec3(max(0.01, 1.+self.zoom/10.)))

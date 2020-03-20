@@ -6,7 +6,7 @@ from pyglet.gl import *
 from lib.opengl import *
 from lib.geom import *
 from lib.world import *
-from lib.world.render.ChunkRenderer_shader import vert_src, frag_src
+# from lib.world.render.ChunkRenderer_shader import vert_src, frag_src
 from lib.ai import *
 
 
@@ -56,8 +56,8 @@ class ChunkWindow(pyglet.window.Window):
         self.texture = None
         self.mesh = self.chunk.create_mesh()
         self.drawable = self.mesh.create_drawable()
-        self.drawable.shader.set_vertex_source(vert_src)
-        self.drawable.shader.set_fragment_source(frag_src)
+        #self.drawable.shader.set_vertex_source(vert_src)
+        #self.drawable.shader.set_fragment_source(frag_src)
 
         self.texture2 = Texture2D()
 
@@ -87,23 +87,23 @@ class ChunkWindow(pyglet.window.Window):
             follow = name
 
         # projection
-        self.projection = WorldProjection(self.width, self.height, WorldProjection.P_ISOMETRIC)
-        self.projection.update(.4)
+        self._projection = WorldProjection(self.width, self.height, WorldProjection.P_ISOMETRIC)
+        self._projection.update(.4)
 
         # time(r)
         self.start_time = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
-        pyglet.clock.set_fps_limit(60)
+        # pyglet.clock.set_fps_limit(60)
 
     def update(self, dt):
         self.check_keys(dt)
 
         self.agents.update(dt)
 
-        self.projection.width = self.width
-        self.projection.height = self.height
-        self.projection.user_transformation = glm.translate(glm.mat4(1), -self.agents["player"].sposition)
-        self.projection.update(dt)
+        self._projection.width = self.width
+        self._projection.height = self.height
+        self._projection.user_transformation = glm.translate(glm.mat4(1), -self.agents["player"].sposition)
+        self._projection.update(dt)
 
     def check_keys(self, dt):
         dir_mapping = {
@@ -118,7 +118,7 @@ class ChunkWindow(pyglet.window.Window):
         for symbol in dir_mapping:
             if self.keys[symbol]:
                 dir = dir_mapping[symbol]
-                if self.projection.projection == self.projection.P_ISOMETRIC:
+                if self._projection.projection == self._projection.P_ISOMETRIC:
                     dir = glm.vec3(glm.rotate(glm.mat4(1), -glm.pi()/4., (0,0,1)) * glm.vec4(dir, 0))
                 #dir *= min(1, dt*10.)
                 sum_dir += dir
@@ -178,7 +178,7 @@ class ChunkWindow(pyglet.window.Window):
 
         ti = time.time() - self.start_time
 
-        proj = self.projection.matrix
+        proj = self._projection.matrix
 
         lightpos = glm.vec3(self.hit_voxel) + (.5,.5,1.5)
         lightamt = .94+.06*math.sin(ti*2.)
@@ -225,10 +225,10 @@ class ChunkWindow(pyglet.window.Window):
 
         # waypoints debugger
         if self.edit_mode:
-            self.agents.path_debug_renderer.render(self.projection)
+            self.agents.path_debug_renderer.render(self._projection)
 
         #glDepthMask(False)
-        self.agents.render(self.projection)
+        self.agents.render(self._projection)
 
         # coordinate system
         if 0:
@@ -249,10 +249,10 @@ class ChunkWindow(pyglet.window.Window):
         #OpenGlBaseObject.dump_instances()
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        self.projection._rotation[0] -= scroll_y / 30.
+        self._projection._rotation[0] -= scroll_y / 30.
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        self.projection._rotation[1] += dx / 30.
+        self._projection._rotation[1] += dx / 30.
 
     def on_mouse_press(self, x, y, button, modifiers):
         import random
@@ -299,16 +299,16 @@ class ChunkWindow(pyglet.window.Window):
             self.edit_mode = not self.edit_mode
 
     def on_text(self, text):
-        if text in self.projection.PROJECTIONS:
-            self.projection.init(text)
+        if text in self._projection.PROJECTIONS:
+            self._projection.init(text)
         if text == "f":
             self.set_fullscreen(not self.fullscreen)
         if text == "+":
-            self.projection.zoom += 1.
+            self._projection.zoom += 1.
         if text == "-":
-            self.projection.zoom -= 1.
+            self._projection.zoom -= 1.
         if text == "d":
             self.debug_view = (self.debug_view + 1) % 2
 
     def get_ray(self, x, y):
-        return self.projection.screen_to_ray(x, y)
+        return self._projection.screen_to_ray(x, y)

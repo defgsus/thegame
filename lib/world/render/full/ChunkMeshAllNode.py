@@ -70,7 +70,7 @@ class ChunkMeshAllNode(RenderNode):
 
         proj = rs.projection.matrix
 
-        lightpos = glm.vec3(self.world.click_voxel) + (.5,.5,1.5)
+        lightpos = glm.vec3(self.world.click_voxel) + glm.vec3(.5, .5, 1.5)
         shader = self.mesh_drawable.shader
         shader.set_uniform("u_projection", proj)
         shader.set_uniform("u_time", rs.time)

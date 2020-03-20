@@ -26,14 +26,14 @@ class ProjectionWindow(pyglet.window.Window):
         self.texture = Texture2D()
 
         self.fov = 1.
-        self.projection = "o"
+        self._projection = "o"
         self._init_rotation()
         self._calc_projection()
 
         self.start_time = time.time()
 
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
-        pyglet.clock.set_fps_limit(60)
+        # pyglet.clock.set_fps_limit(60)
 
     def update(self, dt):
         self.check_keys(dt)
@@ -77,17 +77,17 @@ class ProjectionWindow(pyglet.window.Window):
 
     def on_text(self, text):
         if text == "o":
-            self.projection = "o"
+            self._projection = "o"
             self._init_rotation()
         if text == "i":
-            self.projection = "i"
+            self._projection = "i"
             self._init_rotation()
             self.rotate_z = glm.pi()/4
         if text == "p":
-            self.projection = "p"
+            self._projection = "p"
             self._init_rotation()
         if text == "e":
-            self.projection = "e"
+            self._projection = "e"
             self._init_rotation()
         if text == "f":
             self.set_fullscreen(not self.fullscreen)
@@ -116,12 +116,12 @@ class ProjectionWindow(pyglet.window.Window):
     def _calc_projection(self):
         asp = self.width / self.height
 
-        if self.projection == "o":
+        if self._projection == "o":
             proj = glm.ortho(-3, 3, -3, 3, -30, 30)
-        elif self.projection == "p":
+        elif self._projection == "p":
             proj = glm.perspectiveFov(self.fov, self.width, self.height, 0.01, 100.)
 
-        proj = glm.translate(proj, (0,0,-4))
+        proj = glm.translate(proj, glm.vec3(0,0,-4))
 
         self.projection_matrix = proj
 

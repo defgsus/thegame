@@ -18,13 +18,17 @@ def create_mesh():
     #factory.add_uv_sphere(poly, 1, num_v=6, num_u=12)
     #factory.add_octahedron(poly)
     #factory.add_icosahedron(poly)
-    factory.add_dodecahedron(poly)
+    for pos in factory.get_icosahedron_positions():
+        with factory:
+            factory.translate(pos * 2)
+            factory.add_dodecahedron(poly)
+
     #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
     #factory.rotate_x(30)
     #factory.translate((0, 1, 0))
     #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
 
-    poly.extrude(.5)
+    poly.extrude(1.1)
     #poly.extrude(.1)
 #    poly.extrude(.1)
 

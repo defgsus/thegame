@@ -14,11 +14,18 @@ class MeshFactory:
         self._trans_stack = []
 
     def push(self):
-        self._trans_stack.append(self._trans.copy())
+        self._trans_stack.append(glm.mat4(self._trans))
 
     def pop(self):
         if self._trans_stack:
             self._trans = self._trans_stack.pop()
+
+    def __enter__(self):
+        self.push()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.pop()
 
     def translate(self, pos):
         self._trans = glm.translate(self._trans, glm.vec3(pos))

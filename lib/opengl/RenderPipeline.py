@@ -153,7 +153,7 @@ class RenderStage:
                 self.node.render(self.pipeline.render_settings, 0)
                 self.fbo.unbind()
             except BaseException as e:
-                raise e.__class__(f"in RenderNode {self.node.name}: {e.__class__.__name__}: e")
+                raise e.__class__(f"in RenderNode {self.node.name}: {e.__class__.__name__}: {e}")
         else:
             for pass_num in range(self.node.num_passes()):
                 self.debug(4, f"pass #{pass_num}")

@@ -4,7 +4,7 @@ import pyglet
 #from sketches.ChunkWindow import ChunkWindow as MainWindow
 #from sketches.ProjectionWindow import ProjectionWindow as MainWindow
 from sketches.WorldWindow import WorldWindow as MainWindow
-#from sketches.RenderGraphWindow import RenderGraphWindow as MainWindow
+#from sketches.RenderGraphTestWindow import RenderGraphTestWindow as MainWindow
 
 
 # platform = pyglet.window.get_platform()

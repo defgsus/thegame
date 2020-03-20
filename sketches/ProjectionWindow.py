@@ -59,8 +59,6 @@ class ProjectionWindow(pyglet.window.Window):
         self.coordinate_grid.drawable.shader.set_uniform("u_projection", self.projection_matrix)
         self.coordinate_grid.draw()
 
-
-
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.rotate_x += scroll_y / 30.
 

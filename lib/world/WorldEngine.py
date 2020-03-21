@@ -3,6 +3,7 @@ import glm
 from lib.ai import *
 from .WorldChunk import WorldChunk
 from .Tileset import Tileset
+from .WorldProjection import WorldProjection
 from .render.ChunkRenderer import ChunkRenderer
 from lib.opengl.RenderSettings import RenderSettings
 
@@ -15,10 +16,8 @@ class WorldEngine:
         self.debug_view = 0
 
         self.renderer = None
-        self.render_settings = RenderSettings(480, 320)
-
-        # projection
-        self.projection = self.render_settings.projection
+        self.projection = WorldProjection(480, 320, projection=WorldProjection.P_ISOMETRIC)
+        self.render_settings = RenderSettings(480, 320, projection=self.projection)
 
         # chunk
         self.tileset = Tileset.from_image(16, 16, "./assets/tileset02.png")

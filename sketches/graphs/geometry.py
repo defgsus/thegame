@@ -1,12 +1,10 @@
-import pyglet
+import glm
 
 from lib.opengl.core.base import *
 from lib.opengl import *
 from lib.geom import TriangleMesh, TriangleHashMesh, MeshFactory, Polygons
 from lib.world.render import RenderSettings
 from lib.world import WorldProjection
-
-from sketches.RenderGraphWindow import RenderGraphWindow as MainWindow
 
 
 def create_mesh():
@@ -20,17 +18,21 @@ def create_mesh():
     #factory.add_icosahedron(poly)
     for pos in factory.get_dodecahedron_positions():
         with factory:
-            factory.translate(pos * 2)
+            factory.translate(pos * 14)
             factory.scale(.5)
-            factory.add_dodecahedron(poly)
+            #factory.add_icosahedron(poly)
+            #factory.rotate_x(45)
+            axis = glm.normalize(factory.transform((0, 0, 0)))
+            factory.rotate(axis, 180)
+            factory.add_cube(poly)
 
     #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
     #factory.rotate_x(30)
     #factory.translate((0, 1, 0))
     #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
 
-    poly.extrude(.7)
-    #poly.extrude(.1)
+    poly.extrude(17)
+    #poly.extrude(.5)
 #    poly.extrude(.1)
 
     mesh = poly.create_mesh()
@@ -111,21 +113,3 @@ def create_render_graph():
     graph.add_node(RenderMeshNode("geom", create_mesh()))
 
     return graph
-
-
-if __name__ == "__main__":
-    render_settings = RenderSettings(1024, 1024, WorldProjection.P_PERSPECTIVE)
-    render_settings.projection.rotation = (.2, -.2, 0)
-    gl_config = pyglet.gl.Config(
-        major_version=3,
-        minor_version=0,
-        double_buffer=True,
-    )
-    main_window = MainWindow(
-        render_graph=create_render_graph(),
-        render_settings=render_settings,
-        config=gl_config,
-        resizable=True,
-    )
-
-    pyglet.app.run()

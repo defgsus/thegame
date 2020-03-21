@@ -53,7 +53,7 @@ class WorldProjection:
 
     @rotation.setter
     def rotation(self, val):
-        self._rotation = val
+        self._rotation = glm.vec3(val)
 
     @property
     def matrix(self):
@@ -164,9 +164,11 @@ class WorldProjection:
         self._rotation = glm.vec3(0)
         if self.projection=="o":
             self._rotation[0] = -glm.pi()/4
-        if self.projection in "ep":
+        elif self.projection in "e":
             self._rotation[0] = -glm.pi()/2.
-        if self.projection == "i":
+        elif self.projection in "p":
+            pass
+        elif self.projection == "i":
             self._rotation[0] = -glm.pi()/3.3
             self._rotation[2] = glm.pi()/4.
 

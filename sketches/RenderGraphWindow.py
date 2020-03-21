@@ -38,7 +38,8 @@ class RenderGraphWindow(pyglet.window.Window):
         self.render_settings = render_settings or RenderSettings(320, 200)
 
         self.graph = render_graph
-        # self.graph.add_node(CoordinateGridNode("grid"))
+        #self.graph = RenderGraph()
+        #self.graph.add_node(CoordinateGridNode("grid"))
 
         self.pipeline = self.graph.create_pipeline()
         self.pipeline.dump()
@@ -46,6 +47,13 @@ class RenderGraphWindow(pyglet.window.Window):
 
         self.start_time = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
+
+    def set_render_graph(self, render_graph):
+        if self.graph:
+            pass # self.graph.destroy?
+        self.graph = render_graph
+        self.pipeline = self.graph.create_pipeline()
+        self.pipeline.dump()
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         self.render_settings.projection.rotation = \

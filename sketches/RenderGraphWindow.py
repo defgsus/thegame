@@ -36,6 +36,8 @@ class RenderGraphWindow(pyglet.window.Window):
         super().__init__(*args, **kwargs)
 
         self.render_settings = render_settings or RenderSettings(320, 200)
+        self.live_transform = LiveTransformation()
+        self.live_transform.translate_z(-10)
 
         self.graph = render_graph
         #self.graph = RenderGraph()
@@ -56,8 +58,13 @@ class RenderGraphWindow(pyglet.window.Window):
         self.pipeline.dump()
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        self.render_settings.projection.rotation = \
-            self.render_settings.projection.rotation + glm.vec3(dy, dx, 0) * 1.
+        if dx:
+            self.live_transform.rotate_y(dx * .2)
+        if dy:
+            self.live_transform.rotate_x(-dy * .2)
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        self.live_transform.translate_z(scroll_y)
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:
@@ -66,9 +73,13 @@ class RenderGraphWindow(pyglet.window.Window):
     def on_text(self, text):
         if text == "f":
             self.set_fullscreen(not self.fullscreen)
+        if text == "+":
+            self.live_transform.translate_z(2)
+        if text == "-":
+            self.live_transform.translate_z(-2)
 
     def update(self, dt):
-        self.render_settings.projection.user_transformation = self._calc_trans_matrix()
+        self.live_transform.update(dt)
         self.render_settings.projection.update(min(1, dt*1))
 
     def on_draw(self):
@@ -77,6 +88,7 @@ class RenderGraphWindow(pyglet.window.Window):
             self.render_settings.screen_width = self.width
             self.render_settings.screen_height = self.height
             self.render_settings.time = time.time() - self.start_time
+            self.render_settings.projection.transformation_matrix = self.live_transform.matrix
 
             glDisable(GL_CULL_FACE)
             glEnable(GL_DEPTH_TEST)

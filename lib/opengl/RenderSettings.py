@@ -1,15 +1,15 @@
-from lib.world.WorldProjection import WorldProjection
+#from lib.world.WorldProjection import WorldProjection
+from .Projection import Projection
 
 
 class RenderSettings:
     
-    def __init__(self, render_width, render_height, projection=WorldProjection.P_PERSPECTIVE):
+    def __init__(self, render_width, render_height, projection=None):
         self.render_width = render_width
         self.render_height = render_height
         self.screen_width = render_width
         self.screen_height = render_height
-        self.projection = WorldProjection(self.render_width, self.render_height, projection)
-        self.projection.update(.4)
+        self.projection = projection or Projection(self.render_width, self.render_height)
         self.time = 0.
 
     def __str__(self):

@@ -4,7 +4,7 @@ from lib.ai import *
 from .WorldChunk import WorldChunk
 from .Tileset import Tileset
 from .render.ChunkRenderer import ChunkRenderer
-from .render.RenderSettings import RenderSettings
+from lib.opengl.RenderSettings import RenderSettings
 
 
 class WorldEngine:

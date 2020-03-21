@@ -3,8 +3,23 @@ import glm
 from lib.opengl.core.base import *
 from lib.opengl import *
 from lib.geom import TriangleMesh, TriangleHashMesh, MeshFactory, Polygons
-from lib.world.render import RenderSettings
-from lib.world import WorldProjection
+
+
+def make_dodec(factory, mesh, p):
+    def add_pentagon(p1, p2, p3, p4, p5):
+        mesh.add_triangle(p1, p2, p5)
+        mesh.add_triangle(p2, p3, p5)
+        mesh.add_triangle(p5, p3, p4)
+
+    factory.add_cube(mesh, origin=p[9], size=(0.2, 0.2, 0.2))
+
+    add_pentagon(p[0], p[1], p[4], p[6], p[2])
+    add_pentagon(p[0], p[3], p[7], p[5], p[1])
+    add_pentagon(p[3], p[9], p[15], p[13], p[7])
+    add_pentagon(p[7], p[13], p[17], p[11], p[5])
+    add_pentagon(p[15], p[18], p[19], p[17], p[13])
+    add_pentagon(p[18], p[15], p[9], p[8], p[14])
+    add_pentagon(p[9], p[18], p[19], p[17], p[13])
 
 
 def create_mesh():
@@ -18,20 +33,21 @@ def create_mesh():
     #factory.add_icosahedron(poly)
     for pos in factory.get_dodecahedron_positions():
         with factory:
-            factory.translate(pos * 14)
-            factory.scale(.5)
+            factory.translate(pos)
+            factory.scale(.1)
             #factory.add_icosahedron(poly)
             #factory.rotate_x(45)
-            axis = glm.normalize(factory.transform((0, 0, 0)))
-            factory.rotate(axis, 180)
+            #axis = glm.normalize(factory.transform((0, 0, 0)))
+            #factory.rotate(axis, 180)
             factory.add_cube(poly)
 
+    make_dodec(factory, poly, factory.get_dodecahedron_positions())
     #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
     #factory.rotate_x(30)
     #factory.translate((0, 1, 0))
     #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
 
-    poly.extrude(17)
+    #poly.extrude(17)
     #poly.extrude(.5)
 #    poly.extrude(.1)
 
@@ -102,7 +118,7 @@ class RenderMeshNode(RenderNode):
         #self.drawable.shader.set_uniform("u_tex2", 1)
         self.drawable.shader.set_uniform("u_projection", rs.projection.matrix)
 
-        glEnable(GL_CULL_FACE)
+        #glEnable(GL_CULL_FACE)
         glEnable(GL_DEPTH_TEST)
 
         self.drawable.draw()

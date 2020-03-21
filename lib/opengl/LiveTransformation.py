@@ -17,6 +17,9 @@ class LiveTransformation:
     def matrix(self):
         return self._matrix
 
+    def init(self, initial_matrix=None):
+        self._matrix = initial_matrix or glm.mat4(1)
+
     def transform(self, pos):
         """Transforms vec3 position to a direction matching the current transformation"""
         dir = glm.inverse(self.matrix) * glm.vec4(pos, 1)

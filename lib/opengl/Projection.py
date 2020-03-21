@@ -71,7 +71,6 @@ class Projection:
     def init(self, projection=None):
         if projection is not None:
             self.projection = projection
-
         if self.projection == self.P_ORTHO:
             self._near = -30
             self._far = 100

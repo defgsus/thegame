@@ -73,6 +73,10 @@ class RenderGraphWindow(pyglet.window.Window):
     def on_text(self, text):
         if text == "f":
             self.set_fullscreen(not self.fullscreen)
+        if text in "po":
+            self.live_transform.init()
+            self.live_transform.translate_z(-10)
+            self.render_settings.projection.init(text)
         if text == "+":
             self.live_transform.translate_z(2)
         if text == "-":

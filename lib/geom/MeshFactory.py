@@ -92,6 +92,24 @@ class MeshFactory(Transformation):
             p3 = _sphere_point(u, num_v)
             self.add_triangle(mesh, p1, p2, p3)
 
+    def add_cylinder(self, mesh, radius=1., length=1., num=10):
+        y0 = -length / 2
+        y1 = length / 2
+        for i in range(num):
+            t0 = i / num * TWO_PI
+            t1 = (i+1) / num * TWO_PI
+            x0 = math.sin(t0) * radius
+            z0 = math.cos(t0) * radius
+            x1 = math.sin(t1) * radius
+            z1 = math.cos(t1) * radius
+            # bottom
+            self.add_triangle(mesh, (0, y0, 0), (x1, y0, z1), (x0, y0, z0))
+            # top
+            self.add_triangle(mesh, (0, y1, 0), (x0, y1, z0), (x1, y1, z1))
+            # side
+            self.add_triangle(mesh, (x0, y0, z0), (x1, y0, z1), (x1, y1, z1))
+            self.add_triangle(mesh, (x0, y0, z0), (x1, y1, z1), (x0, y1, z0))
+
     def add_octahedron(self, mesh):
         a = 0.5 / math.sqrt(2. * math.sqrt(2))
         b = 0.5

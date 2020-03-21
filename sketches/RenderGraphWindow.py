@@ -37,7 +37,7 @@ class RenderGraphWindow(pyglet.window.Window):
 
         self.render_settings = render_settings or RenderSettings(320, 200)
         self.live_transform = LiveTransformation()
-        self.live_transform.translate_z(-10)
+        self.init_transform()
 
         self.graph = render_graph
         #self.graph = RenderGraph()
@@ -64,7 +64,7 @@ class RenderGraphWindow(pyglet.window.Window):
             self.live_transform.rotate_x(-dy * .2)
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        self.live_transform.translate_z(scroll_y)
+        self.live_transform.translate_z(scroll_y * 4.)
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:
@@ -74,13 +74,16 @@ class RenderGraphWindow(pyglet.window.Window):
         if text == "f":
             self.set_fullscreen(not self.fullscreen)
         if text in "po":
-            self.live_transform.init()
-            self.live_transform.translate_z(-10)
+            self.init_transform()
             self.render_settings.projection.init(text)
         if text == "+":
             self.live_transform.translate_z(2)
         if text == "-":
             self.live_transform.translate_z(-2)
+
+    def init_transform(self):
+        self.live_transform.init()
+        self.live_transform.translate_z(-13)
 
     def update(self, dt):
         self.live_transform.update(dt)

@@ -25,6 +25,14 @@ class Transformation:
         self.push()
         return self
 
+    @property
+    def matrix(self):
+        return self._trans
+
+    @matrix.setter
+    def matrix(self, matrix):
+        self._trans = matrix
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.pop()
 
@@ -46,6 +54,24 @@ class Transformation:
     def scale(self, factor):
         self._trans = glm.scale(self._trans, glm.vec3(factor))
 
+    def look(self, direction, up):
+        quat = glm.quatLookAt(glm.vec3(direction), glm.vec3(up))
+        self._trans = glm.rotate(self._trans, glm.angle(quat), glm.axis(quat))
+
+    # TODO: not really working
+    def align_direction(self, old_dir, new_dir):
+        norm = glm.vec3(new_dir)
+        up = glm.vec3(old_dir)
+        c = glm.cross(norm, up)
+        up = glm.cross(c, norm)
+
+        quat = glm.quatLookAt(up, norm)
+        self._trans = glm.rotate(self._trans, glm.angle(quat), glm.axis(quat))
+
     def transform(self, pos):
-        """Transform the 3d-vector with the current translation"""
+        """Transform the 3d-vector with the current transformation"""
         return (self._trans * glm.vec4(pos, 1)).xyz
+
+    def transform_direction(self, dir):
+        """Transform the 3d-vector with the current transformation, excluding translations"""
+        return (self._trans * glm.vec4(dir, 0)).xyz

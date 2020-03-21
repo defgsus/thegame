@@ -22,42 +22,49 @@ def make_dodec(factory, mesh, p):
     add_pentagon(p[9], p[18], p[19], p[17], p[13])
 
 
+def grid_positions(num_x, num_y=None, num_z=None):
+    if num_y is None:
+        num_y = num_x
+    if num_z is None:
+        num_z = num_x
+    cx = (num_x-1) / -2
+    cy = (num_y-1) / -2
+    cz = (num_z-1) / -2
+    positions = []
+    for z in range(num_z):
+        for y in range(num_y):
+            for x in range(num_x):
+                positions.append(glm.vec3(
+                    x + cx, y + cy, z + cz
+                ))
+    return positions
+
+
 def create_mesh():
 
     poly = Polygons()
     factory = MeshFactory()
 
-    #factory.add_cube(poly)
-    #factory.add_uv_sphere(poly, 1, num_v=6, num_u=12)
-    #factory.add_octahedron(poly)
-    #factory.add_icosahedron(poly)
-    for pos in factory.get_dodecahedron_positions():
-        with factory:
-            factory.translate(pos)
-            factory.scale(.1)
-            #factory.add_icosahedron(poly)
-            #factory.rotate_x(45)
-            axis = glm.normalize(factory.transform((0, 0, 0)))
-            factory.rotate(axis, 180)
-            factory.add_cube(poly)
+    positions = factory.get_icosahedron_positions()
+    positions = grid_positions(6)
 
-    # make_dodec(factory, poly, factory.get_dodecahedron_positions())
-    #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
-    #factory.rotate_x(30)
-    #factory.translate((0, 1, 0))
-    #factory.add_triangle(poly, (0, 0, 0), (1, 0, 0), (1, 1, 0))
+    with factory:
+        factory.scale(1)
+        for pos in factory.get_icosahedron_positions():
+            with factory:
+                factory.translate(pos*2)
+                factory.look(glm.normalize(glm.vec3(pos)), (0, 1, 0))
+                factory.rotate_x(90)
+                factory.add_cylinder(poly, radius=.1)
 
-    #poly.extrude(17)
-    #poly.extrude(.5)
-#    poly.extrude(.1)
+        for pos in factory.get_dodecahedron_positions():
+            with factory:
+                factory.translate(pos*2)
+                factory.look(glm.normalize(glm.vec3(pos)), (0, 1, 0))
+                factory.rotate_x(90)
+                factory.add_cylinder(poly, radius=.02)
 
     mesh = poly.create_mesh()
-
-    #mesh = TriangleMesh()
-    #MeshFactory.add_cube(mesh)
-    #MeshFactory.add_cube(mesh, origin=(0, 1.1, 0))
-
-    #print(mesh.triangles_array())
 
     return mesh
 

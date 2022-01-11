@@ -1,9 +1,12 @@
+from typing import List, Union
+
 from .core.base import *
+from .RenderSettings import RenderSettings
 
 
 class RenderNode:
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
         self.is_created = False
 
@@ -13,29 +16,29 @@ class RenderNode:
             self.name, self.is_created, self.num_color_outputs(),
         )
 
-    def num_color_outputs(self):
+    def num_color_outputs(self) -> int:
         return 1
 
-    def has_depth_output(self):
+    def has_depth_output(self) -> bool:
         return False
 
-    def num_multi_sample(self):
+    def num_multi_sample(self) -> int:
         return 0
 
-    def num_passes(self):
+    def num_passes(self) -> int:
         return 1
 
-    def output_slots(self):
+    def output_slots(self) -> List[Union[int, str]]:
         s = list(range(self.num_color_outputs()))
         if self.has_depth_output():
             s.append("depth")
         return s
 
-    def create(self, render_settings):
+    def create(self, render_settings: RenderSettings):
         pass
 
     def release(self):
         pass
 
-    def render(self, render_settings, pass_num):
+    def render(self, render_settings: RenderSettings, pass_num: int):
         raise NotImplementedError

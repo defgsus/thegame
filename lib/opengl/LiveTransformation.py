@@ -60,7 +60,7 @@ class LiveTransformation:
     def translate_z(self, amount):
         self.translate(self.transform_direction((0, 0, 1)), amount)
 
-    def update(self, dt):
+    def update(self, dt: float):
         """Call this repeatedly with the time in seconds since last frame"""
         rotations = self._rotations
         self._rotations = []

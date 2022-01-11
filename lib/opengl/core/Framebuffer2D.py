@@ -1,18 +1,31 @@
+from typing import Optional, Union
+
 import ctypes
+
 from .base import *
+from .Texture2D import Texture2D
 
 
 class Framebuffer2D(OpenGlBaseObject):
-    def __init__(self, width, height, num_color_tex=1, with_depth_tex=True, name=None,
-                 multi_sample=0):
+    def __init__(
+            self,
+            width: int,
+            height: int,
+            num_color_tex: int = 1,
+            with_depth_tex: bool = True,
+            name: Optional[str] = None,
+            multi_sample: int = 0
+    ):
         from .Texture2D import Texture2D
         super(Framebuffer2D, self).__init__(name=name)
         self.width = width
         self.height = height
         self.multi_sample = multi_sample
         self._rbo = None
-        self._color_textures = [Texture2D(multi_sample=self.multi_sample, name="%s-color-%s" % (self.name, i))
-                                for i in range(num_color_tex)]
+        self._color_textures = [
+            Texture2D(multi_sample=self.multi_sample, name="%s-color-%s" % (self.name, i))
+            for i in range(num_color_tex)
+        ]
         self._depth_texture = Texture2D(multi_sample=self.multi_sample, name="%s-depth" % self.name) if with_depth_tex else None
         self._color_texture_changed = set()
 
@@ -22,12 +35,12 @@ class Framebuffer2D(OpenGlBaseObject):
     def has_depth_texture(self):
         return self._depth_texture is not None
 
-    def color_texture(self, index):
+    def color_texture(self, index: int) -> Texture2D:
         if index >= len(self._color_textures):
             raise IndexError("color texture index %s out of range for %s" % (index, self))
         return self._color_textures[index]
 
-    def depth_texture(self):
+    def depth_texture(self) -> Optional[Texture2D]:
         return self._depth_texture
 
     def clear(self):
@@ -36,7 +49,7 @@ class Framebuffer2D(OpenGlBaseObject):
     def set_viewport(self):
         glViewport(0, 0, self.width, self.height)
 
-    def swap_color_texture(self, index, tex):
+    def swap_color_texture(self, index: int, tex: Texture2D) -> Texture2D:
         """
         Exchange current color texture with given texture.
         Changes take effect after bind()

@@ -140,7 +140,7 @@ class OrthoWindow(pyglet.window.Window):
             #self.fbo.depth_texture().bind()
             self.quad.draw(self.width, self.height)
 
-        #OpenGlBaseObject.dump_instances()
+        #OpenGlObjects.dump()
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.rotate_x += scroll_y / 30.

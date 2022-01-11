@@ -14,5 +14,5 @@ class TestWindow(pyglet.window.Window):
 
     def on_draw(self):
         self.mesh.draw()
-        OpenGlBaseObject.dump_instances()
+        OpenGlObjects.dump()
 

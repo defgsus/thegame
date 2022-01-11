@@ -102,7 +102,7 @@ class WorldWindow(pyglet.window.Window):
         if text == "d":
             self.world.debug_view = (self.world.debug_view + 1) % 5
         if text == ".":
-            OpenGlBaseObject.dump_instances()
+            OpenGlObjects.dump()
             OpenGlAssets.dump()
             self.world.renderer.pipeline.verbose = 5
         if text == "b":

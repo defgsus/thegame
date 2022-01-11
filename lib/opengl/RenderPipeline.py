@@ -1,14 +1,17 @@
+from typing import Union, Optional
+
 from .core.base import *
 from .core.Framebuffer2D import Framebuffer2D
 from .core.Texture2D import Texture2D
 from .ScreenQuad import ScreenQuad
 from .RenderGraph import RenderGraph
-from ..graph.DirectedGraph import DirectedGraph
+from .RenderSettings import RenderSettings
+from .RenderNode import RenderNode
 
 
 class RenderPipeline:
 
-    def __init__(self, graph):
+    def __init__(self, graph: RenderGraph):
         self.graph = graph
         self.render_settings = None
         # get serial list of RenderStages
@@ -18,16 +21,16 @@ class RenderPipeline:
         self._quad = None
         self.verbose = 0
 
-    def get_stage(self, name):
+    def get_stage(self, name: str) -> Optional["RenderStage"]:
         return self._stage_dict.get(name)
 
-    def render(self, rs):
+    def render(self, rs: RenderSettings):
         self.debug(1, "render %s" % rs)
         self.render_settings = rs
         for stage in self.stages:
             stage.render()
 
-    def render_to_screen(self, rs):
+    def render_to_screen(self, rs: RenderSettings):
         self.debug(1, "render_to_screen %s" % rs)
         """Render final stage to screen"""
         assert len(self.stages)
@@ -41,7 +44,7 @@ class RenderPipeline:
         self._quad.draw_centered(rs.screen_width, rs.screen_height,
                                  rs.render_width, rs.render_height)
 
-    def debug(self, level, text):
+    def debug(self, level: int, text):
         if self.verbose >= level:
             print("Pipeline: %s" % text)
 
@@ -57,7 +60,7 @@ class RenderPipeline:
         for o in outs:
             self._dump_stage(self._stage_dict[o], indent + "  ")
 
-    def benchmark(self, rs=None, max_sec=3):
+    def benchmark(self, rs: Optional[RenderSettings] = None, max_sec: float = 3.):
         import time
         start_time = time.time()
         cur_time = 0
@@ -76,7 +79,7 @@ class RenderPipeline:
 class RenderStage:
     """Internal class to handle a RenderNode and it's FBOs"""
 
-    def __init__(self, pipeline, node):
+    def __init__(self, pipeline: RenderPipeline, node: RenderNode):
         self.pipeline = pipeline
         self.node = node
         self.fbo = None
@@ -108,19 +111,19 @@ class RenderStage:
         inf += ")"
         return "Stage(%s)" % inf
 
-    def debug(self, level, text):
+    def debug(self, level: int, text):
         self.pipeline.debug(level, "Stage('%s'): %s" % (self.node.name, text))
 
     @property
-    def graph(self):
+    def graph(self) -> RenderGraph:
         return self.pipeline.graph
 
     @property
-    def width(self):
+    def width(self) -> int:
         return self.pipeline.render_settings.render_width
 
     @property
-    def height(self):
+    def height(self) -> int:
         return self.pipeline.render_settings.render_height
 
     def render(self):
@@ -176,7 +179,7 @@ class RenderStage:
         if self.node.num_multi_sample():
             self._downsample()
 
-    def get_output_texture(self, slot):
+    def get_output_texture(self, slot: Union[int, str]) -> Texture2D:
         fbo = self.fbo if not self.node.num_multi_sample() else self.fbo_down
         if not fbo:
             raise ValueError("FBO not yet initialized in node '%s'" % self.node.name)
@@ -234,8 +237,8 @@ class RenderStage:
         glBindFramebuffer(GL_READ_FRAMEBUFFER, self.fbo.handle)
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, self.fbo_down.handle)
         for i in range(self.fbo.num_color_textures()):
-            glReadBuffer(GL_COLOR_ATTACHMENT0+i)
-            glDrawBuffer(GL_COLOR_ATTACHMENT0+i)
+            glReadBuffer(GL_COLOR_ATTACHMENT0 + i)
+            glDrawBuffer(GL_COLOR_ATTACHMENT0 + i)
             bits = GL_COLOR_BUFFER_BIT
             if i == 0:
                 bits |= GL_DEPTH_BUFFER_BIT

@@ -1,10 +1,17 @@
+from typing import Optional
+
 #from lib.world.WorldProjection import WorldProjection
 from .Projection import Projection
 
 
 class RenderSettings:
     
-    def __init__(self, render_width, render_height, projection=None):
+    def __init__(
+            self,
+            render_width: int,
+            render_height: int,
+            projection: Optional[Projection] = None,
+    ):
         self.render_width = render_width
         self.render_height = render_height
         self.screen_width = render_width
@@ -22,5 +29,5 @@ class RenderSettings:
     def __repr__(self):
         return self.__str__()
 
-    def screen_to_ray(self, x, y):
+    def screen_to_ray(self, x: float, y: float):
         return self.projection.screen_to_ray(x, y, self.screen_width, self.screen_height)

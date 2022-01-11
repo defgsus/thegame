@@ -1,5 +1,7 @@
 from .TextureBase import *
 
+import numpy as np
+
 
 class Texture2D(TextureBase):
 
@@ -28,7 +30,12 @@ class Texture2D(TextureBase):
             values = self._flip_y(values, width, height, get_opengl_channel_size(input_format))
 
         if values is not None:
-            ptr = (get_opengl_type(input_type) * len(values))(*values)
+            if isinstance(values, (list, tuple)):
+                ptr = (get_opengl_type(input_type) * len(values))(*values)
+            elif isinstance(values, np.ndarray):
+                ptr = np.ctypeslib.as_ctypes(values)
+            else:
+                raise TypeError(f"Texture of type '{type(values).__name__}' not supported")
         else:
             ptr = None
 

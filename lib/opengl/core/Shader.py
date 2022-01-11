@@ -1,9 +1,11 @@
+from typing import Optional
 import ctypes
+
 from .base import *
 
 
 class ShaderUniform:
-    def __init__(self, name, type, size, location):
+    def __init__(self, name: str, type, size, location):
         self.name = name
         self.type = type
         self.size = size
@@ -12,7 +14,12 @@ class ShaderUniform:
 
 class Shader(OpenGlBaseObject):
 
-    def __init__(self, vertex_source=None, fragment_source=None, name=None):
+    def __init__(
+            self,
+            vertex_source: Optional[str] = None,
+            fragment_source: Optional[str] = None,
+            name: str = None
+    ):
         super(Shader, self).__init__(name=name)
         self._vertex_source = vertex_source
         self._fragment_source = fragment_source
@@ -24,45 +31,45 @@ class Shader(OpenGlBaseObject):
         self._source_changed = True
         self._is_compiled = False
 
-    def is_compiled(self):
+    def is_compiled(self) -> bool:
         return self._is_compiled
 
-    def is_source_changed(self):
+    def is_source_changed(self) -> bool:
         return self._source_changed
 
-    def has_uniform(self, name):
+    def has_uniform(self, name: str) -> bool:
         return name in self._uniforms
 
-    def has_attribute(self, name):
+    def has_attribute(self, name: str) -> bool:
         return name in self._attributes
 
-    def uniform(self, name):
+    def uniform(self, name: str) -> ShaderUniform:
         if name not in self._uniforms:
             raise KeyError("uniform '%s' not found, possible values: %s" % (name, self.dump_variables(do_print=False)))
         return self._uniforms[name]
 
-    def attribute(self, name):
+    def attribute(self, name) -> ShaderUniform:
         if name not in self._attributes:
             raise KeyError("attribute '%s' not found, possible values: %s" % (name, self.dump_variables(do_print=False)))
         return self._attributes[name]
 
     @property
-    def vertex_source(self):
+    def vertex_source(self) -> Optional[str]:
         return self._vertex_source
 
     @property
-    def fragment_source(self):
+    def fragment_source(self) -> Optional[str]:
         return self._fragment_source
 
-    def set_vertex_source(self, src):
+    def set_vertex_source(self, src: str):
         self._source_changed = src != self._vertex_source
         self._vertex_source = src
 
-    def set_fragment_source(self, src):
+    def set_fragment_source(self, src: str):
         self._source_changed = src != self._fragment_source
         self._fragment_source = src
 
-    def set_uniform(self, name, value):
+    def set_uniform(self, name: str, value):
         self._uniform_values[name] = value
 
     def update_uniforms(self):
@@ -195,7 +202,7 @@ class Shader(OpenGlBaseObject):
             attribute = ShaderUniform(namebuf.value.decode("utf-8"), uniform_type.value, uniform_size.value, location)
             self._attributes[attribute.name] = attribute
 
-    def dump_variables(self, do_print=True):
+    def dump_variables(self, do_print: bool = True) -> str:
         s = ""
         for u in list(self._uniforms.values()) + list(self._attributes.values()):
             s += "%3s %6s %2s %s\n" % (u.location, u.type, u.size, u.name)

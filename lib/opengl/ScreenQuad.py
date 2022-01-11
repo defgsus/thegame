@@ -77,20 +77,20 @@ class ScreenQuad:
             [0,1,2, 0,2,3]
         )
 
-    def set_shader_code(self, code):
+    def set_shader_code(self, code: str):
         self.drawable.shader.set_fragment_source(self.FRAGMENT_SRC % {"mainImage": code})
 
     def release(self):
         self.drawable.release()
 
-    def draw(self, width, height):
+    def draw(self, width: float, height: float):
         #print("quaddraw", width, height)
         proj = glm.mat4(1.)
         self.drawable.shader.set_uniform("u_projection", proj)
         self.drawable.shader.set_uniform("u_resolution", (width, height, 1./max(1, width), 1./max(1, height)))
         self.drawable.draw()
 
-    def draw_centered(self, width, height, tex_width, tex_height):
+    def draw_centered(self, width: float, height: float, tex_width: float, tex_height: float):
         #print("quaddraw_centered", width, height, tex_width, tex_height)
         if height < width:
             proj = glm.scale(glm.mat4(1), glm.vec3(height/width, 1, 1))

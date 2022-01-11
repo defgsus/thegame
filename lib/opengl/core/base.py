@@ -7,6 +7,13 @@ class OpenGlObjects:
     instance_counter = 0
     instances = dict()
 
+    @classmethod
+    def dump(cls):
+        names = ["%s" % OpenGlObjects.instances[i] for i in OpenGlObjects.instances]
+        names.sort()
+        for name in names:
+            print(name)
+
 
 class OpenGlBaseObject:
 
@@ -67,10 +74,3 @@ class OpenGlBaseObject:
         if not self.is_created():
             raise OpenGlError(".unbind() on uninitialized %s" % self)
         self._unbind()
-
-    @classmethod
-    def dump_instances(cls):
-        names = ["%s" % OpenGlObjects.instances[i] for i in OpenGlObjects.instances]
-        names.sort()
-        for name in names:
-            print(name)

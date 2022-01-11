@@ -1,8 +1,9 @@
+from typing import Tuple, Optional
+
 import glm
 
 
 class Projection:
-
     """
     Wrapper around an initialized projection matrix
 
@@ -17,7 +18,7 @@ class Projection:
         P_PERSPECTIVE,
     )
 
-    def __init__(self, width, height, projection=P_PERSPECTIVE):
+    def __init__(self, width: int, height: int, projection: str = P_PERSPECTIVE):
         self.projection = projection
         self.width = width
         self.height = height
@@ -33,42 +34,42 @@ class Projection:
         return "Projection('%s', %sx%s)" % (self.projection, self.width, self.height)
 
     @property
-    def matrix(self):
+    def matrix(self) -> glm.mat4:
         return self._mat_project * self._mat_transform
 
     @property
-    def projection_matrix(self):
+    def projection_matrix(self) -> glm.mat4:
         return self._mat_project
 
     @property
-    def inverse_projection_matrix(self):
+    def inverse_projection_matrix(self) -> glm.mat4:
         return glm.inverse(self._mat_project)
 
     @property
-    def transformation_matrix(self):
+    def transformation_matrix(self) -> glm.mat4:
         return self._mat_transform
 
     @transformation_matrix.setter
-    def transformation_matrix(self, trans):
+    def transformation_matrix(self, trans) -> glm.mat4:
         self._mat_transform = trans
 
     @property
-    def near(self):
+    def near(self) -> float:
         return self._near
 
     @property
-    def far(self):
+    def far(self) -> float:
         return self._far
 
-    def is_perspective(self):
+    def is_perspective(self) -> bool:
         return self.projection == self.P_PERSPECTIVE
 
-    def get_direction(self, dir):
+    def get_direction(self, dir: glm.vec3) -> glm.vec3:
         """Transforms vec3 direction to a direction matching the current transformation"""
         dir = glm.inverse(self.transformation_matrix) * glm.vec4(dir, 0)
         return glm.vec3(dir)
 
-    def init(self, projection=None):
+    def init(self, projection: Optional[str] = None):
         if projection is not None:
             self.projection = projection
         if self.projection == self.P_ORTHO:
@@ -80,10 +81,10 @@ class Projection:
 
         self._calc_projection_matrix()
 
-    def update(self, dt):
+    def update(self, dt: float):
         pass
 
-    def screen_to_ray(self, x, y, scr_width, scr_height):
+    def screen_to_ray(self, x: float, y: float, scr_width: float, scr_height: float) -> Tuple[glm.vec3, glm.vec3]:
         """Return tuple with ray-origin and normalized ray-direction for input screen coords"""
         x = x / scr_width * 2. - 1.
         y = y / scr_height * 2. - 1.
@@ -101,7 +102,7 @@ class Projection:
             (y * .5 + .5) * self.height,
         )
 
-    def voxel_to_ray(self, x, y):
+    def voxel_to_ray(self, x: float, y: float) -> Tuple[glm.vec3, glm.vec3]:
         """Return tuple with ray-origin and normalized ray-direction for input render-res x, y"""
         st = glm.vec2(x / self.width, y / self.height) * 2. - 1.
 

@@ -53,13 +53,16 @@ void main() {
 
 
 class Drawable:
+    """
+    Binds a VertexArrayObject and a Shader together
+    """
 
     A_POSITION = "a_position"
     A_NORMAL = "a_normal"
     A_TEXCOORD = "a_texcoord"
     A_COLOR = "a_color"
 
-    def __init__(self, name=None):
+    def __init__(self, name: str = None):
         self.name = name or "drawable"
         self.vao = VertexArrayObject()
         self.shader = Shader(DEFAULT_VERTEX_SRC, DEFAULT_FRAGMENT_SRC, name="%s-shader" % (self.name))
@@ -68,7 +71,8 @@ class Drawable:
         self._elements = dict()
 
     def __str__(self):
-        return "Drawable(%s, %s, %s)" % (
+        return "%s(%s, %s, %s)" % (
+            self.__class__.__name__,
             self.name,
             ", ".join("'%s'" % e for e in sorted(self._attributes)),
             ", ".join("%s" % e for e in sorted(self._elements)),
@@ -131,6 +135,3 @@ class Drawable:
         self.shader.bind()
         self.shader.update_uniforms()
         self.vao.draw_elements()
-
-
-

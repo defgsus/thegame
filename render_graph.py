@@ -37,6 +37,8 @@ class MainWindow(RenderGraphWindow):
         self.render_graph_module_name = render_graph_module_name
         render_graph_module = import_graph_module(self.render_graph_module_name)
         self.render_graph_module_filename = render_graph_module.__file__
+        if hasattr(render_graph_module, "create_render_settings"):
+            kwargs["render_settings"] = render_graph_module.create_render_settings()
         super().__init__(render_graph_module.create_render_graph(), **kwargs)
 
         self._last_file_check_time = time.time()

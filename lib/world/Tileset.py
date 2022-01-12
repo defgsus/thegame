@@ -5,7 +5,7 @@ class Tileset:
     _loaded_sets = dict()
 
     @classmethod
-    def from_image(cls, tile_width, tile_height, filename):
+    def from_image(cls, tile_width, tile_height, filename) -> "Tileset":
         key = (tile_width, tile_height, filename)
         if key not in cls._loaded_sets:
             ts = Tileset(tile_width, tile_height)

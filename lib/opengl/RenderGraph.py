@@ -1,4 +1,4 @@
-from typing import Union, Set
+from typing import Union, Set, Optional, Dict
 
 from .core.base import *
 from ..graph.DirectedGraph import DirectedGraph
@@ -14,7 +14,7 @@ class RenderGraph:
     def __init__(self):
         self.graph = DirectedGraph()
         self.nodes = dict()
-        self.inputs = dict()
+        self.inputs: Dict[str, Dict] = dict()
 
     def create_pipeline(self):
         from .RenderPipeline import RenderPipeline
@@ -22,7 +22,6 @@ class RenderGraph:
 
     @staticmethod
     def to_name(node_or_name: NodeOrName) -> str:
-        from .RenderNode import RenderNode
         if isinstance(node_or_name, RenderNode):
             return node_or_name.name
         return node_or_name
@@ -43,27 +42,38 @@ class RenderGraph:
 
     def connect(
             self,
-            node_from: NodeOrName,
-            output: Union[str, int],
-            node_to: NodeOrName,
-            input: Union[str, int] = "0"
+            from_node: NodeOrName,
+            from_slot: Union[str, int],
+            to_node: NodeOrName,
+            to_slot: Union[str, int] = 0,
+            min_filter: Optional[int] = None,
+            mag_filter: Optional[int] = None,
     ):
         """Connect to existing nodes by name or instance"""
-        node_from = self.to_name(node_from)
-        node_to = self.to_name(node_to)
-        assert node_from in self.nodes
-        assert node_to in self.nodes
-        assert output in self.to_node(node_from).output_slots(), \
-            f"output '{output}' not in {node_from} outputs {self.to_node(node_from).output_slots()}"
+        from_node = self.to_name(from_node)
+        to_node = self.to_name(to_node)
+        assert from_node in self.nodes
+        assert to_node in self.nodes
+        assert from_slot in self.to_node(from_node).output_slots(), \
+            f"output '{from_slot}' not in {from_node} outputs {self.to_node(from_node).output_slots()}"
+
         # add edge
-        self.graph.add_edge(node_from, node_to)
+        self.graph.add_edge(from_node, to_node)
+
         # add connection config
-        if node_to not in self.inputs:
-            self.inputs[node_to] = {input: (node_from, output)}
+        connection = {
+            "from_node": from_node,
+            "from_slot": from_slot,
+            "to_slot": to_slot,
+            "min_filter": min_filter,
+            "mag_filter": mag_filter,
+        }
+        if to_node not in self.inputs:
+            self.inputs[to_node] = {to_slot: connection}
         else:
-            if input in self.inputs[node_to]:
-                raise ValueError("Multiple input '%s' to node '%s'" % (input, node_to))
-            self.inputs[node_to][input] = (node_from, output)
+            if to_slot in self.inputs[to_node]:
+                raise ValueError("Multiple input to slot '%s' in node '%s'" % (to_slot, to_node))
+            self.inputs[to_node][to_slot] = connection
 
     def output_nodes(self, node: NodeOrName) -> Set[str]:
         return self.graph.outputs(self.to_name(node))

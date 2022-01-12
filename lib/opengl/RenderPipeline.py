@@ -36,9 +36,13 @@ class RenderPipeline:
         assert len(self.stages)
         if not self._quad:
             self._quad = ScreenQuad()
+
         tex = self.stages[-1].get_output_texture(0)
         Texture2D.set_active_texture(0)
         tex.bind()
+        if rs.mag_filter is not None:
+            tex.set_parameter(GL_TEXTURE_MAG_FILTER, rs.mag_filter)
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glViewport(0, 0, rs.screen_width, rs.screen_height)
         self._quad.draw_centered(rs.screen_width, rs.screen_height,
@@ -88,13 +92,7 @@ class RenderStage:
 
         self.inputs = []
         if self.node.name in self.graph.inputs:
-            ins = self.graph.inputs[self.node.name]
-            for in_slot in ins:
-                self.inputs.append({
-                    "from_node": ins[in_slot][0],
-                    "from_slot": ins[in_slot][1],
-                    "to_slot": in_slot,
-                })
+            self.inputs = list(self.graph.inputs[self.node.name].values())
         self.inputs.sort(key=lambda i: i["to_slot"])
 
     def __repr__(self):
@@ -127,12 +125,17 @@ class RenderStage:
         return self.pipeline.render_settings.render_height
 
     def render(self):
+        from .TextureNode import Texture2DNode
+
         self.debug(2, "render")
         # create node assets or whatever
         if not self.node.is_created:
             self.debug(3, "create node")
             self.node.create(self.pipeline.render_settings)
             self.node.is_created = True
+
+        if isinstance(self.node, Texture2DNode):
+            return
 
         # build and bind this stage's FBO
         self._update_fbo()
@@ -148,7 +151,10 @@ class RenderStage:
             Texture2D.set_active_texture(input["to_slot"])
             self.debug(4, "bind tex %s to %s" % (input["to_slot"], tex))
             tex.bind()
-            #tex.set_parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+            if input["mag_filter"] is not None:
+                tex.set_parameter(GL_TEXTURE_MAG_FILTER, input["mag_filter"])
+            if input["min_filter"] is not None:
+                tex.set_parameter(GL_TEXTURE_MIN_FILTER, input["min_filter"])
 
         if self.node.num_passes() < 2:
             try:
@@ -180,12 +186,19 @@ class RenderStage:
             self._downsample()
 
     def get_output_texture(self, slot: Union[int, str]) -> Texture2D:
+        from .TextureNode import Texture2DNode
+
+        if isinstance(slot, int):
+            if slot >= self.node.num_color_outputs():
+                raise ValueError("Request for output slot %s ot of range for node '%s'" % (slot, self.node.name))
+
+        if isinstance(self.node, Texture2DNode):
+            return self.node.texture
+
         fbo = self.fbo if not self.node.num_multi_sample() else self.fbo_down
         if not fbo:
             raise ValueError("FBO not yet initialized in node '%s'" % self.node.name)
         if isinstance(slot, int):
-            if slot >= self.node.num_color_outputs():
-                raise ValueError("Request for output slot %s ot of range for node '%s'" % (slot, self.node.name))
             return fbo.color_texture(slot)
         elif slot == "depth":
             if fbo.has_depth_texture():

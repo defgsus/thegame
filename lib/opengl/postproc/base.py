@@ -1,5 +1,7 @@
+from ..RenderSettings import RenderSettings
 from ..RenderNode import RenderNode
 from ..ScreenQuad import ScreenQuad
+from ..core.Shader import Shader
 
 
 class PostProcNode(RenderNode):
@@ -13,7 +15,7 @@ class PostProcNode(RenderNode):
     def release(self):
         self.quad.release()
 
-    def render(self, rs, pass_num):
+    def render(self, rs: RenderSettings, pass_num: int):
         if self.do_compile:
             self.quad.set_shader_code(self.get_code())
             self.do_compile = False
@@ -29,5 +31,5 @@ class PostProcNode(RenderNode):
     def get_code(self):
         raise NotImplementedError
 
-    def update_uniforms(self, shader, rs, pass_num):
+    def update_uniforms(self, shader: Shader, rs: RenderSettings, pass_num: int):
         pass

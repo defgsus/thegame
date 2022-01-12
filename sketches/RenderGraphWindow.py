@@ -1,4 +1,5 @@
 import time
+import traceback
 
 import pyglet
 import glm
@@ -35,7 +36,7 @@ class RenderGraphWindow(pyglet.window.Window):
     def __init__(self, render_graph, render_settings=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.render_settings = render_settings or RenderSettings(320, 200)
+        self.render_settings = render_settings or RenderSettings(320, 320)
         self.live_transform = LiveTransformation()
         self.init_transform()
 
@@ -108,7 +109,8 @@ class RenderGraphWindow(pyglet.window.Window):
             self.pipeline.render_to_screen(self.render_settings)
 
         except Exception as e:
-            print(f"{e.__class__.__name__}: {e}")
+            traceback.print_exc()
+            # print(f"{e.__class__.__name__}: {e}")
             exit(-1)
 
     def _calc_trans_matrix(self):

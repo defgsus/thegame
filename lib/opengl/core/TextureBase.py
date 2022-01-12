@@ -1,4 +1,3 @@
-import ctypes
 from .base import *
 
 
@@ -21,7 +20,7 @@ class TextureBase(OpenGlBaseObject):
         self.multi_sample = 0
 
     @staticmethod
-    def set_active_texture(idx):
+    def set_active_texture(idx: int):
         glActiveTexture(GL_TEXTURE0 + idx)
 
     def _create(self):

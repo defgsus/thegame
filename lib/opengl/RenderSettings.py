@@ -11,12 +11,14 @@ class RenderSettings:
             render_width: int,
             render_height: int,
             projection: Optional[Projection] = None,
+            mag_filter: Optional[int] = None,
     ):
         self.render_width = render_width
         self.render_height = render_height
         self.screen_width = render_width
         self.screen_height = render_height
         self.projection = projection or Projection(self.render_width, self.render_height)
+        self.mag_filter = mag_filter
         self.time = 0.
 
     def __str__(self):

@@ -1,5 +1,6 @@
 import ctypes
 from pyglet.gl import *
+from pyglet import gl
 
 
 OPENGL_TYPE_ENUM_MAPPING = {
@@ -51,6 +52,24 @@ OPENGL_ENUM_CHANNELSIZE_MAPPING = {
     GL_RGBA32F:	4,
 }
 
+CHANNELSIZE_OPENGL_ENUM_MAPPING = {
+    1: GL_LUMINANCE,
+    2: GL_RG,
+    3: GL_RGB,
+    4: GL_RGBA,
+}
+
+NUMPY_DTYPE_TO_OPENGL_TYPE_ENUM_MAPPING = {
+    "uint8": GL_UNSIGNED_BYTE,
+    "int8": GL_BYTE,
+    "uint16": GL_UNSIGNED_SHORT,
+    "int16": GL_SHORT,
+    "uint32": GL_UNSIGNED_INT,
+    "int32": GL_INT,
+    "float32": GL_FLOAT,
+    "float64": GL_DOUBLE,
+}
+
 
 def get_opengl_type_enum(typ):
     if typ in OPENGL_TYPE_ENUM_MAPPING:
@@ -71,3 +90,11 @@ def get_opengl_type_size(enum_or_type):
 
 def get_opengl_channel_size(enum):
     return OPENGL_ENUM_CHANNELSIZE_MAPPING.get(enum, 0)
+
+
+def gl_enum_to_string(enum: int) -> str:
+    for name in dir(gl):
+        if getattr(gl, name) == enum:
+            return name
+    return str(enum)
+

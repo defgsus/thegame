@@ -76,7 +76,7 @@ class TestTextureNumpy(unittest.TestCase):
             gpu_format=gl.GL_R32I,
         )
 
-    def test_int_raw(self):
+    def test_float_raw(self):
         width, height = 8, 4
         gpu_format = gl.GL_R32F
         input_format = gl.GL_RED

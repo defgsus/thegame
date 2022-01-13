@@ -112,9 +112,3 @@ class RenderGraphWindow(pyglet.window.Window):
             traceback.print_exc()
             # print(f"{e.__class__.__name__}: {e}")
             exit(-1)
-
-    def _calc_trans_matrix(self):
-        trans = glm.translate(glm.mat4(1), glm.vec3(0, 0, 4))
-        #trans = glm.rotate(trans, self.rotate_x, glm.vec3(1, 0, 0))
-        #trans = glm.rotate(trans, self.rotate_y, glm.vec3(0, 1, 0))
-        return trans

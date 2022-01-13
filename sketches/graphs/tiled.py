@@ -16,7 +16,7 @@ ASSET_PATH = Path(__file__).resolve().parent.parent.parent / "assets"
 def create_render_settings() -> RenderSettings:
     return RenderSettings(
         640, 400,
-        mag_filter=gl.GL_NEAREST,
+        #mag_filter=gl.GL_NEAREST,
     )
 
 
@@ -107,28 +107,39 @@ class Map:
         self.map = WangEdge2.get_tile_map(self.binary_map)
 
 
-class TiledBitmapNode(PostProcNode):
-    def __init__(self, name: str):
+class TiledMapNode(PostProcNode):
+    def __init__(self, map: Map, name: str = "tiled"):
         super().__init__(name)
-
-    def num_multi_sample(self) -> int:
-        return 0
+        self.map = map
+        self.map_texture = Texture2D()
 
     def get_code(self):
         return """
-        #line 113
+        #line 118
         const ivec2 tile_size = ivec2(32, 32);
         const ivec2 tile_map_size = ivec2(4, 4);
+        
+        vec2 rotate(in vec2 v, in float degree) {
+            float sa = sin(degree), ca = cos(degree);
+            return vec2(
+                v.x * ca - v.y * sa,
+                v.x * sa + v.y * ca
+            );
+        }
         
         //vec4 tile_texture(int tile_idx, 
         void mainImage(out vec4 fragColor, in vec2 fragCoord, in vec2 texCoord) {
             vec2 uv = (fragCoord / u_resolution.y);
             uv.x -= .5 * u_resolution.y / u_resolution.x;    
             
-            vec2 map_pos_f = 10. * (uv);// * vec2(1, -1) + vec2(0, 1));
+            vec2 map_pos_f = uv;
+            map_pos_f = rotate(map_pos_f - .5, sin(u_time)*0.02) + .5;
+            map_pos_f *= 10.;
+            map_pos_f.y -= u_time * .4;
+            
             ivec2 map_pos = ivec2(map_pos_f);
             map_pos.y = 10 - map_pos.y;
-            ivec4 map = ivec4(texelFetch(u_tex2, map_pos, 0));
+            ivec4 map = ivec4(texelFetch(u_tex4, map_pos, 0));
             
             vec2 tile_pos = (fract(map_pos_f) * (float(tile_size - 1)) + .5) / float(tile_size);
             
@@ -144,23 +155,33 @@ class TiledBitmapNode(PostProcNode):
         }   
         """
 
-    def num_multi_sample(self):
-        return 0
+    def num_multi_sample(self) -> int:
+        return 16
 
-    def has_depth_output(self):
+    def has_depth_output(self) -> bool:
         return False
 
+    def create(self, render_settings: RenderSettings):
+        super().create(render_settings)
 
-MAP = [
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 0, 0, 0, 0, 0, 0, 1,
-    1, 0, 1, 1, 0, 0, 0, 1,
-    1, 0, 1, 0, 1, 0, 0, 1,
-    1, 0, 1, 1, 0, 0, 0, 1,
-    1, 0, 1, 0, 0, 0, 0, 1,
-    1, 0, 1, 0, 0, 0, 0, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-]
+        self.map_texture.create()
+        self.map_texture.bind()
+        self.map_texture.upload_numpy(
+            self.map.map.astype("float32"),
+            self.map.width, gl.GL_RED, gpu_format=gl.GL_R32F,
+        )
+
+    def release(self):
+        super().release()
+        self.map_texture.release()
+
+    def render(self, rs: RenderSettings, pass_num: int):
+        self.map_texture.set_active_texture(3)
+        self.map_texture.bind()
+        self.map_texture.set_parameter(gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        super().render(rs, pass_num)
+
+
 def create_render_graph():
     graph = RenderGraph()
     tile_tex = graph.add_node(Texture2DNode(
@@ -170,19 +191,11 @@ def create_render_graph():
         "pipe1.png"
         #"mininicular.png"
     ))
-    map = Map(8, 8)
 
-    map_tex = graph.add_node(Texture2DNode(
-        callback=lambda rs, tex: tex.upload_numpy(
-            map.map.astype("float32"),
-            map.width, gl.GL_RED, gpu_format=gl.GL_R32F,
-        )
-    ))
+    map = Map(64, 64)
     print(map.map)
-
-    renderer = graph.add_node(TiledBitmapNode("tiled"))
-    graph.connect(tile_tex, 0, renderer, mag_filter=gl.GL_NEAREST)
-    graph.connect(map_tex, 0, renderer, 1, mag_filter=gl.GL_NEAREST)
+    renderer = graph.add_node(TiledMapNode(map))
+    graph.connect(tile_tex, 0, renderer)#, mag_filter=gl.GL_NEAREST)
     return graph
 
 

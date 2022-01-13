@@ -32,3 +32,8 @@ It uses [PyQt5](https://www.riverbankcomputing.com/software/pyqt/intro)
 pip install -r requirements-editor.txt
 python main_editor.py
 ```
+
+Recent experiment with 2d wang tiling:
+```bash
+python render_graph.py sketches.graphs.tiled
+```

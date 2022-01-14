@@ -79,6 +79,14 @@ class Shader(OpenGlBaseObject):
                 u = self.uniform(name)
                 if u.type in (GL_INT, GL_SAMPLER_1D, GL_SAMPLER_2D, GL_SAMPLER_3D):
                     glUniform1i(u.location, value)
+
+                elif u.type == GL_INT_VEC2:
+                    glUniform2i(u.location, value[0], value[1])
+                elif u.type == GL_INT_VEC3:
+                    glUniform3i(u.location, value[0], value[1], value[2])
+                elif u.type == GL_INT_VEC4:
+                    glUniform4i(u.location, value[0], value[1], value[2], value[3])
+
                 elif u.type == GL_FLOAT:
                     glUniform1f(u.location, value)
                 elif u.type == GL_FLOAT_VEC2:
@@ -87,6 +95,11 @@ class Shader(OpenGlBaseObject):
                     glUniform3f(u.location, value[0], value[1], value[2])
                 elif u.type == GL_FLOAT_VEC4:
                     glUniform4f(u.location, value[0], value[1], value[2], value[3])
+
+                elif u.type == GL_FLOAT_MAT3:
+                    value = sum((list(i) for i in value), [])
+                    v = (GLfloat * len(value))(*value)
+                    glUniformMatrix3fv(u.location, 1, GL_FALSE, v)
                 elif u.type == GL_FLOAT_MAT4:
                     value = sum((list(i) for i in value), [])
                     v = (GLfloat * len(value))(*value)

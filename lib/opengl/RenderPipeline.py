@@ -209,11 +209,13 @@ class RenderStage:
     def _update_fbo(self):
         if self.fbo is None:
             self.fbo = self._create_fbo()
+
         if self.fbo.is_created():
             if self.fbo.width != self.width or self.fbo.height != self.height:
                 self.fbo.release()
                 self.fbo = self._create_fbo()
-        else:
+
+        if not self.fbo.is_created():
             self.fbo.create()
 
         if self.node.num_multi_sample() > 0:

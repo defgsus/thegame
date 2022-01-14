@@ -21,7 +21,7 @@ class Framebuffer2D(OpenGlBaseObject):
         self.width = width
         self.height = height
         self.multi_sample = multi_sample
-        self._rbo = None
+        self._rbo = -1
         self._color_textures = [
             Texture2D(multi_sample=self.multi_sample, name="%s-color-%s" % (self.name, i))
             for i in range(num_color_tex)

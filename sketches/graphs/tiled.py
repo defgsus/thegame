@@ -1,4 +1,7 @@
+import time
 from pathlib import Path
+from collections import deque
+from threading import Thread
 from typing import Optional, Dict
 
 import glm
@@ -100,38 +103,49 @@ class WangEdge2:
 
 class Map:
 
-    def __init__(self, width: int, height: int):
+    def __init__(
+            self,
+            width: int,
+            height: int,
+            preset: Optional[dict] = None,
+    ):
+        preset = dict() if preset is None else preset
         self.width = width
         self.height = height
-        self.binary_map: np.ndarray = np.zeros([self.height, self.width])
-
-    def tile_map(self) -> np.ndarray:
-        return WangEdge2.get_tile_map(self.binary_map)
-
-    def init_random(self, probability: float = .5):
-        self.binary_map = (
-            np.random.random([self.height, self.width]) + probability
-        ).astype(int)
-
-    def init_automaton(self, preset: Optional[dict] = None):
-        preset = dict() if preset is None else preset
-        a = ClassicAutomaton(
+        self._preset = preset
+        self.automaton = ClassicAutomaton(
             width=self.width,
             height=self.height,
             born=preset.get("born") or {1, 2, 3},
             survive=preset.get("survive") or {6},
         )
-        a.init_random(preset.get("probability") or .3)
-        for i in range(preset.get("iterations") or 100):
-            a.step()
 
-        a.born = set()
-        a.survive = {3, 4, 5, 6, 7, 8}
+        #self.binary_map: np.ndarray = np.zeros([self.height, self.width])
 
-        for i in range(1):
-            a.step()
+    @property
+    def binary_map(self) -> np.ndarray:
+        return self.automaton.cells
 
-        self.binary_map = a.cells
+    def tile_map(self) -> np.ndarray:
+        return WangEdge2.get_tile_map(self.binary_map)
+
+    def init_random(self):
+        self.automaton.init_random(
+            probability=self._preset.get("probability") or .3,
+            seed=self._preset.get("seed") or 23,
+        )
+
+    def step(self, count: int = 1):
+        for i in range(count):
+            self.automaton.step()
+
+        if False:
+            # smoothing the map
+            a.born = set()
+            a.survive = {3, 4, 5, 6, 7, 8}
+
+            for i in range(5):
+                a.step()
 
 
 class TiledMapNode(PostProcNode):
@@ -139,10 +153,14 @@ class TiledMapNode(PostProcNode):
         super().__init__(name)
         self.map = map
         self.map_texture = Texture2D()
+        self.last_step_time = 0
+        self.queue = deque()
+        #self.map_thread = Thread(target=self._map_thread_loop)
+        #self.map_thread.start()
 
     def get_code(self):
         return """
-        #line 142
+        #line 160
         const ivec2 tile_size = ivec2(32, 32);
         const ivec2 tile_map_size = ivec2(4, 4);
         
@@ -194,12 +212,10 @@ class TiledMapNode(PostProcNode):
     def create(self, render_settings: RenderSettings):
         super().create(render_settings)
 
+        self.map.step(100)
         self.map_texture.create()
         self.map_texture.bind()
-        self.map_texture.upload_numpy(
-            self.map.tile_map().astype("float32"),
-            width=self.map.width, input_format=gl.GL_RED, gpu_format=gl.GL_R32F,
-        )
+        self._upload_map_tex()
 
     def release(self):
         super().release()
@@ -208,24 +224,45 @@ class TiledMapNode(PostProcNode):
     def render(self, rs: RenderSettings, pass_num: int):
         self.map_texture.set_active_texture(3)
         self.map_texture.bind()
+        if self.queue:
+            self._upload_map_tex(self.queue.pop())
+        #if rs.time - self.last_step_time > 1.:
+        #    self.last_step_time = rs.time
+        #    self.map.step(2)
+        #    self._upload_map_tex()
         self.map_texture.set_parameter(gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
         super().render(rs, pass_num)
 
+    def _upload_map_tex(self, float_array: Optional[np.ndarray] = None):
+        if float_array is None:
+            float_array = self.map.tile_map().astype("float32")
+        self.map_texture.upload_numpy(
+            float_array,
+            width=self.map.width, input_format=gl.GL_RED, gpu_format=gl.GL_R32F,
+        )
+
+    def _map_thread_loop(self):
+        while True:
+            time.sleep(1)
+            self.map.step(2)
+            #self._upload_map_tex()
+            self.queue.append(self.map.tile_map().astype("float32"))
 
 def create_render_graph():
     graph = RenderGraph()
     tile_tex = graph.add_node(Texture2DNode(
-        ASSET_PATH / "cr31" /
-        #"wang2e.png"
-        #"border.png"
-        #"quad.png"
-        "octal.png"
-        #"pipe1.png"
-        #"mininicular.png"
+        ASSET_PATH /
+        "w2e_curvy.png"
+        #"cr31" / "wang2e.png"
+        #"cr31" / "border.png"
+        #"cr31" / "quad.png"
+        #"cr31" / "octal.png"
+        #"cr31" / "pipe1.png"
+        #"cr31" / "mininicular.png"
     ))
 
-    map = Map(128, 128)
-    map.init_automaton()
+    map = Map(32, 32)
+    map.init_random()
     print(map.tile_map())
     renderer = graph.add_node(TiledMapNode(map))
     graph.connect(tile_tex, 0, renderer, mag_filter=gl.GL_NEAREST)

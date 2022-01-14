@@ -18,6 +18,10 @@ def parse_arguments():
         "module_name", type=str,
         help="Name of module where a create_render_graph method is found"
     )
+    parser.add_argument(
+        "--hot", type=bool, nargs="?", default=False, const=True,
+        help="Enable hot reloading on module file change"
+    )
 
     return parser.parse_args()
 
@@ -31,7 +35,7 @@ def import_graph_module(module_name):
 
 class MainWindow(RenderGraphWindow):
 
-    def __init__(self, render_graph_module_name, **kwargs):
+    def __init__(self, render_graph_module_name: str, hot_reloading: bool = False, **kwargs):
         # render_settings = RenderSettings(1024, 1024)
 
         self.render_graph_module_name = render_graph_module_name
@@ -43,6 +47,7 @@ class MainWindow(RenderGraphWindow):
 
         self._last_file_check_time = time.time()
         self._last_file_time = os.stat(self.render_graph_module_filename).st_mtime
+        self.hot_reloading = hot_reloading
 
     def update(self, dt):
 
@@ -53,13 +58,14 @@ class MainWindow(RenderGraphWindow):
         #))
         super().update(dt)
 
-        cur_time = time.time()
-        if cur_time - self._last_file_check_time >= 1.:
-            cur_stamp = os.stat(self.render_graph_module_filename).st_mtime
-            if cur_stamp != self._last_file_time:
-                self._last_file_time = cur_stamp
-                self._reload_module()
-            self._last_file_check_time = cur_time
+        if self.hot_reloading:
+            cur_time = time.time()
+            if cur_time - self._last_file_check_time >= 1.:
+                cur_stamp = os.stat(self.render_graph_module_filename).st_mtime
+                if cur_stamp != self._last_file_time:
+                    self._last_file_time = cur_stamp
+                    self._reload_module()
+                self._last_file_check_time = cur_time
 
     def _reload_module(self):
         try:
@@ -70,7 +76,7 @@ class MainWindow(RenderGraphWindow):
             print(f"EXCEPTION in create_render_graph\n{e.__class__.__name__}: {e}\n{traceback.format_exc()}")
 
 
-def run_window(render_graph_module_name):
+def run_window(render_graph_module_name: str, hot_reloading: bool):
     gl_config = pyglet.gl.Config(
         major_version=3,
         minor_version=0,
@@ -80,6 +86,7 @@ def run_window(render_graph_module_name):
         render_graph_module_name=render_graph_module_name,
         config=gl_config,
         resizable=True,
+        hot_reloading=hot_reloading,
     )
 
     pyglet.app.run()
@@ -88,6 +95,6 @@ def run_window(render_graph_module_name):
 if __name__ == "__main__":
     args = parse_arguments()
 
-    run_window(args.module_name)
+    run_window(args.module_name, hot_reloading=args.hot)
 
 

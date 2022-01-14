@@ -40,11 +40,11 @@ class RenderGraphWindow(pyglet.window.Window):
         self.live_transform = LiveTransformation()
         self.init_transform()
 
-        self.graph = render_graph
+        self.graph: RenderGraph = render_graph
         #self.graph = RenderGraph()
         #self.graph.add_node(CoordinateGridNode("grid"))
 
-        self.pipeline = self.graph.create_pipeline()
+        self.pipeline: RenderPipeline = self.graph.create_pipeline()
         self.pipeline.dump()
         #self.pipeline.verbose = 5
 
@@ -81,6 +81,8 @@ class RenderGraphWindow(pyglet.window.Window):
             self.live_transform.translate_z(2)
         if text == "-":
             self.live_transform.translate_z(-2)
+        if text == "b":
+            self.pipeline.benchmark(self.render_settings)
 
     def init_transform(self):
         self.live_transform.init()

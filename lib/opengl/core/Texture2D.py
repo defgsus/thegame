@@ -177,8 +177,8 @@ class Texture2D(TextureBase):
             if input_type is None:
                 raise ValueError(f"Need to specify 'input_type' for numpy array with dtype {dtype}")
 
-        print("UPLOAD", width, height, gl_enum_to_string(input_format),
-              gl_enum_to_string(input_type), gl_enum_to_string(gpu_format))
+        # print("UPLOAD", width, height, gl_enum_to_string(input_format),
+        #       gl_enum_to_string(input_type), gl_enum_to_string(gpu_format))
 
         self.upload(
             array, width, height, input_format, input_type,

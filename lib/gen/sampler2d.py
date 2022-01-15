@@ -11,7 +11,7 @@ class BlockSampler2DBase:
     The __call__ method allows getting a block of any size and position.
     """
 
-    MAX_CACHE = 30
+    MAX_CACHE = 100
     VERBOSE = False
 
     def __init__(self, block_size: int):
@@ -63,6 +63,9 @@ class BlockSampler2DBase:
             block = block[:height - block.shape[0]]
 
         return block
+
+    def clear_cache(self):
+        self._cache.clear()
 
     def get_block_cached(self, block_x: int, block_y: int) -> np.ndarray:
         key = (block_x, block_y)

@@ -35,6 +35,7 @@ class MainWindow(pyglet.window.Window):
         return time.time() - self.start_time
 
     def update(self, dt: float):
+        self.game.render_settings = self.renderer.render_settings
         self.check_keys(dt)
         self.game.check_keys(self.keys, dt)
         self.game.update(time, dt)
@@ -46,6 +47,7 @@ class MainWindow(pyglet.window.Window):
             self.renderer.render_settings.time = self.time()
 
             self.clear()
+
             self.renderer.render()
         except Exception as e:
             traceback.print_exc()
@@ -63,6 +65,13 @@ class MainWindow(pyglet.window.Window):
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:
             self.close()
+        elif pyglet.window.key._0 <= symbol <= pyglet.window.key._9:
+            number = symbol - pyglet.window.key._0
+            if pyglet.window.key.MOD_CTRL & modifiers:
+                self.renderer.tile_render_node.map.random_sampler.survive ^= {number}
+            else:
+                self.renderer.tile_render_node.map.random_sampler.born ^= {number}
+            self.renderer.tile_render_node.last_map_center = None
         else:
             self.game.on_key_press(symbol, modifiers)
 
@@ -70,7 +79,7 @@ class MainWindow(pyglet.window.Window):
         if text == ".":
             OpenGlObjects.dump()
             OpenGlAssets.dump()
-        if text == "f":
+        elif text == "f":
             self.set_fullscreen(not self.fullscreen)
 
     def check_keys(self, dt: float):

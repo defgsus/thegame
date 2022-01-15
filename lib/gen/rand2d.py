@@ -1,3 +1,5 @@
+from typing import Iterable
+
 import numpy as np
 from numpy.random import Generator, PCG64, SeedSequence
 
@@ -31,6 +33,26 @@ class AutomatonSampler2D(BlockSampler2DBase):
     ):
         super().__init__(block_size=block_size)
         self.random_sampler = RandomSampler2D(seed=seed, block_size=self.block_size)
+        self._born = {3}
+        self._survive = {2, 3}
+
+    @property
+    def born(self) -> set:
+        return self._born
+
+    @born.setter
+    def born(self, value: Iterable[int]):
+        self._born = value
+        self.clear_cache()
+
+    @property
+    def survive(self) -> set:
+        return self._survive
+
+    @survive.setter
+    def survive(self, value: Iterable[int]):
+        self._survive = value
+        self.clear_cache()
 
     def get_block(self, block_x: int, block_y: int) -> np.ndarray:
         noise = self.random_sampler(
@@ -40,9 +62,9 @@ class AutomatonSampler2D(BlockSampler2DBase):
         )
         ca = ClassicAutomaton(
             self.block_size, self.block_size,
-            born=(1, 2, 3),
-            survive=(3, 4, 5, 6),
+            born=self._born,
+            survive=self._survive,
             cells=(noise + .5).astype("int32"),
         )
         ca.step(10)
-        return ca.cells[self.block_size:-self.block_size, self.block_size:-self.block_size]
+        return ca.total_neighbours()[self.block_size:-self.block_size, self.block_size:-self.block_size]

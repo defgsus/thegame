@@ -19,6 +19,7 @@ class TileMapNode(GameShaderNode):
         self.map_texture = Texture2D()
         self.last_map_center = None
         self.last_map_offset = None
+        self.last_map_scale = None
 
     def get_game_shader_code(self):
         return """
@@ -41,7 +42,8 @@ class TileMapNode(GameShaderNode):
             tile_pos += vec2(tile_idx % u_tile_set_size.x, (tile_idx / u_tile_set_size.x));
                
             vec4 color = texture(u_tex1, tile_pos / u_tile_set_size);
-            
+            color.xyz *= .2 + .8 * clamp(map.x/20., 0, 1);
+                        
             float frame = smoothstep(0.6, 0., max(abs(gs.uv.x), abs(gs.uv.y)) - 1.);
             color *= .5 + .5 * frame;
             return color;
@@ -78,13 +80,16 @@ class TileMapNode(GameShaderNode):
         else:
             dist = abs(self.last_map_center[0] - map_center[0]) + abs(self.last_map_center[1] - map_center[1])
             do_update = dist > 2
+            do_update |= self.last_map_scale * 1.1 < rs.projection.scale
 
         if do_update:
-            w, h = 16, 16  # radius
+            # radius
+            w = h = max(16, int(rs.projection.scale * 1.3))
             map_array = self.map.get_map(map_center[0] - w, map_center[1] + h, w * 2 + 1, h * 2 + 1)
             self.upload_map(map_array)
             self.last_map_center = map_center
             self.last_map_offset = glm.vec2(*map_center) - glm.vec2(w, h)
+            self.last_map_scale = rs.projection.scale
 
     def upload_map(self, float_array: np.ndarray):
         assert float_array.dtype.name == "float32"

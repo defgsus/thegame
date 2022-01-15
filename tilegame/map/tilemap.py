@@ -13,9 +13,9 @@ class TileMap:
 
     def get_map(self, x: int, y: int, width: int, height: int) -> np.ndarray:
         noise = self.random_sampler(x, y, width, height)
-        map = (noise * 16).astype("int32").astype("float32")
+        map = (noise*3).astype("int32").astype("float32")
 
-        print(map)
+        # print(map)
 
         return map
 

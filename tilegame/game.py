@@ -1,9 +1,10 @@
 import math
 
-from .map.tilemap import TileMap
-
 import glm
 import pyglet
+
+from .map.tilemap import TileMap
+from .render.rs import GameRenderSettings
 
 
 class Game:
@@ -12,6 +13,8 @@ class Game:
         self.tile_map = TileMap()
         self.player_pos = glm.vec2(0, 0)
         self.player_rotation = 0.
+        # replaced by mainwindow
+        self.render_settings = GameRenderSettings(32, 32)
 
     def check_keys(self, keys: dict, dt: float):
         speed = min(1., dt * 5.)
@@ -31,7 +34,7 @@ class Game:
         norm = glm.vec2(-math.sin(a), math.cos(a))
         for key, dir in dir_mapping.items():
             if keys.get(key):
-                self.player_pos += dir * speed * norm
+                self.player_pos += dir * speed * (1. + self.render_settings.projection.scale / 10.) * norm
 
     def on_key_press(self, symbol, modifiers):
         pass

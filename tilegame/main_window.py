@@ -6,6 +6,7 @@ import pyglet
 
 from lib.opengl import *
 from lib.opengl.core.base import OpenGlObjects
+from lib.gen import Worker
 
 from .game import Game
 from .render.renderer import GameRenderer
@@ -31,6 +32,10 @@ class MainWindow(pyglet.window.Window):
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
         # pyglet.clock.set_fps_limit(60)
 
+    def close(self):
+        Worker.stop_all()
+        super().close()
+
     def time(self) -> float:
         return time.time() - self.start_time
 
@@ -51,7 +56,7 @@ class MainWindow(pyglet.window.Window):
             self.renderer.render()
         except Exception as e:
             traceback.print_exc()
-            exit(-1)
+            self.close()
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         pass

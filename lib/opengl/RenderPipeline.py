@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, Dict
 
 from .core.base import *
 from .core.Framebuffer2D import Framebuffer2D
@@ -7,6 +7,7 @@ from .ScreenQuad import ScreenQuad
 from .RenderGraph import RenderGraph
 from .RenderSettings import RenderSettings
 from .RenderNode import RenderNode
+from tests.util import Timer
 
 
 class RenderPipeline:
@@ -20,6 +21,7 @@ class RenderPipeline:
         self._stage_dict = {s.node.name: s for s in self.stages}
         self._quad = None
         self.verbose = 0
+        self._stage_times = dict()
 
     def get_stage(self, name: str) -> Optional["RenderStage"]:
         return self._stage_dict.get(name)
@@ -28,7 +30,13 @@ class RenderPipeline:
         self.debug(1, "render %s" % rs)
         self.render_settings = rs
         for stage in self.stages:
-            stage.render()
+            with Timer() as timer:
+                timings = stage.render()
+            self._stage_times[stage.node.name] = (timer, timings)
+
+        for name, (timer, timers) in self._stage_times.items():
+            if timer.fps() < 60.:
+                print("TOO SLOW:", name, timer, timers)
 
     def render_to_screen(self, rs: RenderSettings):
         self.debug(1, "render_to_screen %s" % rs)
@@ -124,43 +132,52 @@ class RenderStage:
     def height(self) -> int:
         return self.pipeline.render_settings.render_height
 
-    def render(self):
+    def render(self) -> Dict[str, float]:
         from .TextureNode import Texture2DNode
+        timings = {}
 
         self.debug(2, "render")
         # create node assets or whatever
         if not self.node.is_created:
-            self.debug(3, "create node")
-            self.node.create(self.pipeline.render_settings)
-            self.node.is_created = True
+            with Timer() as timer:
+                self.debug(3, "create node")
+                self.node.create(self.pipeline.render_settings)
+                self.node.is_created = True
+            timings["node_create"] = timer
 
         if isinstance(self.node, Texture2DNode):
-            return
+            return timings
 
-        # build and bind this stage's FBO
-        self._update_fbo()
-        self.debug(4, "bind fbo %s" % self.fbo)
-        self.fbo.bind()
-        self.fbo.set_viewport()
-        self.fbo.clear()
+        with Timer() as timer:
+            # build and bind this stage's FBO
+            self._update_fbo()
+            self.debug(4, "bind fbo %s" % self.fbo)
+            self.fbo.bind()
+            self.fbo.set_viewport()
+            self.fbo.clear()
+        timings["bind_fbo"] = timer
 
         # bind input textures
-        for input in self.inputs:
-            stage = self.pipeline.get_stage(input["from_node"])
-            tex = stage.get_output_texture(input["from_slot"])
-            Texture2D.set_active_texture(input["to_slot"])
-            self.debug(4, "bind tex %s to %s" % (input["to_slot"], tex))
-            tex.bind()
-            if input["mag_filter"] is not None:
-                tex.set_parameter(GL_TEXTURE_MAG_FILTER, input["mag_filter"])
-            if input["min_filter"] is not None:
-                tex.set_parameter(GL_TEXTURE_MIN_FILTER, input["min_filter"])
+        with Timer() as timer:
+            for input in self.inputs:
+                stage = self.pipeline.get_stage(input["from_node"])
+                tex = stage.get_output_texture(input["from_slot"])
+                Texture2D.set_active_texture(input["to_slot"])
+                self.debug(4, "bind tex %s to %s" % (input["to_slot"], tex))
+                tex.bind()
+                if input["mag_filter"] is not None:
+                    tex.set_parameter(GL_TEXTURE_MAG_FILTER, input["mag_filter"])
+                if input["min_filter"] is not None:
+                    tex.set_parameter(GL_TEXTURE_MIN_FILTER, input["min_filter"])
+        timings["bind_textures"] = timer
 
         if self.node.num_passes() < 2:
             try:
                 self.debug(3, "render node %s" % self.node)
-                self.node.render(self.pipeline.render_settings, 0)
-                self.fbo.unbind()
+                with Timer() as timer:
+                    self.node.render(self.pipeline.render_settings, 0)
+                    self.fbo.unbind()
+                timings["render"] = timer
             except BaseException as e:
                 raise e.__class__(f"in RenderNode {self.node.name}: {e.__class__.__name__}: {e}")
         else:
@@ -183,7 +200,11 @@ class RenderStage:
             self.fbo.unbind()
 
         if self.node.num_multi_sample():
-            self._downsample()
+            with Timer() as timer:
+                self._downsample()
+            timings["downsample"] = timer
+
+        return timings
 
     def get_output_texture(self, slot: Union[int, str]) -> Texture2D:
         from .TextureNode import Texture2DNode

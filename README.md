@@ -37,3 +37,8 @@ Recent experiment with 2d wang tiling:
 ```bash
 python render_graph.py sketches.graphs.tiled
 ```
+
+And the more recent approach for a good tile-based 2d engine
+```bash
+python tilegame.py
+```

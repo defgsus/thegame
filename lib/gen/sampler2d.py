@@ -6,12 +6,18 @@ class BlockSampler2DBase:
     """
     Base class for samplers that provide fixed sized blocks.
 
-    Overload `get_block` to create fixed-size data.
+    Overload `get_block` to create fixed-size 2d numpy arrays.
 
     The __call__ method allows getting a block of any size and position.
     """
+
+    MAX_CACHE = 30
+    VERBOSE = False
+
     def __init__(self, block_size: int):
         self.block_size = block_size
+        self._cache = dict()
+        self._last_key = None
 
     def get_block(self, block_x: int, block_y: int) -> np.ndarray:
         raise NotImplementedError
@@ -34,7 +40,7 @@ class BlockSampler2DBase:
         for ly in range((y2 - by1 + self.block_size - 1) // self.block_size):
             row = []
             for lx in range((x2 - bx1 + self.block_size - 1) // self.block_size):
-                row.append(self.get_block(block_x0 + lx, block_y0 + ly))
+                row.append(self.get_block_cached(block_x0 + lx, block_y0 + ly))
 
             rows.append(np.concatenate(row, axis=1))
 
@@ -58,19 +64,48 @@ class BlockSampler2DBase:
 
         return block
 
+    def get_block_cached(self, block_x: int, block_y: int) -> np.ndarray:
+        key = (block_x, block_y)
+        if key in self._cache:
+            if self.VERBOSE:
+                print(f"{self.__class__.__name__}: cache hit {key}")
+            return self._cache[key]
 
-class RandomSampler2D(BlockSampler2DBase):
+        if self.VERBOSE:
+            print(f"{self.__class__.__name__}: cache miss {key}")
 
-    def __init__(self, seed: int = 1, block_size: int = 32):
-        super().__init__(block_size=block_size)
-        self.seed = seed
+        block = self.get_block(block_x, block_y)
+        self._cache[key] = block
+        self._last_key = key
 
-    def get_block(self, block_x: int, block_y: int) -> np.ndarray:
-        seed = abs(
-                (self.seed * 2147483647)
-                ^ (block_x * 391939)
-                ^ (block_y * 2097593)
-        )
-        rnd = Generator(PCG64(seed))
+        if len(self._cache) > self.MAX_CACHE:
+            self._shrink_cache()
+        return block
 
-        return rnd.random([self.block_size, self.block_size])
+    def _shrink_cache(self):
+        if not self._last_key:
+            return
+
+        num_drop = len(self._cache) // 3
+
+        distances = [
+            abs(self._last_key[0] - key[0]) + abs(self._last_key[1] - key[1])
+            for key in self._cache
+        ]
+        distance_map = {
+            key: dist
+            for key, dist in zip(self._cache, distances)
+        }
+        threshold = sorted(distances)[num_drop]
+
+        if self.VERBOSE:
+            print(
+                f"{self.__class__.__name__}: dropping cache",
+                [key for key in self._cache if distance_map[key] <= threshold]
+            )
+
+        self._cache = {
+            key: value
+            for key, value in self._cache.items()
+            if distance_map[key] > threshold
+        }

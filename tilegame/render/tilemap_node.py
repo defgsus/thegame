@@ -80,7 +80,7 @@ class TileMapNode(GameShaderNode):
             do_update = dist > 2
 
         if do_update:
-            w, h = 16, 16
+            w, h = 16, 16  # radius
             map_array = self.map.get_map(map_center[0] - w, map_center[1] + h, w * 2 + 1, h * 2 + 1)
             self.upload_map(map_array)
             self.last_map_center = map_center

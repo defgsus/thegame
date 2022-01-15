@@ -1,8 +1,6 @@
 import unittest
 
-import numpy as np
-
-from lib.ai.automaton import CellularAutomatonBase, ClassicAutomaton
+from lib.gen.automaton import CellularAutomatonBase, ClassicAutomaton
 
 
 class TestCellularAutomaton(unittest.TestCase):

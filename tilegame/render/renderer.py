@@ -21,7 +21,7 @@ class GameRenderer:
         self.pipeline: Optional[RenderPipeline] = None
         self.render_settings = GameRenderSettings(32, 32)
         self.frame_number = 0
-        self.camera_pos = glm.vec2(-1, -10)
+        self.camera_pos = glm.vec2(-1, -5)
         self.camera_rotation = 0.
 
     def update(self, time: float, dt: float):

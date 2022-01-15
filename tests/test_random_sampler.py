@@ -4,11 +4,14 @@ from typing import Optional
 
 import numpy as np
 
-from lib.gen import RandomSampler2D
+from lib.gen import *
+from .util import Timer
 
 
 class TestRandomSampler(unittest.TestCase):
 
+    # Ahem.. for now this test needs visual inspection and
+    #   comparison with the area test below
     def test_010_block(self):
         rs = RandomSampler2D(block_size=4)
         print("x")
@@ -37,7 +40,44 @@ class TestRandomSampler(unittest.TestCase):
             h = rnd.randint(1, 20)
             block = rs(x, y, w, h)
             self.assertEqual(
-                #(h, w), block.shape,
-                w, block.shape[-1],
+                (h, w), block.shape,
                 f"for {x}, {y}, {w}, {h} at block_size {rs.block_size}"
             )
+
+    def benchmark(self, sampler: BlockSampler2DBase, num_frames: int = 300):
+        ret = dict()
+        with Timer(num_frames) as timer:
+            for i in range(num_frames):
+                sampler.get_block(i // 10, i // 11)
+        ret["block"] = timer
+
+        with Timer(num_frames) as timer:
+            for i in range(num_frames):
+                sampler.get_block_cached(i // 10, i // 11)
+        ret["block_cached"] = timer
+
+        with Timer(num_frames) as timer:
+            for i in range(num_frames):
+                sampler(i // 10, i // 11, sampler.block_size * 2, sampler.block_size * 2)
+        ret["area"] = timer
+
+        rnd = random.Random(42)
+        with Timer(num_frames) as timer:
+            for i in range(num_frames):
+                sampler(rnd.randint(-20, 20), rnd.randint(-20, 20), sampler.block_size * 2, sampler.block_size * 2)
+        ret["area random"] = timer
+        return ret
+
+    def test_benchmark(self):
+        data = {
+            "rnd32": self.benchmark(RandomSampler2D(block_size=32)),
+            "automat32": self.benchmark(AutomatonSampler2D(block_size=32), num_frames=20),
+            "automat64": self.benchmark(AutomatonSampler2D(block_size=64), num_frames=10),
+        }
+        print()
+        for sampler, timers in data.items():
+            for task, timer in timers.items():
+                print(
+                    f"{sampler:10} {task:20} {timer.seconds():10} total sec "
+                    f"{timer.fps():10} fps {timer.spf()*1000.:10} ms"
+                )

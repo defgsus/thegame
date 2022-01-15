@@ -7,10 +7,19 @@ import scipy.signal
 
 class CellularAutomatonBase:
 
-    def __init__(self, width: int, height: int, dtype: str = "int8"):
+    def __init__(
+            self,
+            width: int,
+            height: int,
+            dtype: str = "int8",
+            cells: Optional[np.ndarray] = None,
+    ):
         self.width = width
         self.height = height
-        self.cells = np.zeros([self.height, self.width], dtype=dtype)
+        if cells is not None:
+            self.cells = cells
+        else:
+            self.cells = np.zeros([self.height, self.width], dtype=dtype)
         self._kernel = np.array([
             [1, 1, 1],
             [1, 0, 1],
@@ -46,18 +55,20 @@ class ClassicAutomaton(CellularAutomatonBase):
             height: int,
             born: Iterable[int] = (3,),
             survive: Iterable[int] = (2, 3),
+            cells: Optional[np.ndarray] = None,
     ):
-        super().__init__(width, height)
+        super().__init__(width, height, cells=cells)
         self.born = set(born)
         self.survive = set(survive)
 
-    def step(self):
-        neigh = self.total_neighbours()
-        for y, row in enumerate(self.cells):
-            for x, value in enumerate(row):
-                if not value:
-                    if neigh[y][x] in self.born:
-                        row[x] = 1
-                else:
-                    if neigh[y][x] not in self.survive:
-                        row[x] = 0
+    def step(self, count: int = 1):
+        for i in range(count):
+            neigh = self.total_neighbours()
+            for y, row in enumerate(self.cells):
+                for x, value in enumerate(row):
+                    if not value:
+                        if neigh[y][x] in self.born:
+                            row[x] = 1
+                    else:
+                        if neigh[y][x] not in self.survive:
+                            row[x] = 0

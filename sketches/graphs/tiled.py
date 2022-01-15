@@ -1,19 +1,14 @@
 import time
 from pathlib import Path
 from collections import deque
-from threading import Thread
-from typing import Optional, Dict
+from typing import Optional
 
-import glm
 import numpy as np
-import scipy.signal
 
 from lib.opengl.core.base import *
 from lib.opengl import *
 from lib.opengl.postproc import PostProcNode
-from lib.geom import TriangleMesh, TriangleHashMesh, MeshFactory, Polygons
-from lib.world import Tileset
-from lib.ai.automaton import ClassicAutomaton
+from lib.gen.automaton import ClassicAutomaton
 
 ASSET_PATH = Path(__file__).resolve().parent.parent.parent / "assets"
 

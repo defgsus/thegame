@@ -85,7 +85,7 @@ class TileMapNode(GameShaderNode):
         if do_update:
             # radius
             w = h = max(16, int(rs.projection.scale * 1.3))
-            map_array = self.map.get_map(map_center[0] - w, map_center[1] + h, w * 2 + 1, h * 2 + 1)
+            map_array = self.map.get_map(map_center[0] - w, map_center[1] - h, w * 2 + 1, h * 2 + 1)
             self.upload_map(map_array)
             self.last_map_center = map_center
             self.last_map_offset = glm.vec2(*map_center) - glm.vec2(w, h)

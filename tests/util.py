@@ -1,6 +1,8 @@
 import time
 from typing import Optional
 
+import numpy as np
+
 
 class Timer:
 
@@ -22,3 +24,18 @@ class Timer:
 
     def spf(self, num_frames: Optional[int] = None) -> float:
         return round(self.seconds() / (num_frames or self.num_frames), 2)
+
+
+def assert_numpy_equal(
+        expected, real,
+        msg: Optional[str] = None
+):
+    message = f"\n\nExpected:\n{expected}\n\nGot:\n{real}"
+    if msg:
+        message = f"{message}\n{msg}"
+    if expected.shape != real.shape:
+        raise AssertionError(f"numpy shape {real.shape} not equal, expected {expected.shape}{message}")
+    if not np.all(expected == real):
+        raise AssertionError(
+            f"numpy array values not equal{message}"
+        )

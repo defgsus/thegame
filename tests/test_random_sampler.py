@@ -1,3 +1,4 @@
+import os
 import unittest
 import random
 from typing import Optional
@@ -5,7 +6,7 @@ from typing import Optional
 import numpy as np
 
 from lib.gen import *
-from .util import Timer
+from .util import Timer, assert_numpy_equal
 
 
 class TestRandomSampler(unittest.TestCase):
@@ -44,6 +45,27 @@ class TestRandomSampler(unittest.TestCase):
                 f"for {x}, {y}, {w}, {h} at block_size {rs.block_size}"
             )
 
+    def test_ca_zoom(self):
+        sampler = AutomatonSampler2D(block_size=16)
+        expect = sampler.get_block_cached(0, 0)
+        for x, y in (
+                (0, 0), (-1, 3), (15, 17)
+        ):
+            w, h = expect.shape[1], expect.shape[0]
+            if (x, y) != (0, 0):
+                expect = sampler(x, y, w, h)
+            for i in range(1, sampler.block_size + 1):
+                area = sampler(x-i, y-i, w+i*2, h+i*2)
+                area_cut = area[i:-i, i:-i]
+
+                assert_numpy_equal(
+                    expect, area_cut,
+                    f"for i={i}, sampler({x-i}, {y-i}, {w+i*w}, {h+i*2})"
+                )
+
+
+@unittest.skipIf(not os.environ.get("BENCHMARK"), "define BENCHMARK to run")
+class TestRandomSamplerBenchmark(unittest.TestCase):
     def benchmark(self, sampler: BlockSampler2DBase, num_frames: int = 300):
         ret = dict()
         with Timer(num_frames) as timer:

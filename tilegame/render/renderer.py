@@ -42,8 +42,8 @@ class GameRenderer:
             self.pipeline.dump()
             # self.pipeline.verbose = 5
 
-        if self.frame_number % 100 == 0:
-            self.tile_render_node.upload_map(self.game.tile_map.get_map_block(0, 0, 32, 32))
+        #if self.frame_number % 100 == 0:
+        #    self.tile_render_node.upload_map(self.game.tile_map.get_map(0, 0, 32, 32))
         self.pipeline.render(self.render_settings)
         self.pipeline.render_to_screen(self.render_settings)
         self.frame_number += 1
@@ -58,7 +58,7 @@ class GameRenderer:
         )
         graph.add_node(tile_tex)
 
-        self.tile_render_node = TileMapNode("tilerender")
+        self.tile_render_node = TileMapNode(self.game.tile_map, "tilerender")
         graph.add_node(self.tile_render_node)
 
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)

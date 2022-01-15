@@ -35,6 +35,7 @@ class MainWindow(pyglet.window.Window):
         return time.time() - self.start_time
 
     def update(self, dt: float):
+        self.check_keys(dt)
         self.game.check_keys(self.keys, dt)
         self.game.update(time, dt)
         self.renderer.update(time, dt)
@@ -62,6 +63,8 @@ class MainWindow(pyglet.window.Window):
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.ESCAPE:
             self.close()
+        else:
+            self.game.on_key_press(symbol, modifiers)
 
     def on_text(self, text):
         if text == ".":
@@ -69,3 +72,9 @@ class MainWindow(pyglet.window.Window):
             OpenGlAssets.dump()
         if text == "f":
             self.set_fullscreen(not self.fullscreen)
+
+    def check_keys(self, dt: float):
+        if self.keys[pyglet.window.key.MINUS]:
+            self.renderer.render_settings.projection.scale *= min(1.1, 1. + dt)
+        if self.keys[pyglet.window.key.PLUS]:
+            self.renderer.render_settings.projection.scale *= max(.9, 1. - dt)

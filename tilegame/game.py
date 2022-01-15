@@ -21,7 +21,7 @@ class Game:
         }
         for key, dir in dir_mapping.items():
             if keys.get(key):
-                self.player_rotation -= speed * dir * 10.
+                self.player_rotation -= speed * dir * 30.
 
         dir_mapping = {
             pyglet.window.key.UP: 1,
@@ -32,6 +32,9 @@ class Game:
         for key, dir in dir_mapping.items():
             if keys.get(key):
                 self.player_pos += dir * speed * norm
+
+    def on_key_press(self, symbol, modifiers):
+        pass
 
     def update(self, time: float, dt: float):
         pass

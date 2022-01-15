@@ -66,34 +66,9 @@ class GameShaderNode(PostProcNode):
             uv = uv * 2. - 1.;
             
             vec2 map_pos_f = (u_camera * vec3(uv, 1)).xy;
-            //map_pos_f = rotate(map_pos_f - .5, sin(u_time)*0.02) + .5;
-            //map_pos_f *= 10. + 5. * sin(u_time/3.);
             
             GameShader gs = GameShader(fragCoord, texCoord, uv, map_pos_f);
-            fragColor = game_shader(gs);
-            
-            /*
-            map_pos_f.y -= u_time * .9;
-            
-            ivec2 map_pos = ivec2(map_pos_f);
-            map_pos.y = 20 - map_pos.y;
-            ivec4 map = ivec4(texelFetch(u_tex4, map_pos, 0));
-            
-            vec2 tile_pos = fract(map_pos_f);
-            
-            // when using bilinear mag filter, this is needed 
-            //tile_pos = tile_pos * (float(tile_size - 1.) + .5) / float(tile_size);
-            
-            //int tile_idx = int(map_pos.y + map_pos.x) % (tile_map_size.x * tile_map_size.y);
-            int tile_idx = map.x;
-            tile_pos += vec2(tile_idx % tile_map_size.x, (tile_idx / tile_map_size.x));
-               
-            fragColor = texture(u_tex1, tile_pos / tile_map_size);
-            //fragColor = texture(u_tex2, uv);            
-            
-            if (uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.)
-                fragColor.xyz *= .2;
-            */
+            fragColor = game_shader(gs);            
         }   
         """.replace("_GaMeShAdEr_", self.get_game_shader_code())
 

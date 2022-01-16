@@ -61,10 +61,9 @@ class AutomatonSampler2D(BlockSampler2DBase):
             self.block_size * 3, self.block_size * 3,
         )
         ca = ClassicAutomaton(
-            self.block_size, self.block_size,
+            cells=(noise + .5).astype("int32"),
             born=self._born,
             survive=self._survive,
-            cells=(noise + .5).astype("int32"),
         )
         ca.step(10)
         return ca.total_neighbours()[self.block_size:-self.block_size, self.block_size:-self.block_size]

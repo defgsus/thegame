@@ -9,22 +9,28 @@ class CellularAutomatonBase:
 
     def __init__(
             self,
-            width: int,
-            height: int,
+            width: int = 16,
+            height: int = 16,
             dtype: str = "int8",
             cells: Optional[np.ndarray] = None,
     ):
-        self.width = width
-        self.height = height
         if cells is not None:
             self.cells = cells
         else:
-            self.cells = np.zeros([self.height, self.width], dtype=dtype)
+            self.cells = np.zeros([height, width], dtype=dtype)
         self._kernel = np.array([
             [1, 1, 1],
             [1, 0, 1],
             [1, 1, 1],
         ])
+
+    @property
+    def width(self) -> int:
+        return self.cells.shape[-1]
+
+    @property
+    def height(self) -> int:
+        return self.cells.shape[-2]
 
     def step(self):
         raise NotImplementedError
@@ -51,8 +57,8 @@ class ClassicAutomaton(CellularAutomatonBase):
 
     def __init__(
             self,
-            width: int,
-            height: int,
+            width: int = 16,
+            height: int = 16,
             born: Iterable[int] = (3,),
             survive: Iterable[int] = (2, 3),
             cells: Optional[np.ndarray] = None,

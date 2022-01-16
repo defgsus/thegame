@@ -55,6 +55,7 @@ class GameRenderer:
             ASSET_PATH /
             #"w2e_curvy.png"
             "cr31" / "wang2e.png"
+            #"cr31" / "circuit.png"
         )
         graph.add_node(tile_tex)
 

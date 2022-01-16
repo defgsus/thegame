@@ -47,7 +47,7 @@ class TileMapNode(GameShaderNode):
             tile_pos += vec2(tile_idx % u_tile_set_size.x, (tile_idx / u_tile_set_size.x));
                
             vec4 color = texture(u_tex1, tile_pos / u_tile_set_size);
-            color.xyz *= .2 + .8 * clamp(map.x/20., 0, 1);
+            //color.xyz *= .2 + .8 * clamp(map.x/20., 0, 1);
                         
             float frame = smoothstep(0.6, 0., max(abs(gs.uv.x), abs(gs.uv.y)) - 1.);
             color *= .5 + .5 * frame;
@@ -56,7 +56,7 @@ class TileMapNode(GameShaderNode):
         """
 
     def num_multi_sample(self) -> int:
-        return 0
+        return 4
 
     def create(self, render_settings: RenderSettings):
         super().create(render_settings)

@@ -169,6 +169,19 @@ class Texture2D(TextureBase):
                             f", width {width} would suggest {num_colors} colors"
                         )
 
+        elif ndim == 3:
+            if input_format is None:
+                num_colors = shape[-1]
+                input_format = CHANNELSIZE_OPENGL_ENUM_MAPPING.get(int(num_colors))
+                if input_format is None:
+                    raise ValueError(
+                        f"Need to specify 'input_format' for numpy array with shape {shape}"
+                        f", format for {num_colors} colors is unknown"
+                    )
+            height = shape[0]
+            if width is None:
+                width = shape[1]
+
         else:
             raise ValueError(f"Can not convert numpy array of shape {shape} to texture")
 
@@ -177,8 +190,8 @@ class Texture2D(TextureBase):
             if input_type is None:
                 raise ValueError(f"Need to specify 'input_type' for numpy array with dtype {dtype}")
 
-        # print("UPLOAD", width, height, gl_enum_to_string(input_format),
-        #       gl_enum_to_string(input_type), gl_enum_to_string(gpu_format))
+        #print("UPLOAD", width, height, gl_enum_to_string(input_format),
+        #      gl_enum_to_string(input_type), gl_enum_to_string(gpu_format))
 
         self.upload(
             array, width, height, input_format, input_type,

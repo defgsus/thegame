@@ -33,14 +33,15 @@ class NoiseSampler2D(BlockSampler2DBase):
     def get_block(self, block_x: int, block_y: int) -> np.ndarray:
         # need to get one block of initial data
         #   + the first column and row of the next blocks
-        tl = self.random_sampler.get_block_cached(block_x, block_y)
-        tr = self.random_sampler.get_block_cached(block_x+1, block_y)
-        bl = self.random_sampler.get_block_cached(block_x, block_y+1)
-        br = self.random_sampler.get_block_cached(block_x+1, block_y+1)
+        tl = self.random_sampler.get_block_cached(block_x, block_y-1)
+        tr = self.random_sampler.get_block_cached(block_x+1, block_y-1)
+        bl = self.random_sampler.get_block_cached(block_x, block_y)
+        br = self.random_sampler.get_block_cached(block_x+1, block_y)
         noise = np.concatenate([
             np.concatenate([tl, tr], axis=1),
             np.concatenate([bl, br], axis=1),
         ])
+
         noise = noise[:self.random_sampler.block_size + 1, :self.random_sampler.block_size + 1]
         return generate_perlin_noise_2d(
             shape=(self.block_size, self.block_size),

@@ -16,30 +16,32 @@ class TilemapSampler(BlockSampler2DBase):
             seed=seed, block_size=128,
         )
         self.noise = NoiseSampler2D(
-            resolution=16,
+            resolution=8,
             seed=seed+23, block_size=128,
         )
 
-        #self.ca_sampler = AutomatonSampler2D(seed=seed, block_size=self.block_size)
-        self.random_sampler = RandomSampler2D(seed=seed, block_size=self.block_size)
+        self.ca_sampler = AutomatonSampler2D(seed=seed, block_size=self.block_size)
+        # self.random_sampler = RandomSampler2D(seed=seed, block_size=self.block_size)
 
-    def get_block(self, block_x: int, block_y: int) -> np.ndarray:
+    def __call__(self, x: int, y: int, width: int, height: int) -> np.ndarray:
         padding = 1
         window = (
-            block_x * self.block_size - padding,
-            block_y * self.block_size - padding,
-            self.block_size + padding * 2,
-            self.block_size + padding * 2,
+            x - padding,
+            y - padding,
+            width + padding * 2,
+            height + padding * 2,
         )
 
         sea_land = self.biosphere_noise(*window)
-        coast = np.power(1. - np.abs(sea_land), 10)
+        coast = 1. - np.abs(sea_land)
 
-        noise = self.noise(*window)
+        noise1 = self.noise(*window)
+        noise2 = self.ca_sampler(*window) / 4. - 1.
 
         level = (
             sea_land * .5 + .5
-            + coast * noise
+            + np.power(coast, 3) * noise1
+            + np.power(coast, 7) * noise2 * .5
         )
         level = np.clip(level, 0, 1)
 
@@ -49,33 +51,14 @@ class TilemapSampler(BlockSampler2DBase):
 
         occupied = (level > threshold).astype("int32")
         tiling = WangTiling.get_edge_indices(occupied, bottom_up=True)
+
         if padding:
             tiling = tiling[padding:-padding, padding:-padding]
             occupied = occupied[padding:-padding, padding:-padding]
+            level = level[padding:-padding, padding:-padding]
 
-        return WangTiling.to_layout_indices(tiling, occupied_mask=occupied.astype("bool"))
+        wang_tiles = WangTiling.to_layout_indices(tiling, occupied_mask=occupied.astype("bool"))
 
-
-class XXX_TileMap:
-
-    BLOCK_SIZE = 32
-
-    def __init__(self):
-        self.random_sampler = NoiseSampler2D(seed=1, block_size=self.BLOCK_SIZE)
-        self.ca_sampler = AutomatonSampler2D()
-
-    def get_map(self, x: int, y: int, width: int, height: int) -> np.ndarray:
-        noise = self.random_sampler(x, y, width, height)
-        return (noise * 20).astype("int32").astype("float32")
-
-        return self.wang_sampler(x, y, width, height).astype("float32")
-        #return wang_indices.astype("float32")
-        #return WangTiling.to_layout_index(wang_indices).astype("float32")
-
-        noise = self.random_sampler(x, y, width, height)
-        map = (noise*3).astype("int32").astype("float32")
-
-        # print(map)
-
+        map = wang_tiles.reshape([height, width, 1]).repeat(3, axis=2)
+        map[:, :, 1] = level * 10
         return map
-

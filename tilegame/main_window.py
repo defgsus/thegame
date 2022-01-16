@@ -68,17 +68,22 @@ class MainWindow(pyglet.window.Window):
         pass
 
     def on_key_press(self, symbol, modifiers):
-        if symbol == pyglet.window.key.ESCAPE:
-            self.close()
-        elif pyglet.window.key._0 <= symbol <= pyglet.window.key._9:
-            number = symbol - pyglet.window.key._0
-            if pyglet.window.key.MOD_CTRL & modifiers:
-                self.renderer.tile_render_node.map.random_sampler.survive ^= {number}
+        try:
+            if symbol == pyglet.window.key.ESCAPE:
+                self.close()
+            elif pyglet.window.key._0 <= symbol <= pyglet.window.key._9:
+                number = symbol - pyglet.window.key._0
+                if pyglet.window.key.MOD_CTRL & modifiers:
+                    self.renderer.tile_render_node.map.ca_sampler.survive ^= {number}
+                else:
+                    self.renderer.tile_render_node.map.ca_sampler.born ^= {number}
+                self.renderer.tile_render_node.map.clear_cache()
+                self.renderer.tile_render_node.last_map_center = None
             else:
-                self.renderer.tile_render_node.map.random_sampler.born ^= {number}
-            self.renderer.tile_render_node.last_map_center = None
-        else:
-            self.game.on_key_press(symbol, modifiers)
+                self.game.on_key_press(symbol, modifiers)
+        except:
+            traceback.print_exc()
+            self.close()
 
     def on_text(self, text):
         if text == ".":

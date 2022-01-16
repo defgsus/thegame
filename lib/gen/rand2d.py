@@ -1,10 +1,11 @@
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import numpy as np
 from numpy.random import Generator, PCG64, SeedSequence
 
 from .sampler2d import BlockSampler2DBase
 from .automaton import ClassicAutomaton
+from .perlin_noise import generate_perlin_noise_2d
 
 
 class RandomSampler2D(BlockSampler2DBase):
@@ -14,14 +15,38 @@ class RandomSampler2D(BlockSampler2DBase):
         self.seed = seed
 
     def get_block(self, block_x: int, block_y: int) -> np.ndarray:
-        seed = abs(
-                (self.seed * 2147483647)
-                ^ (block_x * 391939)
-                ^ (block_y * 2097593)
-        )
-        rnd = Generator(PCG64(seed))
+        rng = self.get_rng(self.seed, block_x, block_y)
+        return rng.random([self.block_size, self.block_size])
 
-        return rnd.random([self.block_size, self.block_size])
+
+class NoiseSampler2D(BlockSampler2DBase):
+
+    def __init__(
+            self,
+            resolution: int = 1,
+            seed: int = 1,
+            block_size: int = 32,
+    ):
+        super().__init__(block_size=block_size)
+        self.random_sampler = RandomSampler2D(seed, block_size=resolution)
+
+    def get_block(self, block_x: int, block_y: int) -> np.ndarray:
+        # need to get one block of initial data
+        #   + the first column and row of the next blocks
+        tl = self.random_sampler.get_block_cached(block_x, block_y)
+        tr = self.random_sampler.get_block_cached(block_x+1, block_y)
+        bl = self.random_sampler.get_block_cached(block_x, block_y+1)
+        br = self.random_sampler.get_block_cached(block_x+1, block_y+1)
+        noise = np.concatenate([
+            np.concatenate([tl, tr], axis=1),
+            np.concatenate([bl, br], axis=1),
+        ])
+        noise = noise[:self.random_sampler.block_size + 1, :self.random_sampler.block_size + 1]
+        return generate_perlin_noise_2d(
+            shape=(self.block_size, self.block_size),
+            res=(self.random_sampler.block_size, self.random_sampler.block_size),
+            values=noise,
+        )
 
 
 class AutomatonSampler2D(BlockSampler2DBase):

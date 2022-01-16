@@ -54,7 +54,8 @@ class GameRenderer:
         tile_tex = Texture2DNode(
             ASSET_PATH /
             #"w2e_curvy.png"
-            "cr31" / "wang2e.png"
+            "w2e_beach.png"
+            #"cr31" / "wang2e.png"
             #"cr31" / "circuit.png"
         )
         graph.add_node(tile_tex)

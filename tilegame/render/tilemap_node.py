@@ -10,13 +10,13 @@ from lib.gen import Worker
 
 from .shader_node import GameShaderNode
 from .rs import GameRenderSettings
-from ..map import TileMap
+from ..map import TilemapSampler
 from tests.util import Timer
 
 
 class TileMapNode(GameShaderNode):
 
-    def __init__(self, map: TileMap, name: str):
+    def __init__(self, map: TilemapSampler, name: str):
         super().__init__(name)
         self.map = map
         self.map_texture = Texture2D()
@@ -47,7 +47,7 @@ class TileMapNode(GameShaderNode):
             tile_pos += vec2(tile_idx % u_tile_set_size.x, (tile_idx / u_tile_set_size.x));
                
             vec4 color = texture(u_tex1, tile_pos / u_tile_set_size);
-            //color.xyz *= .2 + .8 * clamp(map.x/20., 0, 1);
+            color.xyz *= .2 + .8 * clamp(map.x/20., 0, 1);
                         
             float frame = smoothstep(0.6, 0., max(abs(gs.uv.x), abs(gs.uv.y)) - 1.);
             color *= .5 + .5 * frame;
@@ -103,7 +103,7 @@ class TileMapNode(GameShaderNode):
                 mx, my, mw, mh = map_center[0] - w, map_center[1] - h, w * 2 + 1, h * 2 + 1
                 self.map_worker.request(
                     "map",
-                    partial(self.map.get_map, mx, my, mw, mh),
+                    partial(self.map, mx, my, mw, mh),
                     extra=(w, h, map_center, rs.projection.scale)
                 )
                 map_array = None
@@ -116,7 +116,8 @@ class TileMapNode(GameShaderNode):
                 self.last_map_scale = scale
 
     def upload_map(self, float_array: np.ndarray):
-        assert float_array.dtype.name == "float32"
+        if float_array.dtype.name != "float32":
+            float_array = float_array.astype("float32")
         if not self.map_texture.is_created():
             self.map_texture.create()
         self.map_texture.bind()

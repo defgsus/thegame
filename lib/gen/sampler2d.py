@@ -22,6 +22,18 @@ class BlockSampler2DBase:
     def get_block(self, block_x: int, block_y: int) -> np.ndarray:
         raise NotImplementedError
 
+    def get_rng(self, seed: int, block_x: int, block_y: int) -> Generator:
+        """
+        Helper function to return a numpy Generator freshly seeded
+        with 2d coordinates.
+        """
+        seed = abs(
+            (seed * 2147483647)
+            ^ (block_x * 391939)
+            ^ (block_y * 2097593)
+        )
+        return Generator(PCG64(seed))
+
     def __call__(self, x: int, y: int, width: int, height: int) -> np.ndarray:
         # first fixed block
         block_x0 = x // self.block_size

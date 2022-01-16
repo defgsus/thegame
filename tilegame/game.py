@@ -3,14 +3,14 @@ import math
 import glm
 import pyglet
 
-from .map.tilemap import TileMap
+from .map.tilemap import TilemapSampler
 from .render.rs import GameRenderSettings
 
 
 class Game:
 
     def __init__(self):
-        self.tile_map = TileMap()
+        self.tile_map = TilemapSampler()
         self.player_pos = glm.vec2(0, 0)
         self.player_rotation = 0.
         # replaced by mainwindow

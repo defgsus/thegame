@@ -1,1 +1,1 @@
-from .tilemap import TileMap
+from .tilemap import TilemapSampler

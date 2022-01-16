@@ -30,7 +30,7 @@ class Timer:
 
     def spf(self, num_frames: Optional[int] = None) -> float:
         seconds = self.end_time - self.start_time
-        return round(seconds / (num_frames or self.num_frames), 2)
+        return round(seconds / (num_frames or self.num_frames), 4)
 
 
 def assert_numpy_equal(

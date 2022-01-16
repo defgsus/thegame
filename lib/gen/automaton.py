@@ -62,6 +62,23 @@ class ClassicAutomaton(CellularAutomatonBase):
         self.survive = set(survive)
 
     def step(self, count: int = 1):
+        new_cells = np.zeros([self.height, self.width], dtype="bool")
+        for i in range(count):
+            neigh = self.total_neighbours()
+            dead = self.cells == 0
+            alive = np.invert(dead)
+
+            for num_n in self.born:
+                new_cells |= dead & (neigh == num_n)
+            for num_n in self.survive:
+                new_cells |= alive & (neigh == num_n)
+
+        self.cells = new_cells.astype(self.cells.dtype)
+
+    def step_old(self, count: int = 1):
+        """
+        Don't use, this is the old python-loop version
+        """
         for i in range(count):
             neigh = self.total_neighbours()
             for y, row in enumerate(self.cells):

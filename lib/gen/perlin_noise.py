@@ -7,7 +7,15 @@ from typing import Tuple, Callable, Optional
 import numpy as np
 
 
-def interpolant(t):
+def interpolate_linear(t):
+    return t
+
+
+def interpolate_poly2(t):
+    return t*(3. - 2. * t)
+
+
+def interpolate_poly5(t):
     return t*t*t*(t*(t*6 - 15) + 10)
 
 
@@ -15,7 +23,7 @@ def generate_perlin_noise_2d(
         shape: Tuple[int, int],
         res: Tuple[int, int],
         tileable: Tuple[bool, bool] = (False, False),
-        interpolant: Callable[[np.ndarray], np.ndarray] = interpolant,
+        interpolant: Callable[[np.ndarray], np.ndarray] = interpolate_poly5,
         rng: Optional[np.random.Generator] = None,
         values: Optional[np.ndarray] = None,
 ):

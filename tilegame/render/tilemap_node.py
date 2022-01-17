@@ -32,28 +32,42 @@ class TileMapNode(GameShaderNode):
         #line 32
         uniform ivec2 u_tile_size;
         uniform ivec2 u_tile_set_size;
-                        
+        
+        vec3 wang_tile(in vec2 uv, int idx00, int idx10, int idx01, int idx11) {
+            float d = wang_tile_distance(uv, idx00);
+            //d = smin(d, wang_tile_distance(uv + vec2(2, 0), idx10));
+            
+            d -= .08 * (abs(sin(uv.x*3.1415)) + abs(sin(uv.y*6.28)));
+            
+            vec3 col1 = vec3(0.2, .5, .7);
+            vec3 col2 = vec3(0.8, 0.6, 0.2);
+            vec3 col = mix(col1, col2, smoothstep(0.05, -0.05, d));
+            return col;
+        }
+                    
         vec4 game_shader(in GameShader gs) {
             //return texture(u_tex4, gs.texCoord) / 10.;
             ivec2 map_pos = ivec2(gs.map_pos);
-            ivec4 map = ivec4(texelFetch(u_tex4, map_pos, 0));
+            ivec4 map00 = ivec4(texelFetch(u_tex4, map_pos, 0));
+            ivec4 map10 = ivec4(texelFetch(u_tex4, map_pos + ivec2(1, 0), 0));
+            ivec4 map01 = ivec4(texelFetch(u_tex4, map_pos + ivec2(0, 1), 0));
+            ivec4 map11 = ivec4(texelFetch(u_tex4, map_pos + ivec2(1, 1), 0));
             
             vec2 tile_pos = fract(gs.map_pos);
             
             // when using bilinear mag filter, this is needed 
             //tile_pos = tile_pos * (float(u_tile_size - 1.) + .5) / float(u_tile_size);
-            
-            //int tile_idx = int(map_pos.y + map_pos.x) % (u_tile_set_size.x * u_tile_set_size.y);
-            int tile_idx = map.x;
-            
-            //tile_pos += vec2(tile_idx % u_tile_set_size.x, (tile_idx / u_tile_set_size.x));   
-            //vec4 color = texture(u_tex1, tile_pos / u_tile_set_size);
-            vec4 color = vec4(wang_tile(tile_pos * 2. - 1., map.z), 1);
-            
-            color.xyz *= .2 + .8 * clamp(map.y/10., 0, 1);
                         
-            float frame = smoothstep(0.6, 0., max(abs(gs.uv.x), abs(gs.uv.y)) - 1.);
-            color *= .5 + .5 * frame;
+            //vec4 color = texture(u_tex1, tile_pos / u_tile_set_size);
+            vec4 color = vec4(wang_tile(tile_pos * 2. - 1., map00.z, map10.z, map01.z, map11.z), 1);
+            
+            color.xyz *= .2 + .8 * clamp(map00.y/10., 0, 1);
+                        
+            //float frame = smoothstep(0.6, 0., max(abs(gs.uv.x), abs(gs.uv.y)) - 1.);
+            vec2 screen_uv = gs.texCoord * 2. - 1.;
+            //float frame = smoothstep(1., .8, max(abs(screen_uv.x), abs(screen_uv.y)));
+            float frame = 1. - dot(screen_uv*.8, screen_uv);
+            color *= .7 + .3 * frame;
             return color;
         }
         """

@@ -44,6 +44,8 @@ class GameShaderNode(PostProcNode):
             vec2 texCoord;
             vec2 uv;
             vec2 map_pos;
+            vec2 top;       // normal
+            vec2 left;      // normal
         };
         
         vec2 rotate(in vec2 v, in float degree) {
@@ -67,7 +69,11 @@ class GameShaderNode(PostProcNode):
             
             vec2 map_pos_f = (u_camera * vec3(uv, 1)).xy;
             
-            GameShader gs = GameShader(fragCoord, texCoord, uv, map_pos_f);
+            GameShader gs = GameShader(
+                fragCoord, texCoord, uv, map_pos_f,
+                (u_camera * vec3(0, 1, 0)).xy,
+                (u_camera * vec3(-1, 0, 0)).xy
+            );
             fragColor = game_shader(gs);            
         }   
         """.replace("_GaMeShAdEr_", self.get_game_shader_code())

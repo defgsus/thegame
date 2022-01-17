@@ -10,6 +10,7 @@ from lib.opengl import *
 from .._path import ASSET_PATH
 from ..game import Game
 from .tilemap_node import TileMapNode
+from .wangtex_node import WangTextureNode
 from .rs import GameRenderSettings
 
 
@@ -64,5 +65,9 @@ class GameRenderer:
         graph.add_node(self.tile_render_node)
 
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)
+
+        if 0:
+            graph = RenderGraph()
+            graph.add_node(WangTextureNode("wangtex"))
 
         return graph

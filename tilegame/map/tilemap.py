@@ -60,8 +60,9 @@ class TilemapSampler(BlockSampler2DBase):
 
         wang_tiles = WangTiling.to_layout_indices(tiling)
 
-        map = wang_tiles.reshape([height, width, 1]).repeat(3, axis=2)
+        map = wang_tiles.reshape([height, width, 1]).repeat(4, axis=2)
         map[:, :, 1] = level * 10
         map[:, :, 2] = tiling
+        map[:, :, 3] = occupied
 
         return map

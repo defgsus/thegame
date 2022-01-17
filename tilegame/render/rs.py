@@ -6,14 +6,29 @@ from lib.opengl import RenderSettings
 
 class GameProjection:
 
-    def __init__(self):
+    def __init__(self, rs: "GameRenderSettings"):
+        self.rs = rs
         self.scale = 10.
-        self.rotation = 0.
+        self.rotation_deg = 0.
         self.location = glm.vec3(0)
         self._stack = []
 
+    def projection_matrix_4(self) -> glm.mat4:
+        scale = 1.
+        ratio = self.rs.render_width / self.rs.render_height
+        m = glm.ortho(-scale * ratio, scale * ratio, -scale, scale, -10, 10)
+        return m
+
+    def transformation_matrix_4(self) -> glm.mat4:
+        m = glm.rotate(
+            glm.mat4(1), -self.rotation_deg / 180 * glm.pi(), glm.vec3(0, 0, 1)
+        )
+        m = m * glm.scale(glm.mat4(), glm.vec3(2. / self.scale))
+        m = m * glm.translate(glm.mat4(), glm.vec3(-self.location.x, -self.location.y, 0))
+        return m
+
     def transformation_matrix(self) -> glm.mat3:
-        m = rotation_matrix_2d(self.rotation)
+        m = rotation_matrix_2d(self.rotation_deg)
         m *= self.scale * .5
         m[2][0] = self.location.x
         m[2][1] = self.location.y
@@ -22,14 +37,14 @@ class GameProjection:
     def push(self):
         self._stack.append({
             "scale": self.scale,
-            "rotation": self.rotation,
+            "rotation": self.rotation_deg,
             "location": self.location.__copy__(),
         })
 
     def pop(self):
         s = self._stack.pop(-1)
         self.scale = s["scale"]
-        self.rotation = s["rotation"]
+        self.rotation_deg = s["rotation"]
         self.location = s["location"]
 
     def __enter__(self):
@@ -54,4 +69,4 @@ def rotation_matrix_2d(degree: float) -> glm.mat3:
 class GameRenderSettings(RenderSettings):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.projection = GameProjection()
+        self.projection = GameProjection(self)

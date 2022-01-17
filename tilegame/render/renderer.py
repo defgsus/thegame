@@ -9,9 +9,10 @@ from lib.opengl import *
 
 from .._path import ASSET_PATH
 from ..game import Game
+from .rs import GameRenderSettings
 from .tilemap_node import TileMapNode
 from .wangtex_node import WangTextureNode
-from .rs import GameRenderSettings
+from .object_node import ObjectNode
 
 
 class GameRenderer:
@@ -32,7 +33,7 @@ class GameRenderer:
 
     def render(self):
         self.render_settings.projection.location = self.camera_pos
-        self.render_settings.projection.rotation = self.camera_rotation
+        self.render_settings.projection.rotation_deg = self.camera_rotation
         # self.render_settings.projection.rotation = math.sin(game_time/10.)*10.
 
         if self.graph is None:
@@ -65,6 +66,13 @@ class GameRenderer:
         graph.add_node(self.tile_render_node)
 
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)
+
+        self.object_node = ObjectNode(self.game)
+        graph.add_node(self.object_node)
+
+        mix_node = graph.add_node(postproc.Add("mix", count=2))
+        graph.connect(self.tile_render_node, 0, mix_node, 0)
+        graph.connect(self.object_node, 0, mix_node, 1)
 
         if 0:
             graph = RenderGraph()

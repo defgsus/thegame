@@ -18,6 +18,8 @@ class Shader(OpenGlBaseObject):
     DEFAULT_INCLUDE_PATH: Path = Path(__file__).resolve().parent.parent / "shaders"
 
     _RE_INCLUDE = re.compile(r"^\s*#include\s*<([^>]+)>\s*$")
+    _RE_LINE = re.compile(r"^\s*#line\s*(\d+)\s*$")
+    _RE_LOG_ERROR = re.compile(".*\((\d+)\) : error (.*)", re.MULTILINE)
 
     def __init__(
             self,
@@ -172,8 +174,7 @@ class Shader(OpenGlBaseObject):
         status = GLint(0)
         glGetShaderiv(shader, GL_COMPILE_STATUS, ctypes.byref(status))
         if not status:
-            #for i, line in enumerate(source.split("\n")):
-            #    print(i, line)
+            self._log += "\n".join(self._get_error_lines(source, self._log))
             print(self._log)
             raise OpenGlError(
                 f"'{self.name}' {shader_type_name} compilation error\n{self._log}"
@@ -182,6 +183,34 @@ class Shader(OpenGlBaseObject):
 
         glAttachShader(self._handle, shader)
         self._shaders.append(shader)
+
+    def _get_error_lines(self, source: str, log: str):
+        # TODO: this is messy
+        source_lines = dict()
+        count = 1
+        for line in source.splitlines():
+            match = self._RE_LINE.match(line)
+            if match:
+                count = int(match.groups()[0])
+            if count not in source_lines:
+                source_lines[count] = []
+            source_lines[count].append(line)
+            count += 1
+
+        ret_lines = []
+
+        for match in self._RE_LOG_ERROR.finditer(log):
+            line_num, message = match.groups()
+            line_num = int(line_num)
+            ret_lines.append("")
+            ret_lines.append(f"{line_num}: {message}")
+            for l_idx in range(max(1, line_num - 2), line_num + 2):
+                lines = source_lines.get(l_idx)
+                if lines:
+                    star = ">" if l_idx == line_num else " "
+                    for line in lines:
+                        ret_lines.append(f"  {star}{l_idx:8}: {line}")
+        return ret_lines
 
     def _get_uniforms(self):
         self._uniforms.clear()

@@ -142,5 +142,5 @@ class TileMapNode(GameShaderNode):
         self.map_texture.upload_numpy(
             float_array,
             width=float_array.shape[1],
-            input_format=gl.GL_RGB, gpu_format=gl.GL_RGB32F,
+            input_format=gl.GL_RGBA, gpu_format=gl.GL_RGBA32F,
         )

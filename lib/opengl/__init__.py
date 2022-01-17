@@ -17,3 +17,6 @@ from .RenderPipeline import RenderPipeline
 from .RenderSettings import RenderSettings
 from .ScreenQuad import ScreenQuad
 from .TextureNode import Texture2DNode
+
+from . import postproc
+

@@ -95,11 +95,14 @@ class TestRandomSamplerBenchmark(unittest.TestCase):
             "rnd32": self.benchmark(RandomSampler2D(block_size=32)),
             "automat32": self.benchmark(AutomatonSampler2D(block_size=32), num_frames=20),
             "automat64": self.benchmark(AutomatonSampler2D(block_size=64), num_frames=10),
+            "pnoise128-1": self.benchmark(NoiseSampler2D(resolution=1, block_size=128), num_frames=100),
+            "pnoise128-32": self.benchmark(NoiseSampler2D(resolution=32, block_size=128), num_frames=100),
+            "pnoise128-128": self.benchmark(NoiseSampler2D(resolution=128, block_size=128), num_frames=100),
         }
         print()
         for sampler, timers in data.items():
             for task, timer in timers.items():
                 print(
-                    f"{sampler:10} {task:20} {timer.seconds():10} total sec "
-                    f"{timer.fps():10} fps {timer.spf()*1000.:10} ms"
+                    f"{sampler:16} {task:16} {timer.seconds():10} total sec "
+                    f"{timer.fps():10,.0f} fps {timer.spf()*1000.:10.1f} ms"
                 )

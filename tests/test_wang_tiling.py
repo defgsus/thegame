@@ -136,3 +136,42 @@ class TestWangTiling(unittest.TestCase):
             expected_layout_indices,#.tolist(),
             layout_indices#.tolist()
         )
+
+
+@unittest.skipIf(not os.environ.get("BENCHMARK"), "define BENCHMARK to run")
+class TestWangTilingBenchmark(unittest.TestCase):
+
+    def benchmark(self, sampler: RandomSampler2D, num_frames: int = 300):
+        ret = dict()
+
+        occupied = (sampler.get_block(0, 0) > .5)
+
+        with Timer(num_frames) as timer:
+            for i in range(num_frames):
+                WangTiling.get_indices(occupied, include_occupied=False)
+        ret["get_indices"] = timer
+
+        with Timer(num_frames) as timer:
+            for i in range(num_frames):
+                wang_indices = WangTiling.get_indices(occupied, include_occupied=True)
+        ret["get_indices (thick)"] = timer
+
+        with Timer(num_frames) as timer:
+            for i in range(num_frames):
+                WangTiling.to_layout_indices(wang_indices)
+        ret["to_layout"] = timer
+
+        return ret
+
+    def test_benchmark(self):
+        data = {
+            "32x32": self.benchmark(RandomSampler2D(block_size=32)),
+            "256x256": self.benchmark(RandomSampler2D(block_size=256)),
+        }
+        print()
+        for sampler, timers in data.items():
+            for task, timer in timers.items():
+                print(
+                    f"{sampler:16} {task:20} {timer.seconds():10} total sec "
+                    f"{timer.fps():10,.0f} fps {timer.spf()*1000.:10.1f} ms"
+                )

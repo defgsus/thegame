@@ -13,6 +13,7 @@ class Game:
         self.tile_map = TilemapSampler()
         self.player_pos = glm.vec2(0, 0)
         self.player_rotation = 0.
+        self.player_walking = 0.
         # replaced by mainwindow
         self.render_settings = GameRenderSettings(32, 32)
 
@@ -24,7 +25,8 @@ class Game:
         }
         for key, dir in dir_mapping.items():
             if keys.get(key):
-                self.player_rotation -= speed * dir * 30.
+                self.player_walking += (1. - self.player_walking) * speed
+                self.player_rotation -= speed * dir * self.player_walking * 30.
 
         dir_mapping = {
             pyglet.window.key.UP: 1,
@@ -34,10 +36,13 @@ class Game:
         norm = glm.vec2(-math.sin(a), math.cos(a))
         for key, dir in dir_mapping.items():
             if keys.get(key):
-                self.player_pos += dir * speed * (1. + self.render_settings.projection.scale / 10.) * norm
+                self.player_walking += (1. - self.player_walking) * speed
+                scale = (1. + self.render_settings.projection.scale / 10.)
+                self.player_pos += dir * speed * scale * norm * self.player_walking
 
     def on_key_press(self, symbol, modifiers):
         pass
 
     def update(self, time: float, dt: float):
-        pass
+        speed = min(1., dt * 5.)
+        self.player_walking += (0. - self.player_walking) * speed

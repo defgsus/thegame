@@ -1,3 +1,4 @@
+import math
 from typing import Optional, Dict
 
 import glm
@@ -15,12 +16,12 @@ from tests.util import Timer
 
 class MeshObject:
 
-    def __init__(self, num_parts: int, name: str = "mesh"):
+    def __init__(self, num_parts: int = 3, name: str = "mesh"):
         self.name = name
         self.num_parts = num_parts
         self.part_transforms = [glm.mat4(1.) for i in range(self.num_parts)]
-        self.part_transforms[0] *= glm.translate(glm.mat4(1), glm.vec3(-1, 0, 0))
-        self.part_transforms[1] *= glm.translate(glm.mat4(1), glm.vec3(1, 0, 0))
+        #self.part_transforms[0] *= glm.translate(glm.mat4(1), glm.vec3(-1, 0, 0))
+        #self.part_transforms[1] *= glm.translate(glm.mat4(1), glm.vec3(1, 0, 0))
         self.mesh: Optional[TriangleMesh] = None
         self.drawable: Optional[Drawable] = None
         self._create_mesh()
@@ -92,6 +93,7 @@ class MeshObject:
 
     def render(self, projection: glm.mat4, transformation: glm.mat4):
         glEnable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
 
         transforms = np.array([m.to_list() for m in self.part_transforms], dtype="float32")
         transforms = transforms.flatten()
@@ -101,13 +103,33 @@ class MeshObject:
         self.drawable.shader.set_uniform("u_part_transformation[0]", transforms)
         self.drawable.draw()
 
+    def set_movement(self, t: float, amount: float):
+        t *= 5
+        head = glm.translate(glm.mat4(), glm.vec3(0, 0, 3))
+        head = glm.rotate(head, math.sin(t)*(.1+.2*amount), glm.vec3(0, 0, 1))
+        self.part_transforms[0] = head
+
+        d = -1
+        for i in range(2):
+            rest_pos = glm.vec3(.4 * d, 0.1, 0)
+            walk_pos = glm.vec3(.4*d, .3*math.sin(t+d*1.57), 0)
+            foot = glm.translate(glm.mat4(), glm.mix(rest_pos, walk_pos, amount))
+            foot = glm.scale(foot, glm.vec3(.3, .5, .3))
+            self.part_transforms[i+1] = foot
+            d = 1
+
     def _create_mesh(self):
         self.mesh = TriangleMesh()
         self.mesh.create_attribute("a_part", 1, 0., gl.GLfloat)
         factory = MeshFactory()
+
+        # head
         self.mesh.set_attribute_value("a_part", 0.)
         factory.add_dodecahedron(self.mesh)
+        # left food
         self.mesh.set_attribute_value("a_part", 1.)
-        #factory.translate((0, .5, 0))
+        factory.add_dodecahedron(self.mesh)
+        # right food
+        self.mesh.set_attribute_value("a_part", 2.)
         factory.add_dodecahedron(self.mesh)
 

@@ -27,9 +27,8 @@ class GameRenderer:
         self.camera_rotation = 0.
 
     def update(self, time: float, dt: float):
-        fac = min(1., dt)
-        self.camera_pos += fac * (self.game.player_pos - self.camera_pos)
-        self.camera_rotation += fac * (self.game.player_rotation - self.camera_rotation)
+        self.camera_pos += min(1., dt * 3.) * (self.game.player_pos - self.camera_pos)
+        self.camera_rotation += min(1., dt*.3) * (self.game.player_rotation - self.camera_rotation)
 
     def render(self):
         self.render_settings.projection.location = self.camera_pos

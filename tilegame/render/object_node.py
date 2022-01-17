@@ -20,10 +20,13 @@ class ObjectNode(RenderNode):
     def __init__(self, game: Game, name: str = "objects"):
         super().__init__(name)
         self.game = game
-        self.mesh = MeshObject(2)
+        self.mesh = MeshObject()
 
     def num_multi_sample(self) -> int:
         return 4
+
+    def has_depth_output(self) -> bool:
+        return True
 
     def create(self, render_settings: RenderSettings):
         pass
@@ -41,7 +44,7 @@ class ObjectNode(RenderNode):
         trans *= glm.rotate(glm.mat4(1), self.game.player_rotation / 180 * glm.pi(), glm.vec3(0, 0, 1))
 
         #trans *= glm.rotate(glm.mat4(1), rs.time / 2., glm.vec3(0.707, 0.707, 0))
-
+        self.mesh.set_movement(rs.time, self.game.player_walking)
         self.mesh.render(
             projection=proj,
             transformation=trans,

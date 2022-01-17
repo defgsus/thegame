@@ -50,15 +50,18 @@ class TilemapSampler(BlockSampler2DBase):
         threshold = .5
 
         occupied = (level > threshold).astype("int32")
-        tiling = WangTiling.get_edge_indices(occupied, bottom_up=True)
+        #tiling = WangTiling.get_edge_indices(occupied, bottom_up=True)
+        tiling = WangTiling.get_indices(occupied, bottom_up=True)
 
         if padding:
             tiling = tiling[padding:-padding, padding:-padding]
             occupied = occupied[padding:-padding, padding:-padding]
             level = level[padding:-padding, padding:-padding]
 
-        wang_tiles = WangTiling.to_layout_indices(tiling, occupied_mask=occupied.astype("bool"))
+        wang_tiles = WangTiling.to_layout_indices(tiling)
 
         map = wang_tiles.reshape([height, width, 1]).repeat(3, axis=2)
         map[:, :, 1] = level * 10
+        map[:, :, 2] = tiling
+
         return map

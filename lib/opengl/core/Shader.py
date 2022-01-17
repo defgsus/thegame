@@ -1,5 +1,6 @@
+import re
+from pathlib import Path
 from typing import Optional
-import ctypes
 
 from .base import *
 
@@ -13,6 +14,10 @@ class ShaderUniform:
 
 
 class Shader(OpenGlBaseObject):
+
+    DEFAULT_INCLUDE_PATH: Path = Path(__file__).resolve().parent.parent / "shaders"
+
+    _RE_INCLUDE = re.compile(r"^\s*#include\s*<([^>]+)>\s*$")
 
     def __init__(
             self,
@@ -62,10 +67,12 @@ class Shader(OpenGlBaseObject):
         return self._fragment_source
 
     def set_vertex_source(self, src: str):
+        src = self._add_includes(src)
         self._source_changed = src != self._vertex_source
         self._vertex_source = src
 
     def set_fragment_source(self, src: str):
+        src = self._add_includes(src)
         self._source_changed = src != self._fragment_source
         self._fragment_source = src
 
@@ -222,3 +229,37 @@ class Shader(OpenGlBaseObject):
         if do_print:
             print(s)
         return s
+
+    def get_include_file(self, filename: str) -> Optional[str]:
+        if ".." in filename:
+            raise ValueError(
+                f"Relative paths for includes are certainly not allowed"
+                f", got '{filename}' in shader '{self.name}"
+            )
+
+        fn = self.DEFAULT_INCLUDE_PATH / filename
+        if not fn.exists():
+            return None
+        return fn.read_text()
+
+    def _add_includes(self, code: str, included_set: Optional[set] = None):
+        if included_set is None:
+            included_set = set()
+
+        lines = code.splitlines()
+        ret_lines = []
+        for line in lines:
+            include_match = self._RE_INCLUDE.match(line)
+            if not include_match:
+                ret_lines.append(line)
+            else:
+                filename = include_match.groups()[0]
+                if filename not in included_set:
+                    included_set.add(filename)
+                    included_code = self.get_include_file(filename)
+                    if included_code is None:
+                        raise ValueError(f"Shader '{self.name}' could not include '{filename}'")
+                    included_code = self._add_includes(included_code, included_set=included_set)
+                    ret_lines += included_code.splitlines()
+
+        return "\n".join(ret_lines)

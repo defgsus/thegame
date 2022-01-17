@@ -28,10 +28,11 @@ class TileMapNode(GameShaderNode):
 
     def get_game_shader_code(self):
         return """
-        #line 31
+        #include <wang-tile.glsl>
+        #line 32
         uniform ivec2 u_tile_size;
         uniform ivec2 u_tile_set_size;
-                
+                        
         vec4 game_shader(in GameShader gs) {
             //return texture(u_tex4, gs.texCoord) / 10.;
             ivec2 map_pos = ivec2(gs.map_pos);
@@ -44,9 +45,11 @@ class TileMapNode(GameShaderNode):
             
             //int tile_idx = int(map_pos.y + map_pos.x) % (u_tile_set_size.x * u_tile_set_size.y);
             int tile_idx = map.x;
-            tile_pos += vec2(tile_idx % u_tile_set_size.x, (tile_idx / u_tile_set_size.x));
-               
-            vec4 color = texture(u_tex1, tile_pos / u_tile_set_size);
+            
+            //tile_pos += vec2(tile_idx % u_tile_set_size.x, (tile_idx / u_tile_set_size.x));   
+            //vec4 color = texture(u_tex1, tile_pos / u_tile_set_size);
+            vec4 color = vec4(wang_tile(tile_pos * 2. - 1., map.z), 1);
+            
             color.xyz *= .2 + .8 * clamp(map.y/10., 0, 1);
                         
             float frame = smoothstep(0.6, 0., max(abs(gs.uv.x), abs(gs.uv.y)) - 1.);

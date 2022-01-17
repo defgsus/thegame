@@ -66,35 +66,40 @@ class WangTiling:
         return "|".join(flags)
 
     @classmethod
-    def get_edge_indices(cls, map: np.ndarray, bottom_up: bool = False) -> np.ndarray:
+    def get_edge_indices(cls, map: np.ndarray, bottom_up: bool = False, include_occupied: bool = True) -> np.ndarray:
         occupied = np.pad(map, [1, 1])
-        return cls._get_edge_indices(occupied, bottom_up=bottom_up)
+        indices = cls._get_edge_indices(occupied, bottom_up=bottom_up)
+        if include_occupied:
+            indices |= map * cls.EDGE_MASK
+        return indices
 
     @classmethod
-    def get_corner_indices(cls, map: np.ndarray, bottom_up: bool = False) -> np.ndarray:
+    def get_corner_indices(cls, map: np.ndarray, bottom_up: bool = False, include_occupied: bool = True) -> np.ndarray:
         occupied = np.pad(map, [1, 1])
-        return cls._get_corner_indices(occupied, bottom_up=bottom_up)
+        indices = cls._get_corner_indices(occupied, bottom_up=bottom_up)
+        if include_occupied:
+            indices |= map * cls.CORNER_MASK
+        return indices
 
     @classmethod
-    def get_indices(cls, map: np.ndarray, bottom_up: bool = False) -> np.ndarray:
+    def get_indices(cls, map: np.ndarray, bottom_up: bool = False, include_occupied: bool = True) -> np.ndarray:
         occupied = np.pad(map, [1, 1])
         edges = cls._get_edge_indices(occupied, bottom_up=bottom_up)
         corners = cls._get_corner_indices(occupied, bottom_up=bottom_up)
-        return edges | corners
+        indices = edges | corners
+        if include_occupied:
+            indices |= map * (cls.EDGE_MASK | cls.CORNER_MASK)
+        return indices
 
     @classmethod
     def to_layout_indices(
             cls,
             indices: np.ndarray,
-            occupied_mask: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         layout_indices = np.zeros_like(indices)
         for wang_idx, layout_idx in cls.WANG_IDX_TO_LAYOUT_IDX.items():
             layout_indices[indices == wang_idx] = layout_idx
 
-        if occupied_mask is not None:
-            assert occupied_mask.dtype == "bool", f"mask must be bool, got '{occupied_mask.dtype}'"
-            layout_indices[occupied_mask] = cls.WANG_IDX_TO_LAYOUT_IDX[cls.T|cls.B|cls.L|cls.R]
         return layout_indices
 
     @classmethod

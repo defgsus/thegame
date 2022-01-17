@@ -45,7 +45,7 @@ class TestWangTiling(unittest.TestCase):
             [0, T  , T|R, T  , L],
             [0, 0  , 0  , T  , 0],
         ], dtype="int32")
-        edge_indices = WangTiling.get_edge_indices(map)
+        edge_indices = WangTiling.get_edge_indices(map, include_occupied=False)
         self.assertEqualWangIndices(expected_edge_indices, edge_indices)
 
         expected_layout_indices = [
@@ -76,12 +76,12 @@ class TestWangTiling(unittest.TestCase):
             [TR   , TR   , TL|TR, TL   , TL   ],
             [0    , 0    , TR   , 0    , TL   ],
         ], dtype="int32")
-        corner_indices = WangTiling.get_corner_indices(map)
+        corner_indices = WangTiling.get_corner_indices(map, include_occupied=False)
         self.assertEqualWangIndices(expected_corner_indices, corner_indices)
 
         assert_numpy_equal(
             edge_indices | corner_indices,
-            WangTiling.get_indices(map)
+            WangTiling.get_indices(map, include_occupied=False)
         )
 
     def test_001_edge_indices(self):
@@ -100,7 +100,7 @@ class TestWangTiling(unittest.TestCase):
             [R, T|R  , T|L|R  , T|L  , L],
             [0, T    , T      , T    , 0],
         ], dtype="int32")
-        edge_indices = WangTiling.get_edge_indices(map)
+        edge_indices = WangTiling.get_edge_indices(map, include_occupied=False)
         self.assertEqualWangIndices(expected_edge_indices, edge_indices)
 
         # test bottom-up mapping as well
@@ -111,10 +111,10 @@ class TestWangTiling(unittest.TestCase):
             [R, B|R  , B|L|R  , B|L  , L],
             [0, B    , B      , B    , 0],
         ], dtype="int32")
-        edge_indices_bottom_up = WangTiling.get_edge_indices(map, bottom_up=True)
+        edge_indices_bottom_up = WangTiling.get_edge_indices(map, bottom_up=True, include_occupied=False)
         self.assertEqualWangIndices(expected_edge_indices_bottom_up, edge_indices_bottom_up)
 
-    def test_001_edge_indices_layout(self):
+    def test_002_edge_indices_layout(self):
         map = np.array([
             [0, 0, 0, 0, 0],
             [0, 1, 1, 1, 0],
@@ -130,10 +130,8 @@ class TestWangTiling(unittest.TestCase):
             [1, 10   , 10  , 10  , 3],
             [0, 4    , 4   , 4   , 0],
         ], dtype="int32")
-        edge_indices = WangTiling.get_edge_indices(map)
-        layout_indices = WangTiling.to_layout_indices(
-            edge_indices, occupied_mask=map.astype("bool")
-        )
+        edge_indices = WangTiling.get_edge_indices(map, include_occupied=True)
+        layout_indices = WangTiling.to_layout_indices(edge_indices)
         assert_numpy_equal(
             expected_layout_indices,#.tolist(),
             layout_indices#.tolist()

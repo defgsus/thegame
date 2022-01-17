@@ -2,6 +2,8 @@ import re
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
+
 from .base import *
 
 
@@ -110,9 +112,15 @@ class Shader(OpenGlBaseObject):
                     v = (GLfloat * len(value))(*value)
                     glUniformMatrix3fv(u.location, 1, GL_FALSE, v)
                 elif u.type == GL_FLOAT_MAT4:
-                    value = sum((list(i) for i in value), [])
-                    v = (GLfloat * len(value))(*value)
-                    glUniformMatrix4fv(u.location, 1, GL_FALSE, v)
+                    if isinstance(value, np.ndarray):
+                        value = value.flatten()
+                        v = np.ctypeslib.as_ctypes(value)
+                        num = value.shape[0] // 16
+                    else:
+                        value = sum((list(i) for i in value), [])
+                        v = (GLfloat * len(value))(*value)
+                        num = len(value) // 16
+                    glUniformMatrix4fv(u.location, num, GL_FALSE, v)
                 else:
                     raise ValueError("Unsupported type enum %s for uniform %s" % (u.type, u.name))
         self._uniform_values.clear()

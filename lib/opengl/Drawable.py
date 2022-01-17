@@ -8,9 +8,10 @@ from .core.VertexArrayObject import VertexArrayObject
 
 
 DEFAULT_VERTEX_SRC = DEFAULT_SHADER_VERSION + """
-#line 9
+#line 11
 uniform mat4 u_projection;
 uniform mat4 u_transformation;
+uniform mat4 u_transformation_inv;
 
 in vec4 a_position;
 in vec3 a_normal;
@@ -23,11 +24,13 @@ out vec3 v_normal;
 out vec4 v_color;
 out vec2 v_texcoord;
 out vec3 v_ambient;
+out vec3 v_world_normal;
 
 void main()
 {
     v_pos = a_position;
     v_normal = a_normal;
+    v_world_normal = normalize((vec4(a_normal, 0.) * u_transformation_inv).xyz);
     v_color = a_color;
     v_texcoord = a_texcoord;
     v_ambient = a_ambient;
@@ -71,6 +74,7 @@ class Drawable:
         self.shader = Shader(DEFAULT_VERTEX_SRC, DEFAULT_FRAGMENT_SRC, name="%s-shader" % (self.name))
         self.shader.set_uniform("u_projection", glm.mat4(1))
         self.shader.set_uniform("u_transformation", glm.mat4(1))
+        self.shader.set_uniform("u_transformation_inv", glm.mat4(1))
         self._attributes_changed = True
         self._attributes = dict()
         self._elements = dict()
@@ -130,8 +134,8 @@ class Drawable:
                 att = self._attributes[a_name]
                 if self.shader.has_attribute(a_name):
                     self.vao.create_attribute_buffer(
-                        self.shader.attribute(a_name).location,
-                        att[0], att[2], att[1]
+                        attribute_location=self.shader.attribute(a_name).location,
+                        num_dimensions=att[0], Type=att[2], values=att[1]
                     )
             for prim_type in self._elements:
                 elem = self._elements[prim_type]

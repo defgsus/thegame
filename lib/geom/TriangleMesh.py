@@ -1,4 +1,7 @@
 import math
+
+from pyglet import gl
+
 from lib.pector import *
 from lib.opengl.Drawable import Drawable, GL_TRIANGLES, GL_LINES
 
@@ -19,19 +22,25 @@ class AbstractTriangleMesh:
     def is_empty(self):
         return NotImplementedError
 
-    def create_attribute(self, name, size):
+    def create_attribute(self, name: str, size: int, default):
+        raise NotImplementedError
+
+    def set_attribute_value(self, name: str, value):
         raise NotImplementedError
 
     def attribute_names(self):
         raise NotImplementedError
 
-    def attribute_size(self, name):
+    def attribute_size(self, name: str) -> int:
+        raise NotImplementedError
+
+    def attribute_type(self, name: str):
         raise NotImplementedError
 
     def vertices_array(self):
         raise NotImplementedError
 
-    def attributes_array(self, name):
+    def attributes_array(self, name: str):
         raise NotImplementedError
 
     def texcoords_array(self):
@@ -123,7 +132,8 @@ class AbstractTriangleMesh:
         for aname in self.attribute_names():
             a = self.attributes_array(aname)
             if a:
-                draw.set_attribute(aname, self.attribute_size(aname), a)
+                type = self.attribute_type(aname)
+                draw.set_attribute(aname, self.attribute_size(aname), a, type)
 
         return draw
 
@@ -189,6 +199,7 @@ class TriangleMesh(AbstractTriangleMesh):
         self._vertices = []
         self._texcoords = []
         self._attributes = dict()
+        self._default_attribute_values = dict()
         self._triangles = []
         self._lines = []
         self._quads = []
@@ -196,8 +207,14 @@ class TriangleMesh(AbstractTriangleMesh):
     def is_empty(self):
         return not self._vertices
 
-    def create_attribute(self, name, size):
-        self._attributes[name] = {"size": size, "values": []}
+    def create_attribute(self, name: str, size: int, default, type=gl.GLfloat):
+        self._attributes[name] = {"size": size, "values": [], "type": type}
+        self._default_attribute_values[name] = default
+
+    def set_attribute_value(self, name: str, value):
+        if name not in self._attributes:
+            raise ValueError(f"Unknown attribute name '{name}'")
+        self._default_attribute_values[name] = value
 
     def attribute_names(self):
         return self._attributes.keys()
@@ -205,8 +222,15 @@ class TriangleMesh(AbstractTriangleMesh):
     def attribute_size(self, name):
         return self._attributes[name]["size"]
 
+    def attribute_type(self, name: str):
+        return self._attributes[name]["type"]
+
     def add_vertex(self, pos):
         self._vertices.append(pos)
+        for name in self.attribute_names():
+            self._attributes[name]["values"].append(
+                self._default_attribute_values[name]
+            )
         return len(self._vertices)-1
 
     def add_texcoord(self, uv):

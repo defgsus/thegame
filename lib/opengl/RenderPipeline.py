@@ -26,6 +26,10 @@ class RenderPipeline:
     def get_stage(self, name: str) -> Optional["RenderStage"]:
         return self._stage_dict.get(name)
 
+    def update(self, rs: RenderSettings, dt: float):
+        for s in self.stages:
+            s.node.update(rs, dt)
+
     def render(self, rs: RenderSettings):
         self.debug(1, "render %s" % rs)
         self.render_settings = rs

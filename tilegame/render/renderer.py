@@ -6,7 +6,7 @@ from pyglet import gl
 import glm
 
 from lib.opengl import *
-
+from lib.math import FollowFilter
 from .._path import ASSET_PATH
 from ..game import Game
 from .rs import GameRenderSettings
@@ -25,15 +25,19 @@ class GameRenderer:
         self.frame_number = 0
         self.camera_pos = glm.vec2(-1, -5)
         self.camera_rotation = 0.
+        self._target_speed_filter = FollowFilter(follow_up=.03, follow_down=.01)
 
     def update(self, time: float, dt: float):
-        self.camera_pos += min(1., dt * 3.) * (self.game.player_pos - self.camera_pos)
-        self.camera_rotation += min(1., dt*.3) * (self.game.player_rotation - self.camera_rotation)
+        target = self.game.player
+        target_speed = self._target_speed_filter(target.average_speed)
+        target_pos = target.location.xy + target.direction_of_movement * target_speed * .5
+        self.camera_pos += min(1., dt * 3.) * (target_pos - self.camera_pos)
+        self.camera_rotation += min(1., dt*.3) * (self.game.player.rotation - self.camera_rotation)
+        self.pipeline.update(self.render_settings, dt)
 
     def render(self):
         self.render_settings.projection.location = self.camera_pos
         self.render_settings.projection.rotation_deg = self.camera_rotation
-        # self.render_settings.projection.rotation = math.sin(game_time/10.)*10.
 
         if self.graph is None:
             self.graph = self.create_render_graph()
@@ -66,7 +70,7 @@ class GameRenderer:
 
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)
 
-        self.object_node = ObjectNode(self.game)
+        self.object_node = ObjectNode(self.game.player)
         graph.add_node(self.object_node)
 
         mix_node = graph.add_node(postproc.Add("mix", count=2))

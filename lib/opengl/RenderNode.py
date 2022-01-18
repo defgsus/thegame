@@ -34,11 +34,14 @@ class RenderNode:
             s.append("depth")
         return s
 
-    def create(self, render_settings: RenderSettings):
+    def create(self, rs: RenderSettings):
         pass
 
     def release(self):
         pass
 
-    def render(self, render_settings: RenderSettings, pass_num: int):
+    def render(self, rs: RenderSettings, pass_num: int):
         raise NotImplementedError
+
+    def update(self, rs: RenderSettings, dt: float):
+        pass

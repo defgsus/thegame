@@ -1,3 +1,5 @@
+from typing import Optional
+
 import glm
 
 from . import DEFAULT_SHADER_VERSION
@@ -116,7 +118,12 @@ class Drawable:
         self._elements[primitive_type] = (values, Type)
         self._attributes_changed = True
 
-    def draw(self):
+    def draw(self, num_instances: Optional[int] = None, without_prepare: bool = False):
+        if not without_prepare:
+            self.prepare()
+        self.vao.draw_elements(num_instances=num_instances)
+
+    def prepare(self):
         if not self.shader.is_created():
             self.shader.create()
         if not self.shader.is_compiled() or self.shader.is_source_changed():
@@ -143,4 +150,3 @@ class Drawable:
 
         self.shader.bind()
         self.shader.update_uniforms()
-        self.vao.draw_elements()

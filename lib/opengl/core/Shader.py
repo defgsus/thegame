@@ -263,6 +263,8 @@ class Shader(OpenGlBaseObject):
         s = ""
         for u in list(self._uniforms.values()) + list(self._attributes.values()):
             s += "%3s %6s %2s %s\n" % (u.location, u.type, u.size, u.name)
+        if not s:
+            s = "None"
         if do_print:
             print(s)
         return s

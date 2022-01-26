@@ -17,8 +17,8 @@ from tests.util import Timer
 
 class ObjectNode(RenderNode):
 
-    def __init__(self, object: ObjectBase, name: str = "objects"):
-        super().__init__(name)
+    def __init__(self, object: ObjectBase, name: Optional[str] = None):
+        super().__init__(name or object.id)
         self.object = object
         self.mesh = self.object.create_mesh()
 

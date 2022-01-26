@@ -3,18 +3,21 @@ import math
 import glm
 import pyglet
 
-from .map.tilemap import TilemapSampler
 from .render.rs import GameRenderSettings
 from .objects import WalkerObject
+from .world import World
 
 
 class Game:
 
     def __init__(self):
-        self.tile_map = TilemapSampler()
-        self.player = WalkerObject("player")
+        self.world = World()
         # will be replaced by mainwindow
         self.render_settings = GameRenderSettings(32, 32)
+
+    @property
+    def player(self):
+        return self.world.player
 
     def check_keys(self, keys: dict, dt: float):
         speed = min(1., dt)
@@ -39,4 +42,4 @@ class Game:
         pass
 
     def update(self, time: float, dt: float):
-        self.player.update(time, dt)
+        self.world.update(time, dt)

@@ -21,7 +21,7 @@ class Add(PostProcNode):
                 f"vec4 col{i} = texture(u_tex{i}, texCoord);"
             )
             add_lines.append(
-                f"col0 = add_function(col{i-1}, col{i});"
+                f"col0 = add_function(col0, col{i});"
             )
 
         if self._mode == "add":

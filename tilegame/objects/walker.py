@@ -1,9 +1,10 @@
 import time
 import math
+from typing import Optional
 
 import glm
-
 from pyglet import gl
+import pybullet
 
 from lib.geom import TriangleMesh, MeshFactory
 
@@ -18,11 +19,18 @@ class WalkerObject(ObjectBase):
             id: str,
             location: glm.vec3 = glm.vec3(0),
             rotation: float = 0,
+            physics_client_id: int = 0,
     ):
-        super().__init__(id=id, location=location, rotation=rotation)
+        super().__init__(
+            id=id,
+            location=location,
+            rotation=rotation,
+            physics_client_id=physics_client_id,
+        )
         self._walk_time = 0.
         self._walking = 0.  # [0., 1.]
         self._head_rotation = 0.
+        self._body_id = None
 
     @property
     def walking(self) -> float:
@@ -36,7 +44,7 @@ class WalkerObject(ObjectBase):
 
     def turn(self, amount: float):
         self._walking += (1. - self._walking) * min(1, abs(amount) * 3.)
-        self._rotation -= amount * self._walking * 100.
+        self.rotate(-amount * self._walking * 100.)
         sign = -1 if amount < 0 else 1
         self._head_rotation += (-70*sign - self._head_rotation) * min(1., abs(amount) * 5.)
 
@@ -53,6 +61,14 @@ class WalkerObject(ObjectBase):
             self._head_rotation += (rest_head_rotation - self._head_rotation) * min(1., dt * 3.)
         else:
             self._head_rotation += (rest_head_rotation - self._head_rotation) * min(1., dt * 1.)
+
+        #if self._body_id is not None:
+        #    pybullet.resetBasePositionAndOrientation(
+        #        bodyUniqueId=self._body_id,
+        #        posObj=list(self._location),
+        #        ornObj=[0, 0, 0, 1],
+        #        physicsClientId=self._physics_client_id,
+        #    )
 
     def update_mesh(self, mesh: MeshObject, time: float, dt: float):
         t = self._walk_time
@@ -98,3 +114,18 @@ class WalkerObject(ObjectBase):
         factory.add_dodecahedron(mesh)
 
         return MeshObject(mesh, num_parts=3, name="walker-mesh")
+
+    def create_bullet_body(self):
+        self._shape_id = pybullet.createCollisionShape(
+            shapeType=pybullet.GEOM_BOX,
+            #radius=.5,
+            halfExtents=[.5, .5, .5],
+            physicsClientId=self._physics_client_id,
+        )
+        self._body_id = pybullet.createMultiBody(
+            baseMass=1.,
+            baseCollisionShapeIndex=self._shape_id,
+            basePosition=self._location + glm.vec3(0, 0, .5),
+            baseOrientation=pybullet.getQuaternionFromAxisAngle([1, 0, 0], -math.pi/2),
+            physicsClientId=self._physics_client_id,
+        )

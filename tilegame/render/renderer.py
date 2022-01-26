@@ -30,7 +30,7 @@ class GameRenderer:
     def update(self, time: float, dt: float):
         target = self.game.player
         target_speed = self._target_speed_filter(target.average_speed)
-        target_pos = target.location.xy + target.direction_of_movement * target_speed * .5
+        target_pos = target.location.xy #+ target.direction_of_movement * target_speed * .5
         self.camera_pos += min(1., dt * 3.) * (target_pos - self.camera_pos)
         self.camera_rotation += min(1., dt*.3) * (self.game.player.rotation - self.camera_rotation)
         self.pipeline.update(self.render_settings, dt)
@@ -65,17 +65,20 @@ class GameRenderer:
         )
         graph.add_node(tile_tex)
 
-        self.tile_render_node = TileMapNode(self.game.tile_map, "tilerender")
+        self.tile_render_node = TileMapNode(self.game.world.tile_map, "tilerender")
         graph.add_node(self.tile_render_node)
 
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)
 
         self.object_node = ObjectNode(self.game.player)
         graph.add_node(self.object_node)
+        self.object_node_2 = ObjectNode(self.game.world.object_map["sphere"])
+        graph.add_node(self.object_node_2)
 
-        mix_node = graph.add_node(postproc.Add("mix", count=2))
+        mix_node = graph.add_node(postproc.Add("mix", count=3))
         graph.connect(self.tile_render_node, 0, mix_node, 0)
         graph.connect(self.object_node, 0, mix_node, 1)
+        graph.connect(self.object_node_2, 0, mix_node, 2)
 
         if 0:
             graph = RenderGraph()

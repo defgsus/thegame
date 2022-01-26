@@ -119,7 +119,7 @@ class Drawable:
         self._attributes_changed = True
 
     def draw(self, num_instances: Optional[int] = None, without_prepare: bool = False):
-        if not without_prepare:
+        if not without_prepare or self.shader.is_source_changed():
             self.prepare()
         self.vao.draw_elements(num_instances=num_instances)
 

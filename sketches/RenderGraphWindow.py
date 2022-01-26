@@ -36,7 +36,7 @@ class RenderGraphWindow(pyglet.window.Window):
     def __init__(self, render_graph, render_settings=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.render_settings = render_settings or RenderSettings(320, 320)
+        self.render_settings = render_settings or RenderSettings(1024, 1024)
         self.live_transform = LiveTransformation()
         self.init_transform()
 

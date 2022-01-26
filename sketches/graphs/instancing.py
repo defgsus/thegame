@@ -1,3 +1,5 @@
+import random
+
 import glm
 
 from lib.opengl.core.base import *
@@ -82,19 +84,34 @@ class InstancingNode(RenderNode):
             fragColor = vec4(col, 1);
         }
         """)
+        if 0:
+            self.instance_colors = [
+                1, 0, 0, 1,
+                0, 1, 0, 1,
+                0, 0, 1, 1,
+                1, 1, 0, 1,
+            ]
+            self.instance_transforms = [
+                glm.mat4(1),
+                glm.translate(glm.mat4(1), glm.vec3(1, 0, 0)),
+                glm.translate(glm.mat4(1), glm.vec3(1, 1, 0)),
+                glm.rotate(glm.translate(glm.mat4(1), glm.vec3(-.5, 1, 0)), glm.pi()/4., glm.vec3(0, 1, 0)),
+            ]
+        else:
+            self.instance_colors = []
+            self.instance_transforms = []
+            for i in range(500):
+                self.instance_colors.append(random.uniform(0.1, 1.))
+                self.instance_colors.append(random.uniform(0.1, 1.))
+                self.instance_colors.append(random.uniform(0.1, 1.))
+                self.instance_colors.append(1.)
 
-        self.instance_colors = [
-            1, 0, 0, 1,
-            0, 1, 0, 1,
-            0, 0, 1, 1,
-            1, 1, 0, 1,
-        ]
-        self.instance_transforms = [
-            glm.mat4(1),
-            glm.translate(glm.mat4(1), glm.vec3(1, 0, 0)),
-            glm.translate(glm.mat4(1), glm.vec3(1, 1, 0)),
-            glm.rotate(glm.translate(glm.mat4(1), glm.vec3(-.5, 1, 0)), glm.pi()/4., glm.vec3(0, 1, 0)),
-        ]
+                self.instance_transforms.append(
+                    glm.translate(
+                        glm.mat4(1),
+                        20. * glm.vec3(random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1))
+                    )
+                )
 
     def num_multi_sample(self):
         return 32

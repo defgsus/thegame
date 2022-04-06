@@ -161,7 +161,7 @@ class VertexArrayObject(OpenGlBaseObject):
             for abuf in self._attrib_buffers:
                 abuf.bind()
                 abuf.set_attrib_pointer()
-        print(timer.fps())
+        # print(timer.fps())
 
         for elembuf in self._element_buffers:
             elembuf.bind()

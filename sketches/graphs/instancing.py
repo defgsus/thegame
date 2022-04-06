@@ -41,7 +41,9 @@ class InstancingNode(RenderNode):
             
             void main()
             {
-                vec4 position = a_instance_transform * a_position;
+                vec4 position = 
+                    a_instance_transform * 
+                    a_position;
                 
                 v_pos = position;
                 v_normal = a_normal;
@@ -134,22 +136,23 @@ class InstancingNode(RenderNode):
             divisor=1,
         )
 
-        flat_transforms = []
-        for mat in self.instance_transforms:
-            for col in mat:
-                for v in col:
-                    flat_transforms.append(v)
+        if self.drawable.shader.has_attribute("a_instance_transform"):
+            flat_transforms = []
+            for mat in self.instance_transforms:
+                for col in mat:
+                    for v in col:
+                        flat_transforms.append(v)
 
-            for i in range(4):
-                vao.create_attribute_buffer(
-                    attribute_location=self.drawable.shader.attribute("a_instance_transform").location + i,
-                    num_dimensions=4,
-                    Type=GLfloat,
-                    values=flat_transforms,
-                    stride=ctypes.sizeof(GLfloat) * 16,
-                    offset=ctypes.sizeof(ctypes.c_float) * 4 * i,
-                    divisor=1,
-                )
+                for i in range(4):
+                    vao.create_attribute_buffer(
+                        attribute_location=self.drawable.shader.attribute("a_instance_transform").location + i,
+                        num_dimensions=4,
+                        Type=GLfloat,
+                        values=flat_transforms,
+                        stride=ctypes.sizeof(GLfloat) * 16,
+                        offset=ctypes.sizeof(ctypes.c_float) * 4 * i,
+                        divisor=1,
+                    )
 
     def render(self, rs, pass_num):
         self.drawable.shader.set_uniform("u_time", rs.time)

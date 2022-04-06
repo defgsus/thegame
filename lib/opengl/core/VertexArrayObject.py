@@ -1,6 +1,7 @@
 from typing import Optional
 
 from .base import *
+from tests.util import Timer
 
 
 class BufferObject(OpenGlBaseObject):
@@ -156,9 +157,11 @@ class VertexArrayObject(OpenGlBaseObject):
 
     def draw_elements(self, num_instances: Optional[int] = None):
         """Draws all element_buffers"""
-        for abuf in self._attrib_buffers:
-            abuf.bind()
-            abuf.set_attrib_pointer()
+        with Timer() as timer:
+            for abuf in self._attrib_buffers:
+                abuf.bind()
+                abuf.set_attrib_pointer()
+        print(timer.fps())
 
         for elembuf in self._element_buffers:
             elembuf.bind()

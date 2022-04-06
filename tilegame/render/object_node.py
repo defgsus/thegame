@@ -45,7 +45,24 @@ class ObjectNode(RenderNode):
 
         trans *= self.object.transformation_matrix()
 
-        self.mesh.render(
-            projection=proj,
-            transformation=trans,
-        )
+        if 0:
+            self.mesh.render(
+                projection=proj,
+                transformation=trans,
+            )
+        else:
+            trans = self.object.transformation_matrix()
+            trans = glm.scale(glm.mat4(1), glm.vec3(.2, .2, .2))
+            self.mesh.render_multi(
+                projection=proj,
+                transformations=[
+                    trans,
+                    glm.translate(trans, glm.vec3(-1, -1, 0)),
+                    #glm.mat4(1),
+                    glm.translate(trans, glm.vec3(1, 1, 0)),
+                    glm.translate(trans, glm.vec3(.1, 1, 0)),
+                    glm.translate(trans, glm.vec3(.2, 1, 0)),
+                    glm.translate(trans, glm.vec3(.3, 1, 0)),
+                    #glm.translate(glm.mat4(1), glm.vec3(2, 0, 0)),
+                ],
+            )

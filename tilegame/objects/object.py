@@ -64,10 +64,10 @@ class ObjectBase:
                 physicsClientId=self._physics_client_id,
             )
             mat3 = pybullet.getMatrixFromQuaternion(quat)
-            print(
-                [round(v, 2) for v in quat],
-                [round(v, 2) for v in mat3],
-            )
+            #print(
+            #    [round(v, 2) for v in quat],
+            #    [round(v, 2) for v in mat3],
+            #)
             return glm.vec2(mat3[2], mat3[5])#, mat3[8])
 
     @property

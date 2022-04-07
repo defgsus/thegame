@@ -27,7 +27,6 @@ class MainWindow(pyglet.window.Window):
         self.keys = pyglet.window.key.KeyStateHandler()
         self.push_handlers(self.keys)
 
-        # time(r)
         self.start_time = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / 60.0)
         # pyglet.clock.set_fps_limit(60)
@@ -40,6 +39,7 @@ class MainWindow(pyglet.window.Window):
         return time.time() - self.start_time
 
     def update(self, dt: float):
+        time = self.time()
         self.game.render_settings = self.renderer.render_settings
         self.check_keys(dt)
         self.game.check_keys(self.keys, dt)

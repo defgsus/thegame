@@ -46,8 +46,9 @@ class CellularAutomatonBase:
 
     def init_random(self, probability: float = .5, seed: Optional[int] = None):
         rnd = random.Random(seed)
-        for i in range(100):
-            rnd.getrandbits(8)
+        if seed:
+            for i in range(100):
+                rnd.getrandbits(8)
         for row in self.cells:
             for i in range(self.width):
                 row[i] = 1 if random.random() < probability else 0

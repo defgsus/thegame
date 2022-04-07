@@ -1,12 +1,10 @@
-from functools import partial
-from typing import Optional, Dict
+from typing import Optional, Dict, Tuple
 
 import glm
 import numpy as np
 
 from lib.opengl.core.base import *
 from lib.opengl import *
-from lib.gen import Worker
 
 from .shader_node import GameShaderNode
 from .rs import GameRenderSettings
@@ -20,12 +18,14 @@ class TileMapNode(GameShaderNode):
             self,
             name: str,
             map: TileMap,
+            tile_size: Tuple[int, int],
+            tile_set_size: Tuple[int, int],
     ):
         super().__init__(name)
         self.map = map
         self.map_texture = Texture2D()
-        self.tile_size = (16, 16)
-        self.tile_set_size = (2, 2)
+        self.tile_size = tile_size
+        self.tile_set_size = tile_set_size
         self.last_map_center = None
         self.last_map_offset = None
         self.last_map_scale = None
@@ -46,14 +46,16 @@ class TileMapNode(GameShaderNode):
             if (map_offset.y < 0)
                 offset.y = -1. + offset.y;
             
-            vec2 tile_pos = fract(gs.map_pos) - offset;
+            vec2 tile_pos = fract(gs.map_pos);
             
             // when using bilinear mag filter, this is needed 
-            //tile_pos = tile_pos * (float(u_tile_size - 1.) + .5) / float(u_tile_size);
+            //tile_pos = tile_pos * (float(u_tile_size - 2.) + 1.) / float(u_tile_size);
+            
+            tile_pos -= offset;
             
             vec2 tile_tex_pos = tile_pos + vec2(tile_idx % u_tile_set_size.x, tile_idx / u_tile_set_size.x);
             vec4 color = texture(u_tex1, tile_tex_pos / u_tile_set_size);
-            vec2 r = .5 / u_tile_size;
+            vec2 r = .1 / u_tile_size;
             color = mix(color, vec4(0), smoothstep(r.x, -r.x, tile_pos.x));
             color = mix(color, vec4(0), smoothstep(r.y, -r.y, tile_pos.y));
             color = mix(color, vec4(0), smoothstep(1.-r.x, 1.+r.x, tile_pos.x));
@@ -70,18 +72,20 @@ class TileMapNode(GameShaderNode):
             vec4 map11 = vec4(texelFetch(u_tex4, map_pos - ivec2(1, 1), 0));
             
             vec4 color = render_tile(gs, map00, ivec2(0, 0));
-            vec4 color2 = render_tile(gs, map10, ivec2(-1, 0));
-            color = mix(color, color2, color2.a);
-            color2 = render_tile(gs, map01, ivec2(0, -1));
-            color = mix(color, color2, color2.a);
-            color2 = render_tile(gs, map11, ivec2(-1, -1));
-            color = mix(color, color2, color2.a);
-                 
+            if (true) {
+                vec4 color2 = render_tile(gs, map10, ivec2(-1, 0));
+                color = mix(color, color2, color2.a);
+                color2 = render_tile(gs, map01, ivec2(0, -1));
+                color = mix(color, color2, color2.a);
+                color2 = render_tile(gs, map11, ivec2(-1, -1));
+                color = mix(color, color2, color2.a);
+            }
+                             
             //float frame = smoothstep(0.6, 0., max(abs(gs.uv.x), abs(gs.uv.y)) - 1.);
             vec2 screen_uv = gs.texCoord * 2. - 1.;
             //float frame = smoothstep(1., .8, max(abs(screen_uv.x), abs(screen_uv.y)));
             float frame = 1. - dot(screen_uv*.8, screen_uv);
-            color *= .7 + .3 * frame;
+            color.xyz *= .7 + .3 * frame;
             return color;
         }
         """

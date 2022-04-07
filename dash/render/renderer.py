@@ -56,13 +56,28 @@ class GameRenderer:
 
         tile_tex = Texture2DNode(
             ASSET_PATH /
-            "tileset01.png"
+            "tileset03.png"
         )
         graph.add_node(tile_tex)
 
-        self.tile_render_node = TileMapNode("tilerender", self.game.world.tile_map)
+        self.tile_render_node = TileMapNode(
+            "tilerender", self.game.world.tile_map,
+            tile_size=(16, 16),
+            tile_set_size=(10, 6),
+        )
         graph.add_node(self.tile_render_node)
-
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)
+
+        self.tile_render_node2 = TileMapNode(
+            "tilerender2", self.game.world.object_map,
+            tile_size=(16, 16),
+            tile_set_size=(10, 6),
+        )
+        graph.add_node(self.tile_render_node2)
+        graph.connect(tile_tex, 0, self.tile_render_node2, mag_filter=gl.GL_NEAREST)
+
+        mix_node = graph.add_node(postproc.Add("mix", count=2))
+        graph.connect(self.tile_render_node, 0, mix_node, 0)
+        graph.connect(self.tile_render_node2, 0, mix_node, 1)
 
         return graph

@@ -72,6 +72,8 @@ class GameRenderer:
 
         self.object_node = ObjectNode(
             "objects", self.game.world.object_map,
+            tile_size=(16, 16),
+            tile_set_size=(10, 6),
         )
         graph.add_node(self.object_node)
         graph.connect(tile_tex, 0, self.object_node, mag_filter=gl.GL_NEAREST)

@@ -1,5 +1,7 @@
 from typing import Optional
 
+import numpy as np
+
 from .base import *
 from tests.util import Timer
 
@@ -39,7 +41,10 @@ class BufferObject(OpenGlBaseObject):
         Buffer must be bound.
         """
         self.check_created("upload")
-        ptr = (Type * len(values))(*values)
+        if isinstance(values, np.ndarray):
+            ptr = np.ctypeslib.as_ctypes(values)
+        else:
+            ptr = (Type * len(values))(*values)
         self.size = ctypes.sizeof(Type) * len(values)
         #print("upload", self.target, self.size, ptr, self.storage_type)
         glBufferData(self.target, self.size, ptr, self.storage_type)

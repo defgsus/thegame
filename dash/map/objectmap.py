@@ -11,33 +11,48 @@ import pymunk
 class ObjectMap:
 
     def __init__(self, static_map: TileMap):
-        self.default_friction = 0.1
+        self.default_friction = 1.
 
         self.static_map = static_map
         self.objects: List[Object] = []
-        self.state_id = 1
         self.space = pymunk.Space()
         self.space.gravity = (0, -10)
         self.static_objects = dict()
         self.last_static_map_state_id = None
         self._add_map_boundaries()
 
-    def set_dirty(self):
-        """
-        Call after changes to force re-rendering
-        """
-        self.state_id += 1
+    @property
+    def width(self) -> int:
+        return self.static_map.width
 
-    def add_object(self, type: str, pos: Tuple[float, float]) -> Object:
-        o = Object(self.space, pos, mass=1, friction=self.default_friction)
+    @property
+    def height(self) -> int:
+        return self.static_map.height
+
+    def add_object(
+            self,
+            shape_type: str,
+            pos: Tuple[float, float],
+            scale: float = 1.,
+    ) -> Object:
+        o = Object(
+            space=self.space,
+            shape_type=shape_type,
+            pos=pos,
+            mass=1,
+            scale=scale,
+            friction=self.default_friction,
+        )
         self.objects.append(o)
-        self.space.add(o.body, o.shape)
+        if o.body != self.space.static_body:
+            self.space.add(o.body)
+        self.space.add(o.shape)
         return o
 
     def update(self, time: float, dt: float):
         if self.static_map.state_id != self.last_static_map_state_id:
             self.last_static_map_state_id = self.static_map.state_id
-            #self.space.
+            self._update_static_map_objects()
 
         fixed_dt = 1./200.
         while dt > 0:
@@ -58,3 +73,48 @@ class ObjectMap:
             shape = pymunk.Segment(self.space.static_body, seg_start, seg_end, 1)
             shape.friction = self.default_friction
             self.space.add(shape)
+
+    def _update_static_map_objects(self):
+        shapes_to_add = []
+        shapes_to_remove = []
+        for pos, cell in self.static_map.iter_cells():
+            shape_type = None
+            if cell[0] > 0:
+                shape_type = "box"
+
+            if not shape_type:
+                if pos in self.static_objects:
+                    o = self.static_objects.pop(pos)
+                    shapes_to_remove.append(o.shape)
+            else:
+                if pos not in self.static_objects:
+                    o = Object(
+                        space=self.space,
+                        shape_type=shape_type,
+                        pos=(pos[0] + .5, pos[1] + .5),
+                        mass=0,
+                        friction=self.default_friction,
+                    )
+                    self.static_objects[pos] = o
+                    shapes_to_add.append(o.shape)
+
+        for s in shapes_to_remove:
+            self.space.remove(s)
+        for s in shapes_to_add:
+            self.space.add(s)
+
+    def dump_object_map(self):
+        map = [[" "] * self.width for _ in range(self.height)]
+        for pos, o in self.static_objects.items():
+            x, y = int(o.position[0]), int(o.position[1])
+            #x, y = pos
+            if 0 <= x < self.width and 0 <= y < self.height:
+                map[y][x] = "#"
+
+        for o in self.objects:
+            x, y = int(o.position[0]), int(o.position[1])
+            if 0 <= x < self.width and 0 <= y < self.height:
+                map[y][x] = "*"
+
+        for row in reversed(map):
+            print("".join(row))

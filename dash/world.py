@@ -8,7 +8,7 @@ from .map import TileMap, Object, ObjectMap
 class World:
 
     def __init__(self):
-        self.tile_map = TileMap((512, 512))
+        self.tile_map = TileMap((16, 16))
         self.tile_map.set_outside(12, 0, 0, 0)
         #self.tile_map.random()
         self.init_map_gol(self.tile_map)
@@ -21,7 +21,10 @@ class World:
                 if pos not in pos_set:
                     pos_set.add(pos)
                     if not self.tile_map.map[pos[1], pos[0], 0]:
-                        self.object_map.add_object("stuff", (pos[0] + .5, pos[1] + .5))
+                        self.object_map.add_object(
+                            shape_type="box" if i == 0 else "circle",
+                            pos=(pos[0] + .5, pos[1] + .5),
+                        )
                         break
 
     @property
@@ -44,7 +47,6 @@ class World:
                         o.body.position[0] + random.randint(-1, 1) * .1,
                         o.body.position[1] + random.randint(-1, 1) * .1,
                     )
-                    self.object_map.set_dirty()
 
         self.object_map.update(time, dt)
 

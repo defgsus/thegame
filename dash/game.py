@@ -31,7 +31,6 @@ class Game:
                     self.player.position[0] + d[0],
                     self.player.position[1] + d[1],
                 )
-                self.world.object_map.set_dirty()
 
     def on_key_press(self, symbol, modifiers):
         pass

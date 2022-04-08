@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Generator
 
 import numpy as np
 
@@ -71,3 +71,8 @@ class TileMap:
 
     def _outside_array(self, height: int, width: int) -> np.ndarray:
         return self._outside.repeat(width, axis=1).repeat(height, axis=0)
+
+    def iter_cells(self) -> Generator[Tuple[int, int, np.ndarray], None, None]:
+        for y in range(self.height):
+            for x in range(self.width):
+                yield (x, y), self.map[y, x]

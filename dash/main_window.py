@@ -84,7 +84,7 @@ class MainWindow(pyglet.window.Window):
             print("-- opengl assets --")
             OpenGlAssets.dump()
             print("-- object map --")
-            self.game.world.object_map.dump_object_map()
+            self.game.world.objects.dump_object_map()
         elif text == "f":
             self.set_fullscreen(not self.fullscreen)
 

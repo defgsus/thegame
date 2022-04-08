@@ -25,16 +25,18 @@ class Object:
             shape_type: str,
             pos: Tuple[float, float],
             scale: float = 1.,
-            mass: float = 0,
-            friction: float = 0.1,
+            mass: float = 1,
+            static: bool = False,
+            friction: float = 1.,
     ):
         self.space = space
         self.shape_type = shape_type
+        self.static = static
         self._scale = scale
 
         padding = 0.03
 
-        if mass:
+        if not static:
             if self.shape_type == "box":
                 moment = pymunk.moment_for_box(mass, (self.scale, self.scale))
             elif self.shape_type == "circle":
@@ -50,6 +52,8 @@ class Object:
                 self.shape = Poly.create_box(self.body, (1, 1))
             elif self.shape_type == "circle":
                 self.shape = Circle(self.body, self.scale / 2. - padding)
+
+        # static
         else:
             self.mass = 0
             self.body = self.space.static_body
@@ -88,8 +92,9 @@ class Object:
         return f"Object({self.mass}, {self.position})"
 
     def apply_impulse(self, impulse: Tuple[float, float], point: Optional[Tuple[float, float]] = (0, 0)):
-        point = self.position + point
-        self.body.apply_impulse_at_world_point(impulse, point)
+        if not self.static:
+            point = self.position + point
+            self.body.apply_impulse_at_world_point(impulse, point)
 
     def add_to_mesh(self, mesh: TriangleMesh):
         offset = self.body.position
@@ -124,3 +129,8 @@ class Object:
                     vertices[i+1],
                     vertices[i],
                 )
+
+    def update(self, time: float, dt: float):
+        pass
+        # self.apply_impulse((0, -min(1., dt * 10.)))
+

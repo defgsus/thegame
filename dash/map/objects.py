@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Dict
 
 import numpy as np
 import pymunk
@@ -6,19 +6,25 @@ import pymunk
 from .tilemap import TileMap
 from .object import Object
 from tests.util import Timer
+from ..control import ControllerBase
 
 
 class Objects:
 
     def __init__(self, static_map: TileMap):
         self.default_friction = 1.
+        self.physics_step_dt = 1. / 200.
 
         self.static_map = static_map
         self.objects: List[Object] = []
+        self.controllers: List[ControllerBase] = []
+
         self.space = pymunk.Space()
         self.space.gravity = (0, -10)
         self.static_objects = dict()
         self.last_static_map_state_id = None
+        self.last_applied_dt = 0.
+
         self._add_map_boundaries()
 
     @property
@@ -34,12 +40,14 @@ class Objects:
             shape_type: str,
             pos: Tuple[float, float],
             scale: float = 1.,
+            mass: float = 1,
     ) -> Object:
         o = Object(
             space=self.space,
             shape_type=shape_type,
             pos=pos,
-            mass=1,
+            mass=mass,
+            static=False,
             scale=scale,
             friction=self.default_friction,
         )
@@ -49,15 +57,25 @@ class Objects:
         self.space.add(o.shape)
         return o
 
+    def add_controller(self, controller: ControllerBase):
+        self.controllers.append(controller)
+
     def update(self, time: float, dt: float):
+        for controller in self.controllers:
+            controller.update(time, dt)
+
+        for o in self.objects:
+            o.update(time, dt)
+
         if self.static_map.state_id != self.last_static_map_state_id:
             self.last_static_map_state_id = self.static_map.state_id
             self._update_static_map_objects()
 
-        fixed_dt = 1./200.
-        while dt > 0:
-            self.space.step(fixed_dt)
-            dt -= fixed_dt
+        applied_dt = dt + self.last_applied_dt
+        while applied_dt > 0:
+            self.space.step(self.physics_step_dt)
+            applied_dt -= self.physics_step_dt
+        self.last_applied_dt = -applied_dt
 
     def dump_objects(self, file=None):
         for i, o in enumerate(self.objects):
@@ -93,7 +111,7 @@ class Objects:
                             space=self.space,
                             shape_type=shape_type,
                             pos=(pos[0] + .5, pos[1] + .5),
-                            mass=0,
+                            static=True,
                             friction=self.default_friction,
                         )
                         self.static_objects[pos] = o

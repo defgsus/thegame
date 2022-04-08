@@ -73,7 +73,7 @@ class GameRenderer:
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)
 
         self.object_node = ObjectsNode(
-            "objects", self.game.world.object_map,
+            "objects", self.game.world.objects,
             tile_size=(16, 16),
             tile_set_size=(10, 6),
         )
@@ -82,7 +82,7 @@ class GameRenderer:
 
         if 0:
             self.debug_node = ObjectDebugNode(
-                "debug", self.game.world.object_map,
+                "debug", self.game.world.objects,
             )
             graph.add_node(self.debug_node)
 

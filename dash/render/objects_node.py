@@ -51,7 +51,8 @@ class ObjectsNode(GameShaderNode):
         
         void main()
         {
-            vec4 position = a_position * a_element_buffer.w;
+            vec4 position = a_position;
+            position.xy *= a_element_buffer.w;
             position.xy = rotate_z(position.xy, a_element_buffer.z) + a_element_buffer.xy;
             
             int tile_idx = int(a_element_texture.w + .1);

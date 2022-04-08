@@ -22,15 +22,15 @@ class World:
                 if pos not in pos_set:
                     pos_set.add(pos)
                     if not self.tile_map.map[pos[1], pos[0], 0]:
-                        o = self.objects.add_object(
-                            shape_type="box" if i != 0 and random.random() < .2 else "circle",
-                            pos=(pos[0] + .5, pos[1] + .5),
-                            mass=1 if i == 0 else 10,
-                            scale=.66 if i == 0 else 1,
-                        )
                         if i == 0:
-                            o.controller = PlayerBugController(o)
-                            self.objects.add_controller(o.controller)
+                            controller = PlayerBugController(self.objects, pos=(pos[0] + .5, pos[1] + .5))
+                        else:
+                            o = self.objects.add_object(
+                                shape_type="box" if i != 0 and random.random() < .2 else "circle",
+                                pos=(pos[0] + .5, pos[1] + .5),
+                                mass=10,
+                                scale=1,
+                            )
                         break
 
     @property

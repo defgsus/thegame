@@ -106,6 +106,9 @@ class VertexArrayObject(OpenGlBaseObject):
                 buf.release()
         self._element_buffers.clear()
 
+    def is_empty(self) -> bool:
+        return bool(self._element_buffers)
+
     def create_attribute_buffer(
             self,
             attribute_location: int,

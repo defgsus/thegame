@@ -1,5 +1,6 @@
 import glm
 import math
+from typing import Tuple
 
 from lib.opengl import RenderSettings
 
@@ -10,7 +11,7 @@ class GameProjection:
         self.rs = rs
         self.scale = 10.
         self.rotation_deg = 0.
-        self.location = glm.vec3(0)
+        self.location = glm.vec2(0)
         self._stack = []
 
     def projection_matrix_4(self) -> glm.mat4:
@@ -70,3 +71,25 @@ class GameRenderSettings(RenderSettings):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.projection = GameProjection(self)
+
+    def is_object_visible(self, pos: Tuple[float, float], radius: float) -> bool:
+        if self.render_width > self.render_height:
+            width = self.render_width / self.render_height
+            height = 1.
+        else:
+            width = 1.
+            height = self.render_height / self.render_width
+
+        pos0 = (
+            (pos[0] - radius - self.projection.location.x) / self.projection.scale,
+            (pos[1] - radius - self.projection.location.y) / self.projection.scale,
+        )
+        pos1 = (
+            (pos[0] + radius - self.projection.location.x) / self.projection.scale,
+            (pos[1] + radius - self.projection.location.y) / self.projection.scale,
+        )
+
+        return (
+                pos0[0] >= -width and pos0[1] >= -height
+            and pos1[0] <= width and pos1[1] <= height
+        )

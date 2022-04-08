@@ -1,11 +1,11 @@
 from typing import Tuple, Optional, List
 
 import numpy as np
+import pymunk
 
 from .tilemap import TileMap
 from .object import Object
-
-import pymunk
+from tests.util import Timer
 
 
 class ObjectMap:
@@ -66,7 +66,7 @@ class ObjectMap:
     def _add_map_boundaries(self):
         for seg_start, seg_end in (
                 ((-1, -1), (self.static_map.width, -1)),
-                ((-1, self.static_map.height), (self.static_map.width, -1)),
+                ((-1, self.static_map.height), (self.static_map.width, self.static_map.height)),
                 ((-1, -1), (-1, self.static_map.height)),
                 ((self.static_map.width, -1), (self.static_map.width, self.static_map.height)),
         ):
@@ -75,33 +75,39 @@ class ObjectMap:
             self.space.add(shape)
 
     def _update_static_map_objects(self):
-        shapes_to_add = []
-        shapes_to_remove = []
-        for pos, cell in self.static_map.iter_cells():
-            shape_type = None
-            if cell[0] > 0:
-                shape_type = "box"
+        with Timer() as timer:
+            shapes_to_add = []
+            shapes_to_remove = []
+            for pos, cell in self.static_map.iter_cells():
+                shape_type = None
+                if cell[0] > 0:
+                    shape_type = "box"
 
-            if not shape_type:
-                if pos in self.static_objects:
-                    o = self.static_objects.pop(pos)
-                    shapes_to_remove.append(o.shape)
-            else:
-                if pos not in self.static_objects:
-                    o = Object(
-                        space=self.space,
-                        shape_type=shape_type,
-                        pos=(pos[0] + .5, pos[1] + .5),
-                        mass=0,
-                        friction=self.default_friction,
-                    )
-                    self.static_objects[pos] = o
-                    shapes_to_add.append(o.shape)
+                if not shape_type:
+                    if pos in self.static_objects:
+                        o = self.static_objects.pop(pos)
+                        shapes_to_remove.append(o.shape)
+                else:
+                    if pos not in self.static_objects:
+                        o = Object(
+                            space=self.space,
+                            shape_type=shape_type,
+                            pos=(pos[0] + .5, pos[1] + .5),
+                            mass=0,
+                            friction=self.default_friction,
+                        )
+                        self.static_objects[pos] = o
+                        shapes_to_add.append(o.shape)
 
-        for s in shapes_to_remove:
-            self.space.remove(s)
-        for s in shapes_to_add:
-            self.space.add(s)
+        print("create shapes", timer)
+
+        with Timer() as timer:
+            for s in shapes_to_remove:
+                self.space.remove(s)
+            for s in shapes_to_add:
+                self.space.add(s)
+
+        print("add/remove shapes", timer)
 
     def dump_object_map(self):
         map = [[" "] * self.width for _ in range(self.height)]

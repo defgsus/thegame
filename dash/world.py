@@ -8,15 +8,15 @@ from .map import TileMap, Object, ObjectMap
 class World:
 
     def __init__(self):
-        self.tile_map = TileMap((16, 16))
+        self.tile_map = TileMap((128, 128))
         self.tile_map.set_outside(12, 0, 0, 0)
         #self.tile_map.random()
         self.init_map_gol(self.tile_map)
         self.object_map = ObjectMap(static_map=self.tile_map)
 
         pos_set = set()
-        for i in range(30):
-            while True:
+        for i in range(1000):
+            for j in range(1000):
                 pos = random.randrange(min(self.width, i+10)), random.randrange(min(self.height, i+10))
                 if pos not in pos_set:
                     pos_set.add(pos)

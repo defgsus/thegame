@@ -106,14 +106,18 @@ class ObjectNode(GameShaderNode):
         element_buffer_values = []
         element_texture_values = []
         for o in self.object_map.objects:
-            element_buffer_values.append(o.position.x)
-            element_buffer_values.append(o.position.y)
-            element_buffer_values.append(o.rotation)
-            element_buffer_values.append(o.scale)
-            element_texture_values.append(1)
-            element_texture_values.append(1)
-            element_texture_values.append(1)
-            element_texture_values.append(o.texture_idx)
+            if rs.is_object_visible(o.position, o.scale):
+                element_buffer_values.append(o.position.x)
+                element_buffer_values.append(o.position.y)
+                element_buffer_values.append(o.rotation)
+                element_buffer_values.append(o.scale)
+                element_texture_values.append(1)
+                element_texture_values.append(1)
+                element_texture_values.append(1)
+                element_texture_values.append(o.texture_idx)
+
+        if not element_texture_values:
+            return
 
         element_buffer_values = np.array(element_buffer_values, dtype="float32")
         element_texture_values = np.array(element_texture_values, dtype="float32")

@@ -12,6 +12,7 @@ from ..game import Game
 from .rs import GameRenderSettings
 from .tilemap_node import TileMapNode
 from .object_node import ObjectNode
+from .object_debug_node import ObjectDebugNode
 
 
 class GameRenderer:
@@ -21,6 +22,7 @@ class GameRenderer:
         self.graph: Optional[RenderGraph] = None
         self.pipeline: Optional[RenderPipeline] = None
         self.render_settings = GameRenderSettings(32, 32)
+        self.debug_node = None
         self.frame_number = 0
         self.camera_pos = glm.vec2(-1, -5)
         self.camera_rotation = 0.
@@ -78,8 +80,16 @@ class GameRenderer:
         graph.add_node(self.object_node)
         graph.connect(tile_tex, 0, self.object_node, mag_filter=gl.GL_NEAREST)
 
-        mix_node = graph.add_node(postproc.Add("mix", count=2))
+        if 0:
+            self.debug_node = ObjectDebugNode(
+                "debug", self.game.world.object_map,
+            )
+            graph.add_node(self.debug_node)
+
+        mix_node = graph.add_node(postproc.Add("mix", count=3 if self.debug_node else 2))
         graph.connect(self.tile_render_node, 0, mix_node, 0)
         graph.connect(self.object_node, 0, mix_node, 1)
+        if self.debug_node:
+            graph.connect(self.debug_node, 0, mix_node, 2)
 
         return graph

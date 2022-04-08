@@ -27,8 +27,10 @@ class Game:
         }
         for key, d in dir_mapping.items():
             if keys.get(key):
-                self.player.pos[0] += d[0]
-                self.player.pos[1] += d[1]
+                self.player.body.position = (
+                    self.player.position[0] + d[0],
+                    self.player.position[1] + d[1],
+                )
                 self.world.object_map.set_dirty()
 
     def on_key_press(self, symbol, modifiers):

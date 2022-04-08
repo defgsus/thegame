@@ -38,6 +38,9 @@ class TileMap:
         #self.map[:, :, 1:] = np.random.uniform(0, .1, (size[1], size[0], 3))
 
     def get_window(self, x: int, y: int, width: int, height: int) -> np.ndarray:
+        if y <= -height or y >= self.height or x <= -width or x >= self.width:
+            return self._outside_array(width, height)
+
         if y >= 0:
             window = self.map[y:y+height]
         else:

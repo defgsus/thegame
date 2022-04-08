@@ -11,6 +11,7 @@ from .._path import ASSET_PATH
 from ..game import Game
 from .rs import GameRenderSettings
 from .tilemap_node import TileMapNode
+from .object_node import ObjectNode
 
 
 class GameRenderer:
@@ -28,7 +29,8 @@ class GameRenderer:
     def update(self, time: float, dt: float):
         target = self.game.player
         #target_speed = self._target_speed_filter(target.average_speed)
-        target_pos = glm.vec2(target.pos) #+ target.direction_of_movement * target_speed * .5
+        target_pos = glm.vec2(target.position) #+ target.direction_of_movement * target_speed * .5
+
         self.camera_pos += min(1., dt * 3.) * (target_pos - self.camera_pos)
         # self.camera_rotation += min(1., dt*.3) * (self.game.player.rotation - self.camera_rotation)
         self.pipeline.update(self.render_settings, dt)
@@ -68,16 +70,14 @@ class GameRenderer:
         graph.add_node(self.tile_render_node)
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)
 
-        self.tile_render_node2 = TileMapNode(
-            "tilerender2", self.game.world.object_map,
-            tile_size=(16, 16),
-            tile_set_size=(10, 6),
+        self.object_node = ObjectNode(
+            "objects", self.game.world.object_map,
         )
-        graph.add_node(self.tile_render_node2)
-        graph.connect(tile_tex, 0, self.tile_render_node2, mag_filter=gl.GL_NEAREST)
+        graph.add_node(self.object_node)
+        graph.connect(tile_tex, 0, self.object_node, mag_filter=gl.GL_NEAREST)
 
         mix_node = graph.add_node(postproc.Add("mix", count=2))
         graph.connect(self.tile_render_node, 0, mix_node, 0)
-        graph.connect(self.tile_render_node2, 0, mix_node, 1)
+        graph.connect(self.object_node, 0, mix_node, 1)
 
         return graph

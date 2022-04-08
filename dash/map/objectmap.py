@@ -11,10 +11,16 @@ import pymunk
 class ObjectMap:
 
     def __init__(self, static_map: TileMap):
+        self.default_friction = 0.1
+
         self.static_map = static_map
         self.objects: List[Object] = []
         self.state_id = 1
         self.space = pymunk.Space()
+        self.space.gravity = (0, -10)
+        self.static_objects = dict()
+        self.last_static_map_state_id = None
+        self._add_map_boundaries()
 
     def set_dirty(self):
         """
@@ -22,18 +28,33 @@ class ObjectMap:
         """
         self.state_id += 1
 
-    #def add_object(self, type: str, pos: Tuple[float, float]):
-    #    self.objects.append(o)
+    def add_object(self, type: str, pos: Tuple[float, float]) -> Object:
+        o = Object(self.space, pos, mass=1, friction=self.default_friction)
+        self.objects.append(o)
+        self.space.add(o.body, o.shape)
+        return o
 
+    def update(self, time: float, dt: float):
+        if self.static_map.state_id != self.last_static_map_state_id:
+            self.last_static_map_state_id = self.static_map.state_id
+            #self.space.
 
-    def get_window(self, x: int, y: int, width: int, height: int) -> np.ndarray:
-        window = np.zeros((height, width, 4))
+        fixed_dt = 1./200.
+        while dt > 0:
+            self.space.step(fixed_dt)
+            dt -= fixed_dt
 
+    def dump_objects(self, file=None):
         for i, o in enumerate(self.objects):
-            int_x, int_y = o.int_pos
-            if x <= int_x < x + width and y <= int_y < y + height:
-                ox, oy = o.tile_offset
-                tile_idx = 20 if i == 0 else 10
-                window[int_y - y, int_x - x, :3] = (tile_idx, ox, oy)
+            print(f"{i:3}: {o}", file=file)
 
-        return window
+    def _add_map_boundaries(self):
+        for seg_start, seg_end in (
+                ((-1, -1), (self.static_map.width, -1)),
+                ((-1, self.static_map.height), (self.static_map.width, -1)),
+                ((-1, -1), (-1, self.static_map.height)),
+                ((self.static_map.width, -1), (self.static_map.width, self.static_map.height)),
+        ):
+            shape = pymunk.Segment(self.space.static_body, seg_start, seg_end, 1)
+            shape.friction = self.default_friction
+            self.space.add(shape)

@@ -9,15 +9,15 @@ from lib.geom import MeshFactory, TriangleMesh
 
 from .shader_node import GameShaderNode
 from .rs import GameRenderSettings
-from ..map import ObjectMap
+from ..map import Objects
 
 
-class ObjectNode(GameShaderNode):
+class ObjectsNode(GameShaderNode):
 
     def __init__(
             self,
             name: str,
-            object_map: ObjectMap,
+            object_map: Objects,
             tile_size: Tuple[int, int],
             tile_set_size: Tuple[int, int],
     ):

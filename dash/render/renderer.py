@@ -11,7 +11,7 @@ from .._path import ASSET_PATH
 from ..game import Game
 from .rs import GameRenderSettings
 from .tilemap_node import TileMapNode
-from .object_node import ObjectNode
+from .objects_node import ObjectsNode
 from .object_debug_node import ObjectDebugNode
 
 
@@ -72,7 +72,7 @@ class GameRenderer:
         graph.add_node(self.tile_render_node)
         graph.connect(tile_tex, 0, self.tile_render_node, mag_filter=gl.GL_NEAREST)
 
-        self.object_node = ObjectNode(
+        self.object_node = ObjectsNode(
             "objects", self.game.world.object_map,
             tile_size=(16, 16),
             tile_set_size=(10, 6),

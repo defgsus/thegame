@@ -10,7 +10,7 @@ from lib.geom import MeshFactory, TriangleMesh
 
 from .shader_node import GameShaderNode
 from .rs import GameRenderSettings
-from ..map import ObjectMap, Object
+from ..map import Objects, Object
 
 
 class ObjectDebugNode(GameShaderNode):
@@ -18,7 +18,7 @@ class ObjectDebugNode(GameShaderNode):
     def __init__(
             self,
             name: str,
-            object_map: ObjectMap,
+            object_map: Objects,
     ):
         super().__init__(name)
         self.object_map = object_map

@@ -2,7 +2,7 @@ import random
 from typing import Tuple
 
 from lib.gen.automaton import ClassicAutomaton
-from .map import TileMap, Object, ObjectMap
+from .map import TileMap, Object, Objects
 
 
 class World:
@@ -12,7 +12,7 @@ class World:
         self.tile_map.set_outside(12, 0, 0, 0)
         #self.tile_map.random()
         self.init_map_gol(self.tile_map)
-        self.object_map = ObjectMap(static_map=self.tile_map)
+        self.object_map = Objects(static_map=self.tile_map)
 
         pos_set = set()
         for i in range(1000):
@@ -22,7 +22,7 @@ class World:
                     pos_set.add(pos)
                     if not self.tile_map.map[pos[1], pos[0], 0]:
                         self.object_map.add_object(
-                            shape_type="box" if i == 0 else "circle",
+                            shape_type="box" if i != 0 and random.random() < .2 else "circle",
                             pos=(pos[0] + .5, pos[1] + .5),
                         )
                         break

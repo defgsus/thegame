@@ -8,7 +8,7 @@ from .object import Object
 from tests.util import Timer
 
 
-class ObjectMap:
+class Objects:
 
     def __init__(self, static_map: TileMap):
         self.default_friction = 1.

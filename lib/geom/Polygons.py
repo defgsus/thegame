@@ -45,7 +45,7 @@ class Polygons:
         self._quads = []
 
         for poly in triangles:
-            poly_offset = offset * poly.normal
+            poly_offset = offset * poly.contact_normal
             n1 = poly.p1 + poly_offset
             n2 = poly.p2 + poly_offset
             n3 = poly.p3 + poly_offset
@@ -56,7 +56,7 @@ class Polygons:
             self.add_triangle(n1, n2, n3)
 
         for poly in quads:
-            poly_offset = offset * poly.normal
+            poly_offset = offset * poly.contact_normal
             n1 = poly.p1 + poly_offset
             n2 = poly.p2 + poly_offset
             n3 = poly.p3 + poly_offset

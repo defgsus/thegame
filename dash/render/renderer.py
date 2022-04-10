@@ -13,6 +13,7 @@ from .rs import GameRenderSettings
 from .tilemap_node import TileMapNode
 from .objects_node import ObjectsNode
 from .object_debug_node import ObjectDebugNode
+from .constraint_debug_node import ConstraintDebugNode
 
 
 class GameRenderer:
@@ -80,8 +81,8 @@ class GameRenderer:
         graph.add_node(self.object_node)
         graph.connect(tile_tex, 0, self.object_node, mag_filter=gl.GL_NEAREST)
 
-        if 0:
-            self.debug_node = ObjectDebugNode(
+        if 1:
+            self.debug_node = ConstraintDebugNode(
                 "debug", self.game.world.objects,
             )
             graph.add_node(self.debug_node)

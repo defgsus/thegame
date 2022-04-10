@@ -41,14 +41,14 @@ class ObjectsNode(GameShaderNode):
 
         in vec4 a_position;
         in vec2 a_texcoord;
-        in vec3 a_ambient;
 
         in vec4 a_element_buffer;
         in vec4 a_element_texture;
         
         out vec4 v_pos;
         out vec2 v_texcoord;
-        
+        out vec4 v_color;
+                
         void main()
         {
             vec4 position = a_position;
@@ -60,6 +60,7 @@ class ObjectsNode(GameShaderNode):
                 + vec2(tile_idx % u_tile_set_size.x, tile_idx / u_tile_set_size.x) / u_tile_set_size;
             
             v_pos = a_position;
+            v_color = vec4(a_element_texture.xyz, 1);
             //v_world_normal = normalize((vec4(a_normal, 0.) * u_transformation_inv).xyz);
             
             gl_Position = u_projection * u_transformation * position;
@@ -72,12 +73,13 @@ class ObjectsNode(GameShaderNode):
         
         in vec4 v_pos;
         in vec2 v_texcoord;
+        in vec4 v_color;
         
         out vec4 fragColor;
         
         void main() {
-            vec4 col = texture(u_tex1, v_texcoord);
-            //col.xyz += v_normal*.3;
+            vec4 col = texture(u_tex1, v_texcoord) * v_color;
+
             fragColor = col;
         }
         """)
@@ -112,9 +114,9 @@ class ObjectsNode(GameShaderNode):
                 element_buffer_values.append(o.position.y)
                 element_buffer_values.append(o.rotation)
                 element_buffer_values.append(o.scale)
-                element_texture_values.append(1)
-                element_texture_values.append(1)
-                element_texture_values.append(1)
+                element_texture_values.append(o.color[0])
+                element_texture_values.append(o.color[1])
+                element_texture_values.append(o.color[2])
                 element_texture_values.append(o.texture_idx)
 
         if not element_texture_values:

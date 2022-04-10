@@ -28,11 +28,13 @@ class Object:
             mass: float = 1,
             static: bool = False,
             friction: float = 1.,
+            color: Tuple[float, float, float] = (1., 1., 1.),
     ):
         self.space = space
         self.shape_type = shape_type
         self.static = static
         self._scale = scale
+        self.color = color
 
         padding = 0.03
 

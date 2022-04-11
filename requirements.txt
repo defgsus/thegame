@@ -1,5 +1,5 @@
 # python3.6+
-numpy==1.18.2
+numpy==1.21.0
 pyglet==1.5.0
 Pillow==7.0.0
 PyGLM==1.1.8

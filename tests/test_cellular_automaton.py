@@ -2,7 +2,7 @@ import os
 import unittest
 
 from lib.gen.automaton import CellularAutomatonBase, ClassicAutomaton
-from .util import Timer
+from tests.util import Timer
 
 
 class TestCellularAutomaton(unittest.TestCase):

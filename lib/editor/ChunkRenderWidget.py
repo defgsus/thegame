@@ -5,7 +5,6 @@ from PyQt5.QtGui import *
 from PyQt5.QtOpenGL import *
 
 from lib.opengl import *
-from lib.world.render import RenderSettings
 from .render.ChunkMeshNode import ChunkMeshNode
 
 

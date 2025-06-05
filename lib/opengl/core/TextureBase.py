@@ -5,7 +5,7 @@ class TextureBase(OpenGlBaseObject):
 
     GL_LINEAR = GL_LINEAR
     GL_NEAREST = GL_NEAREST
-    GL_CLAMP = GL_CLAMP
+    GL_CLAMP = GL_CLAMP_TO_EDGE
     GL_REPEAT = GL_REPEAT
 
     def __init__(self, target, name=None):
@@ -14,9 +14,9 @@ class TextureBase(OpenGlBaseObject):
         self.width = 0
         self.height = 0
         self.gpu_format = 0
-        self.mag_filter = GL_LINEAR
-        self.min_filter = GL_NEAREST
-        self.wrap_mode = GL_CLAMP
+        self.mag_filter = self.GL_LINEAR
+        self.min_filter = self.GL_NEAREST
+        self.wrap_mode = self.GL_CLAMP
         self.multi_sample = 0
 
     @staticmethod

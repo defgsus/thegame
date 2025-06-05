@@ -147,7 +147,7 @@ class WorldChunk:
 
     def create_mesh(self, do_ambient=True):
         mesh = TriangleMesh()
-        mesh.create_attribute("a_ambient", 3)
+        mesh.create_attribute("a_ambient", 3, (1, 1, 1))
 
         def add_quad(p1, p2, p3, p4, *uvquad):
             mesh.add_quad(p1, p2, p3, p4, *uvquad)

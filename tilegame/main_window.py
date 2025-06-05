@@ -42,7 +42,7 @@ class MainWindow(pyglet.window.Window):
     def update(self, dt: float):
         self.game.render_settings = self.renderer.render_settings
         self.check_keys(dt)
-        self.game.check_keys(self.keys, dt)
+        self.game.check_keys(self.keys.data, dt)
         self.game.update(time, dt)
         self.renderer.update(time, dt)
 

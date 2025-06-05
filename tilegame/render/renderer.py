@@ -28,6 +28,13 @@ class GameRenderer:
         self._target_speed_filter = FollowFilter(follow_up=.03, follow_down=.01)
 
     def update(self, time: float, dt: float):
+        if self.graph is None:
+            self.graph = self.create_render_graph()
+
+        if self.pipeline is None:
+            self.pipeline = self.graph.create_pipeline()
+            self.pipeline.dump()
+
         target = self.game.player
         target_speed = self._target_speed_filter(target.average_speed)
         target_pos = target.location.xy #+ target.direction_of_movement * target_speed * .5

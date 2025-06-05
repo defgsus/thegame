@@ -1,6 +1,7 @@
 from typing import Optional
 
 import numpy as np
+import pyglet
 
 from .TextureBase import *
 from .types import (

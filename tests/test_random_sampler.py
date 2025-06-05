@@ -6,7 +6,7 @@ from typing import Optional
 import numpy as np
 
 from lib.gen import *
-from .util import Timer, assert_numpy_equal
+from tests.util import Timer, assert_numpy_equal
 
 
 class TestRandomSampler(unittest.TestCase):

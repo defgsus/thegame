@@ -185,13 +185,13 @@ class VoxelDistanceField:
 
     def create_texture3d(self, name=None):
         tex = Texture3D(name=name)
-        tex.wrap_mode = GL_CLAMP
+        tex.wrap_mode = GL_CLAMP_TO_EDGE
         tex.mag_filter = GL_LINEAR
         tex.create()
         tex.bind()
         print("MAX", max(self.distances))
         tex.upload(self.distances, self.width, self.height, self.depth,
-                   input_format=GL_LUMINANCE)
+                   input_format=GL_RED)
         return tex
 
 

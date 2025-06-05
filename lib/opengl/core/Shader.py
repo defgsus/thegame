@@ -21,7 +21,7 @@ class Shader(OpenGlBaseObject):
 
     _RE_INCLUDE = re.compile(r"^\s*#include\s*<([^>]+)>\s*$")
     _RE_LINE = re.compile(r"^\s*#line\s*(\d+)\s*$")
-    _RE_LOG_ERROR = re.compile(".*\((\d+)\) : error (.*)", re.MULTILINE)
+    _RE_LOG_ERROR = re.compile(r".*\((\d+)\) : error (.*)", re.MULTILINE)
 
     def __init__(
             self,
